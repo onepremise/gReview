@@ -1,0 +1,31 @@
+<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}" url="${project.organization.url}" />
+        <bundle-instructions>
+      	    <Import-Package>com.atlassian.bamboo.plugins.git,*;resolution:=optional</Import-Package>
+    	</bundle-instructions>
+    </plugin-info>
+
+    <!-- internationalize your plugin -->
+    <resource type="i18n" name="i18n" location="english" />
+	
+    <repository key="gerrit" name="Gerrit Repository"
+                     class="com.google.gerrit.bamboo.plugins.GerritRepositoryAdapter">
+      <description>A Gerrit Interface Repository</description>
+      <resource type="freemarker" name="edit" location="GerritRepositoryEdit.ftl"/>
+      <resource type="freemarker" name="view" location="GerritRepositoryView.ftl"/>
+    </repository>
+  
+    <!-- defines an example task -->
+    <taskType name="gReview" class="com.google.gerrit.bamboo.plugins.ExampleTask" key="test">
+      <description>A simple Hello World Task</description>
+      <!-- Categories available in 3.1: "builder", "test" and "deployment"
+      <category name=""/>
+      -->
+      <configuration class="com.google.gerrit.bamboo.plugins.ExampleTaskConfigurator"/>
+      <resource type="freemarker" name="edit" location="editExampleTask.ftl"/>
+      <resource type="freemarker" name="view" location="viewExampleTask.ftl"/>
+    </taskType>
+</atlassian-plugin>

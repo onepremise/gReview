@@ -1,0 +1,1 @@
+[@ww.label labelKey="com.google.gerrit.bamboo.plugins.say" name="say"/]

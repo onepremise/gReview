@@ -1,0 +1,1 @@
+[@ww.textfield labelKey="com.google.gerrit.bamboo.plugins.say" name="say" required='true'/]
