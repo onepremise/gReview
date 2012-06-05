@@ -109,6 +109,17 @@ public class GerritDAO {
     	return selectedChange;
     }
     
+    public GerritChangeVO getChangeByRevision(String rev) throws RepositoryException {
+    	Set<GerritChangeVO> changes=getGerritChangeInfo();
+    	
+    	for (GerritChangeVO change:changes) {
+    		if (change.getCurrentPatchSet().getRevision().equals(rev))
+    			return change;
+    	}
+    	
+    	return null;
+    }
+    
     public Set<GerritChangeVO> getGerritChangeInfo() throws RepositoryException {
     	List<JSONObject> jsonObjects=null;
     	
@@ -131,7 +142,7 @@ public class GerritDAO {
 				if (j.containsKey(GerritChangeVO.JSON_KEY_PROJECT)) {
 					GerritChangeVO info=new GerritChangeVO();
 					
-					info.setProject(GerritChangeVO.JSON_KEY_PROJECT);
+					info.setProject(j.getString(GerritChangeVO.JSON_KEY_PROJECT));
 					info.setBranch(j.getString(GerritChangeVO.JSON_KEY_BRANCH));
 					info.setId(j.getString(GerritChangeVO.JSON_KEY_ID));
 					info.setNumber(j.getInt(GerritChangeVO.JSON_KEY_NUMBER));

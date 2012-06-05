@@ -25,32 +25,37 @@ import java.util.Set;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import com.atlassian.bamboo.author.AuthorCachingFacade;
+import com.atlassian.bamboo.bandana.BambooBandanaContext;
+import com.atlassian.bamboo.build.BuildLoggerManager;
+import com.atlassian.bamboo.build.fileserver.BuildDirectoryManager;
 import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.commit.Commit;
 import com.atlassian.bamboo.commit.CommitFile;
 import com.atlassian.bamboo.commit.CommitFileImpl;
 import com.atlassian.bamboo.commit.CommitImpl;
-import com.atlassian.bamboo.plan.PlanKey;
+import com.atlassian.bamboo.migration.plan.PlanManagerDecorator;
 import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.branch.VcsBranch;
-import com.atlassian.bamboo.plugins.git.GitRepoFactory;
 import com.atlassian.bamboo.plugins.git.GitRepository;
 import com.atlassian.bamboo.repository.AbstractStandaloneRepository;
 import com.atlassian.bamboo.repository.BranchMergingAwareRepository;
 import com.atlassian.bamboo.repository.Repository;
 import com.atlassian.bamboo.repository.RepositoryException;
 import com.atlassian.bamboo.security.StringEncrypter;
+import com.atlassian.bamboo.template.TemplateRenderer;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
 import com.atlassian.bamboo.utils.i18n.I18nBeanFactory;
 import com.atlassian.bamboo.utils.i18n.TextProviderAdapter;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bamboo.v2.build.BuildRepositoryChanges;
 import com.atlassian.bamboo.v2.build.BuildRepositoryChangesImpl;
-import com.atlassian.bamboo.v2.build.agent.capability.RequirementSet;
+import com.atlassian.bamboo.v2.build.agent.capability.CapabilityContext;
+import com.atlassian.bamboo.variable.CustomVariableContext;
 import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.bandana.DefaultBandanaManager;
@@ -61,11 +66,8 @@ import com.atlassian.util.concurrent.LazyReference;
 import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO;
 import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO.FileSet;
 import com.google.gerrit.bamboo.plugins.dao.GerritDAO;
+import com.google.gerrit.bamboo.plugins.dao.GitRepoFactory;
 import com.opensymphony.xwork.TextProvider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
@@ -74,7 +76,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFact
  * @author Jason Huntley
  *
  */
-public class GerritRepositoryAdapter extends AbstractStandaloneRepository implements BranchMergingAwareRepository, GerritEventListener {
+public class GerritRepositoryAdapter extends AbstractStandaloneRepository implements BranchMergingAwareRepository {
 	
 	
 	/**
@@ -107,6 +109,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
     private GerritDAO gerritDAO=null;
     
     BandanaManager bandanaManager = null;
+    
+    GitRepository gitRepository = new GitRepository();
     
     private final transient LazyReference<StringEncrypter> encrypterRef = new LazyReference<StringEncrypter>()
     {
@@ -247,6 +251,34 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
 		return configuration;
 	}
 	
+	@Override
+    public void setBuildDirectoryManager(BuildDirectoryManager buildDirectoryManager) {
+        super.setBuildDirectoryManager(buildDirectoryManager);
+        gitRepository.setBuildDirectoryManager(buildDirectoryManager);
+    }
+
+    @Override
+    public void setBuildLoggerManager(BuildLoggerManager buildLoggerManager) {
+        super.setBuildLoggerManager(buildLoggerManager);
+        gitRepository.setBuildLoggerManager(buildLoggerManager);
+    }
+    
+    @Override
+    public void setCustomVariableContext(CustomVariableContext customVariableContext) {
+        super.setCustomVariableContext(customVariableContext);
+        gitRepository.setCustomVariableContext(customVariableContext);
+    }
+
+    public void setCapabilityContext(final CapabilityContext capabilityContext)  {
+        gitRepository.setCapabilityContext(capabilityContext);
+    }
+    
+    @Override
+    public void setTemplateRenderer(TemplateRenderer templateRenderer) {
+        super.setTemplateRenderer(templateRenderer);
+        gitRepository.setTemplateRenderer(templateRenderer);
+    }
+	
     @Override
     public synchronized void setTextProvider(TextProvider textProvider) {
         if (this.textProvider==null) {
@@ -258,6 +290,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
             I18nBeanFactory i18nBeanFactory = i18nBeanFactoryReference.get();
             this.textProvider = new TextProviderAdapter(i18nBeanFactory.getI18nBean(Locale.getDefault()));
         }
+        
+        gitRepository.setTextProvider(this.textProvider);
     }
     
     public Authentication createGerritCredentials(File sshKeyFile, String strUsername, String phrase) {
@@ -345,6 +379,40 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
     	
     	return gHandler;
     }*/
+    
+    protected class GerritBandanaContext implements BambooBandanaContext {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 2823839939046273111L;
+		
+		private long planID=639917L;
+		
+		@Override
+		public boolean hasParentContext() {
+			return false;
+		}
+
+		@Override
+		public BambooBandanaContext getParentContext() {
+			return null;
+		}
+
+		@Override
+		public long getPlanId() {
+			return planID;
+		}
+
+		@Override
+		public String getPluginKey() {
+			return moduleDescriptor.getPluginKey();
+		}
+
+		@Override
+		public boolean isGlobal() {
+			return false;
+		}
+    }
 
 	/* (non-Javadoc)
 	 * @see com.atlassian.bamboo.v2.build.repository.RepositoryV2#collectChangesSinceLastBuild(java.lang.String, java.lang.String)
@@ -353,10 +421,20 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
 	public BuildRepositoryChanges collectChangesSinceLastBuild(String planKey,
 			String lastVcsRevisionKey) throws RepositoryException {
 		final BuildLogger buildLogger = buildLoggerManager.getBuildLogger(PlanKeys.getPlanKey(planKey));
+		
 		List<Commit> commits = new ArrayList<Commit>();
 		
 		GerritChangeVO change=getGerritDAO().getLastUnverifiedUpdate();
 		
+        if (change.getLastRevision().equals(lastVcsRevisionKey)) {
+            return new BuildRepositoryChangesImpl(change.getLastRevision());
+        } else {
+        	Object lastDate=bandanaManager.getValue(new GerritBandanaContext(), GerritChangeVO.JSON_KEY_ID);
+        	
+        	if (lastDate!=null && lastDate.equals(change.getLastUpdate()))
+        		return new BuildRepositoryChangesImpl(change.getLastRevision());
+        }
+
 		CommitImpl commit = new CommitImpl();
         commit.setComment(change.getSubject());
         commit.setAuthor(new AuthorCachingFacade(change.getOwnerName()));
@@ -374,6 +452,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
         
         BuildRepositoryChanges buildChanges = new BuildRepositoryChangesImpl(change.getLastRevision(), commits);
         
+        bandanaManager.setValue(new GerritBandanaContext(), GerritChangeVO.JSON_KEY_ID, change.getLastUpdate());
+        
         return buildChanges;
 	}
 
@@ -382,28 +462,15 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
 	 */
 	@Override
 	public boolean isRepositoryDifferent(Repository repository) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/* (non-Javadoc)
-	 * @see com.atlassian.bamboo.v2.build.ConfigurablePlugin#customizeBuildRequirements(com.atlassian.bamboo.plan.PlanKey, com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration, com.atlassian.bamboo.v2.build.agent.capability.RequirementSet)
-	 */
-	@Override
-	public void customizeBuildRequirements(PlanKey planKey,
-			BuildConfiguration buildConfiguration, RequirementSet requirementSet) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/* (non-Javadoc)
-	 * @see com.atlassian.bamboo.v2.build.ConfigurablePlugin#removeBuildRequirements(com.atlassian.bamboo.plan.PlanKey, com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration, com.atlassian.bamboo.v2.build.agent.capability.RequirementSet)
-	 */
-	@Override
-	public void removeBuildRequirements(PlanKey planKey,
-			BuildConfiguration buildConfiguration, RequirementSet requirementSet) {
-		// TODO Auto-generated method stub
-
+        if (repository instanceof GerritRepositoryAdapter) {
+        	GerritRepositoryAdapter gerrit = (GerritRepositoryAdapter) repository;
+            return !new EqualsBuilder()
+                    .append(this.hostname, gerrit.getHostname())
+                    .append(this.username, gerrit.getUsername())
+                    .isEquals();
+        } else {
+            return true;
+        }
 	}
 
 	/* (non-Javadoc)
@@ -411,7 +478,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
 	 */
 	@Override
 	public void addDefaultValues(BuildConfiguration buildConfiguration) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -441,6 +507,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
         return hostname;
     }
 
+	public String getUsername() {
+		return username;
+	}
+
 	/* (non-Javadoc)
 	 * @see com.atlassian.bamboo.repository.Repository#getMinimalEditHtml(com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration)
 	 */
@@ -458,68 +528,63 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
 		return textProvider.getText("repository.gerrit.name");
 	}
 
-	@Override
-	public VcsBranch getVcsBranch() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    @NotNull
+    public VcsBranch getVcsBranch() {
+        return gitRepository.getVcsBranch();
+    }
 
-	@Override
-	public void setVcsBranch(VcsBranch branch) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public void setVcsBranch(@NotNull final VcsBranch vcsBranch) {
+        gitRepository.setVcsBranch(vcsBranch);
+    }
 
 	@Override
 	public String retrieveSourceCode(BuildContext buildContext,
 			String vcsRevisionKey, File sourceDirectory)
 			throws RepositoryException {
-
-        String gitRepoUrl="ssh://" + hostname + "/" + "";
+		GerritChangeVO change=this.getGerritDAO().getChangeByRevision(vcsRevisionKey);
+		
+		if (change==null) {
+			throw new RepositoryException("Failed to retrieve change from Gerrit via revision!");
+		}
+		
+        String gitRepoUrl="ssh://" +username + "@" + hostname + ":" + port + "/" + change.getProject();
         
-        GitRepository gitRepository = GitRepoFactory.getSSHGitRepository(gitRepoUrl, username, 
-        		"", "refs/for/paster", sshKey, sshPassphrase, true, 
-        		false, 10000, false);
-        
-        gitRepository.setTextProvider(this.textProvider);
+        GitRepoFactory.configureSSHGitRepository(gitRepository, gitRepoUrl, username, 
+        		"", change.getCurrentPatchSet().getRef(), this.sshKeyFile, sshPassphrase, true, 
+        		false, 10000, false, textProvider);
 		
 		return gitRepository.retrieveSourceCode(buildContext, vcsRevisionKey, sourceDirectory);
 	}
-
-	@Override
-	public boolean isMergingSupported() {
-		// TODO Auto-generated method stub
-		return true;
-	}
-
-	@Override
-	public boolean mergeWorkspaceWith(BuildContext buildContext,
-			File checkoutDirectory, String targetRevision)
-			throws RepositoryException {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
+	
 	@Override
 	public String retrieveSourceCode(BuildContext buildContext,
 			String vcsRevisionKey, File sourceDirectory, int depth)
 			throws RepositoryException {
-		// TODO Auto-generated method stub
-		return null;
+		GerritChangeVO change=this.getGerritDAO().getChangeByRevision(vcsRevisionKey);
+		
+		if (change==null) {
+			throw new RepositoryException("Failed to retrieve change from Gerrit via revision!");
+		}
+		
+        String gitRepoUrl="ssh://" +username + "@" + hostname + ":" + port + "/" + change.getProject();
+        
+        GitRepoFactory.configureSSHGitRepository(gitRepository, gitRepoUrl, username, 
+        		"", change.getCurrentPatchSet().getRef(), this.sshKeyFile, sshPassphrase, true, 
+        		false, 10000, false, textProvider);
+		
+		return gitRepository.retrieveSourceCode(buildContext, vcsRevisionKey, sourceDirectory, depth);
 	}
 
 	@Override
-	public void gerritEvent(GerritEvent arg0) {
-		log.debug(arg0.toString());
+	public boolean isMergingSupported() {
+		return true;
 	}
 
-	@Override
-	public void gerritEvent(PatchsetCreated arg0) {
-		log.debug(arg0.toString());
-	}
-
-	@Override
-	public void gerritEvent(ChangeAbandoned arg0) {
-		log.debug(arg0.toString());
-	}
+    @Override
+    public boolean mergeWorkspaceWith(@NotNull final BuildContext buildContext, 
+    		@NotNull final File file, @NotNull final String s) throws RepositoryException {
+        return gitRepository.mergeWorkspaceWith(buildContext, file, s);
+    }
 }
