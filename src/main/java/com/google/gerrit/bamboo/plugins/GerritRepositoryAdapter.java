@@ -18,6 +18,7 @@ package com.google.gerrit.bamboo.plugins;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -38,7 +39,6 @@ import com.atlassian.bamboo.commit.Commit;
 import com.atlassian.bamboo.commit.CommitFile;
 import com.atlassian.bamboo.commit.CommitFileImpl;
 import com.atlassian.bamboo.commit.CommitImpl;
-import com.atlassian.bamboo.migration.plan.PlanManagerDecorator;
 import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.branch.VcsBranch;
 import com.atlassian.bamboo.plugins.git.GitRepository;
@@ -65,9 +65,10 @@ import com.atlassian.spring.container.LazyComponentReference;
 import com.atlassian.util.concurrent.LazyReference;
 import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO;
 import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO.FileSet;
-import com.google.gerrit.bamboo.plugins.dao.GerritDAO;
+import com.google.gerrit.bamboo.plugins.dao.GerritService;
 import com.google.gerrit.bamboo.plugins.dao.GitRepoFactory;
 import com.opensymphony.xwork.TextProvider;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
@@ -76,7 +77,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFact
  * @author Jason Huntley
  *
  */
-public class GerritRepositoryAdapter extends AbstractStandaloneRepository implements BranchMergingAwareRepository {
+public class GerritRepositoryAdapter extends AbstractStandaloneRepository implements BranchMergingAwareRepository, GerritConnectionConfig {
 	
 	
 	/**
@@ -106,11 +107,11 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
     private File   sshKeyFile=null;
     private String sshPassphrase;
     
-    private GerritDAO gerritDAO=null;
+    private GerritService gerritDAO=null;
     
     BandanaManager bandanaManager = null;
-    
-    GitRepository gitRepository = new GitRepository();
+
+	GitRepository gitRepository = new GitRepository();
     
     private final transient LazyReference<StringEncrypter> encrypterRef = new LazyReference<StringEncrypter>()
     {
@@ -126,6 +127,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
 		super.init(moduleDescriptor);
 		
 		bandanaManager = new DefaultBandanaManager(new MemoryBandanaPersister());
+	}
+	
+    public BandanaManager getBandanaManager() {
+		return bandanaManager;
 	}
 	
 	/* (non-Javadoc)
@@ -332,10 +337,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
     	}
     }
     
-    public GerritDAO getGerritDAO() {
+    public GerritService getGerritDAO() {
     	if (gerritDAO==null) {
     		Authentication auth=createGerritCredentials(sshKeyFile, username, sshPassphrase);
-    		gerritDAO=new GerritDAO(hostname, port,  auth);
+    		gerritDAO=new GerritService(hostname, port,  auth);
     	}
     	
     	return gerritDAO;
@@ -413,6 +418,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
 			return false;
 		}
     }
+    
+    public BuildLoggerManager getBuildLoggerManager() {
+    	return buildLoggerManager;
+    }
 
 	/* (non-Javadoc)
 	 * @see com.atlassian.bamboo.v2.build.repository.RepositoryV2#collectChangesSinceLastBuild(java.lang.String, java.lang.String)
@@ -421,12 +430,18 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
 	public BuildRepositoryChanges collectChangesSinceLastBuild(String planKey,
 			String lastVcsRevisionKey) throws RepositoryException {
 		final BuildLogger buildLogger = buildLoggerManager.getBuildLogger(PlanKeys.getPlanKey(planKey));
-		
 		List<Commit> commits = new ArrayList<Commit>();
 		
 		GerritChangeVO change=getGerritDAO().getLastUnverifiedUpdate();
 		
-        if (change.getLastRevision().equals(lastVcsRevisionKey)) {
+		buildLogger.addBuildLogEntry(textProvider.getText("repository.gerrit.messages.ccRecover.completed"));
+		
+		if (change==null) {
+			buildLogger.addBuildLogEntry(textProvider.getText("processor.gerrit.messages.build.verified.None"));
+			return new BuildRepositoryChangesImpl(lastVcsRevisionKey);
+		} else if (lastVcsRevisionKey == null) {
+            buildLogger.addBuildLogEntry(textProvider.getText("repository.gerrit.messages.ccRepositoryNeverChecked", Arrays.asList(change.getLastRevision())));
+		} else if (change.getLastRevision().equals(lastVcsRevisionKey)) {
             return new BuildRepositoryChangesImpl(change.getLastRevision());
         } else {
         	Object lastDate=bandanaManager.getValue(new GerritBandanaContext(), GerritChangeVO.JSON_KEY_ID);
@@ -436,10 +451,15 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
         }
 
 		CommitImpl commit = new CommitImpl();
-        commit.setComment(change.getSubject());
+		
+        commit.setComment(textProvider.getText("gerrit.change.secure.url",
+        		Arrays.asList(this.hostname, change.getNumber(), change.getId(), change.getSubject())));
+        
         commit.setAuthor(new AuthorCachingFacade(change.getOwnerName()));
         commit.setDate(change.getLastUpdate());
         commit.setChangeSetId(change.getId());
+        commit.setCreationDate(change.getCreatedOn());
+        commit.setLastModificationDate(change.getLastUpdate());
         
         Set<FileSet> fileSets=change.getCurrentPatchSet().getFileSets();
         
@@ -587,4 +607,44 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository implem
     		@NotNull final File file, @NotNull final String s) throws RepositoryException {
         return gitRepository.mergeWorkspaceWith(buildContext, file, s);
     }
+
+	@Override
+	public File getGerritAuthKeyFile() {
+		return this.sshKeyFile;
+	}
+
+	@Override
+	public String getGerritAuthKeyFilePassword() {
+		return sshPassphrase;
+	}
+
+	@Override
+	public Authentication getGerritAuthentication() {
+		return new Authentication(this.sshKeyFile, username, sshPassphrase);
+	}
+
+	@Override
+	public String getGerritHostName() {
+		return this.getHostname();
+	}
+
+	@Override
+	public int getGerritSshPort() {
+		return port;
+	}
+
+	@Override
+	public String getGerritUserName() {
+		return username;
+	}
+
+	@Override
+	public int getNumberOfReceivingWorkerThreads() {
+		return 2;
+	}
+
+	@Override
+	public int getNumberOfSendingWorkerThreads() {
+		return 2;
+	}
 }

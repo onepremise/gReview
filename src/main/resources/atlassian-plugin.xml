@@ -28,4 +28,12 @@
       <resource type="freemarker" name="edit" location="editExampleTask.ftl"/>
       <resource type="freemarker" name="view" location="viewExampleTask.ftl"/>
     </taskType>
+    
+    <!-- P O S T   B U I L D   P R O C E S S O R S -->
+    <buildProcessor key="gerritBuildProcessor" name="Gerrit Verification Processor"
+                    class="com.google.gerrit.bamboo.plugins.processor.GerritProcessor">
+    	<description>A Build Processor to execute the Gerrit Verification for the Build Plan.</description>
+        <resource type="freemarker" name="edit" location="editGerritBuildProcessor.ftl" />
+        <resource type="freemarker" name="view" location="viewGerritBuildProcessor.ftl" />
+    </buildProcessor>
 </atlassian-plugin>

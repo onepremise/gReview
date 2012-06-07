@@ -153,10 +153,11 @@
     </build>
     <scm>
     	<developerConnection>Jason Huntley</developerConnection>
-    	<url>https://bitbucket.org/jhuntley/greview.git</url>
+    	<url>https://github.com/onepremise/gReview.git</url>
     </scm>
     <issueManagement>
-    	<url>https://bitbucket.org/jhuntley/greview/issues</url>
-    	<system>BitBucket Issue Tracking</system>
+    	<url>https://github.com/onepremise/gReview/issues</url>
+    	<system>GitHub Issue Tracking</system>
     </issueManagement>
+    <url>https://github.com/onepremise/gReview</url>
 </project>
