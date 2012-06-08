@@ -10,6 +10,12 @@
 
     <!-- internationalize your plugin -->
     <resource type="i18n" name="i18n" location="english" />
+    <resource type="download" name="favicon.gif" location="favicon.gif"/>
+    
+    <web-resource key="webCss">
+      <resource type="download" name="gerrit.css" location="gerrit.css" />
+      <context>atl.general</context>
+    </web-resource>
 	
     <repository key="gerrit" name="Gerrit Repository"
                      class="com.google.gerrit.bamboo.plugins.GerritRepositoryAdapter">
@@ -17,6 +23,25 @@
       <resource type="freemarker" name="edit" location="GerritRepositoryEdit.ftl"/>
       <resource type="freemarker" name="view" location="GerritRepositoryView.ftl"/>
     </repository>
+    
+    <web-item key="gerrit:${plan.key}-${resultsSummary.buildNumber}" name="gerrit" section="chainResults.subMenu/chainResults" weight="100">
+    	<label key="webitems.build.submenu.gerrit" />
+    	<link linkId="gerrit:${plan.key}-${resultsSummary.buildNumber}">/chain/result/viewChainGerritResults.action?planKey=${plan.key}&amp;buildNumber=${resultsSummary.buildNumber}</link>
+    	<condition class="com.google.gerrit.bamboo.plugins.view.ViewGerritResultsCondition" />
+    </web-item> 
+    
+    <xwork key="gerritWebActions" name="Gerrit Result Actions">
+    	<package name="gerritChainVIew" extends="chainViewResult">
+        	<action name="viewChainGerritResults" class="com.google.gerrit.bamboo.plugins.view.ViewGerritChainResultsAction">
+            	<result name="success" type="freemarker">/viewGerritChainResults.ftl</result>
+            	<result name="error" type="freemarker">/error.ftl</result>
+            </action>
+    	</package>	
+    </xwork>   
+         
+	<web-panel key="myPanel" location="chainresult.summary.right">
+           <resource name="view" type="static"><![CDATA[<b>Hello World!</b>]]></resource>
+    </web-panel>
   
     <!-- defines an example task -->
     <taskType name="gReview" class="com.google.gerrit.bamboo.plugins.ExampleTask" key="test">

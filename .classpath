@@ -18,7 +18,7 @@
 			<attribute name="javadoc_location" value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-core/4.0.1/atlassian-bamboo-core-4.0.1-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-api/4.0.1/atlassian-bamboo-api-4.0.1.jar">
+	<classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-api/4.0.1/atlassian-bamboo-api-4.0.1.jar" sourcepath="/bamboo-api">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-api/4.0.1/atlassian-bamboo-api-4.0.1-javadoc.jar!/"/>
 		</attributes>
@@ -520,7 +520,7 @@
 	</classpathentry>
 	<classpathentry kind="var" path="M2_REPO/org/antlr/stringtemplate/3.2.1/stringtemplate-3.2.1.jar" sourcepath="M2_REPO/org/antlr/stringtemplate/3.2.1/stringtemplate-3.2.1-sources.jar"/>
 	<classpathentry kind="var" path="M2_REPO/antlr/antlr/2.7.7/antlr-2.7.7.jar"/>
-	<classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-web/4.0.1/atlassian-bamboo-web-4.0.1.jar">
+	<classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-web/4.0.1/atlassian-bamboo-web-4.0.1.jar" sourcepath="/bamboo-web">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-web/4.0.1/atlassian-bamboo-web-4.0.1-javadoc.jar!/"/>
 		</attributes>
