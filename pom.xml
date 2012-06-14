@@ -23,6 +23,14 @@
         <bamboo.data.version>3.2.2</bamboo.data.version>
         <amps.version>3.7.2</amps.version>
     </properties>
+    
+    <repositories>
+      <!--required for Gerrit Events-->
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -71,24 +79,6 @@
             <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
             <artifactId>gerrit-events</artifactId>
             <version>1.2.7</version>
-            <scope>system</scope>
-            <systemPath>${basedir}/libs/gerrit-events-1.2.7.jar</systemPath>
-        </dependency>
-        
-       <dependency>
-            <groupId>net.sf.json</groupId>
-            <artifactId>json-lib</artifactId>
-            <version>2.4</version>
-            <scope>system</scope>
-            <systemPath>${basedir}/libs/json-lib-2.4-jdk15.jar</systemPath>
-        </dependency>
-        
-        <dependency>
-            <groupId>net.sf.ezmorph</groupId>
-            <artifactId>ezmorph</artifactId>
-            <version>1.0.6</version>
-            <scope>system</scope>
-            <systemPath>${basedir}/libs/ezmorph-1.0.6.jar</systemPath>
         </dependency>
         
         <dependency>

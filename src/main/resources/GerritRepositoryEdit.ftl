@@ -27,3 +27,12 @@
         [@ww.password labelKey='repository.gerrit.ssh.passphrase' name='temporary.gerrit.ssh.passphrase' /]
     [/#if]
 [/@ui.bambooSection]
+
+[@ww.checkbox labelKey='repository.gerrit.useShallowClones' toggle='true' name='repository.gerrit.useShallowClones' /]
+[@ui.bambooSection dependsOn='repository.gerrit.useShallowClones' showOn='true']
+    [#if (plan.buildDefinition.branchIntegrationConfiguration.enabled)!false ]
+        [@ui.messageBox type='info']
+            [@ww.text name='repository.gerrit.messages.branchIntegration.shallowClonesWillBeDisabled'/]
+        [/@ui.messageBox]
+    [/#if]
+[/@ui.bambooSection]
