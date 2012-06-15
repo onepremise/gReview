@@ -20,6 +20,7 @@
 
 [@ui.bambooSection]
 	[@ww.textfield labelKey='repository.gerrit.hostname' name='repository.gerrit.hostname' required='true' /]
+	[@ww.textfield labelKey='repository.gerrit.port' name='repository.gerrit.port' required='true' value='29418' /]
 	
 	[@ww.textfield labelKey='repository.gerrit.username' name='repository.gerrit.username' required='true' /]
 	

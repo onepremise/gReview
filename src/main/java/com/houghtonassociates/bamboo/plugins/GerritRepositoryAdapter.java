@@ -68,9 +68,9 @@ import com.atlassian.plugin.ModuleDescriptor;
 import com.atlassian.spring.container.LazyComponentReference;
 import com.atlassian.util.concurrent.LazyReference;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
+import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
 import com.houghtonassociates.bamboo.plugins.dao.GitRepoFactory;
-import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
 import com.opensymphony.xwork.TextProvider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
@@ -184,6 +184,12 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         buildConfiguration.setProperty(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
             strHostName);
 
+        String strPort =
+            buildConfiguration.getString(REPOSITORY_GERRIT_REPOSITORY_PORT, "")
+                .trim();
+        buildConfiguration.setProperty(REPOSITORY_GERRIT_REPOSITORY_PORT,
+            strPort);
+
         String strUserName =
             buildConfiguration.getString(REPOSITORY_GERRIT_USERNAME, "").trim();
         buildConfiguration.setProperty(REPOSITORY_GERRIT_USERNAME, strUserName);
@@ -251,10 +257,17 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         String hostame =
             StringUtils.trim(buildConfiguration
                 .getString(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME));
-
         if (!StringUtils.isNotBlank(hostame)) {
             errorCollection.addError(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
                 "Hostname null!");
+        }
+
+        String strPort =
+            buildConfiguration.getString(REPOSITORY_GERRIT_REPOSITORY_PORT, "")
+                .trim();
+        if (!StringUtils.isNotBlank(strPort)) {
+            errorCollection.addError(REPOSITORY_GERRIT_REPOSITORY_PORT,
+                "Port null!");
         }
 
         String username =
@@ -572,10 +585,17 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         GerritChangeVO change = getGerritDAO().getLastUnverifiedUpdate();
 
+        if (change == null)
+            change = getGerritDAO().getLastChange();
+
         buildLogger.addBuildLogEntry(textProvider
             .getText("repository.gerrit.messages.ccRecover.completed"));
 
-        if (change == null) {
+        if ((change == null) && (lastVcsRevisionKey == null)) {
+            buildLogger.addBuildLogEntry(textProvider
+                .getText("processor.gerrit.messages.build.verified.None"));
+            return null;
+        } else if (change == null) {
             buildLogger.addBuildLogEntry(textProvider
                 .getText("processor.gerrit.messages.build.verified.None"));
             return new BuildRepositoryChangesImpl(lastVcsRevisionKey);
@@ -590,7 +610,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 bandanaManager.getValue(new GerritBandanaContext(),
                     GerritChangeVO.JSON_KEY_ID);
 
-            if (lastDate != null && lastDate.equals(change.getLastUpdate()))
+            if ((lastDate != null) && lastDate.equals(change.getLastUpdate()))
                 return new BuildRepositoryChangesImpl(change.getLastRevision());
         }
 

@@ -150,4 +150,8 @@
     	<system>GitHub Issue Tracking</system>
     </issueManagement>
     <url>https://github.com/onepremise/gReview</url>
+    <ciManagement>
+    	<system>Bamboo</system>
+    	<url>http://build.houghtonassociates.com</url>
+    </ciManagement>
 </project>
