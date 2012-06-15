@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.gerrit.bamboo.plugins.dao;
+package com.houghtonassociates.bamboo.plugins.dao;
 
 import java.util.Date;
 import java.util.HashSet;

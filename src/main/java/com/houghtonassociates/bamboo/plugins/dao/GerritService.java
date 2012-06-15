@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.gerrit.bamboo.plugins.dao;
+package com.houghtonassociates.bamboo.plugins.dao;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,10 +28,10 @@ import net.sf.json.JSONObject;
 import org.apache.log4j.Logger;
 
 import com.atlassian.bamboo.repository.RepositoryException;
-import com.google.gerrit.bamboo.plugins.GerritRepositoryAdapter;
-import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO.Approval;
-import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO.FileSet;
-import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO.PatchSet;
+import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
+import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.Approval;
+import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
+import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;

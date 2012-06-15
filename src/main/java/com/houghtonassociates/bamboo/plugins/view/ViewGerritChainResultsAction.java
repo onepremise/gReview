@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.google.gerrit.bamboo.plugins.view;
+package com.houghtonassociates.bamboo.plugins.view;
 
 import java.util.List;
 
@@ -11,9 +11,9 @@ import com.atlassian.bamboo.repository.RepositoryDataEntity;
 import com.atlassian.bamboo.resultsummary.vcs.RepositoryChangeset;
 import com.atlassian.bamboo.ww2.actions.chains.ViewChainResult;
 import com.atlassian.bamboo.ww2.aware.permissions.PlanReadSecurityAware;
-import com.google.gerrit.bamboo.plugins.GerritRepositoryAdapter;
-import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO;
-import com.google.gerrit.bamboo.plugins.dao.GerritService;
+import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
+import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
+import com.houghtonassociates.bamboo.plugins.dao.GerritService;
 
 /**
  * @author Jason Huntley

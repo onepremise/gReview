@@ -14,7 +14,7 @@
  ~ limitations under the License.
 --]
 
-[#-- @ftlvariable name="action" type="com.google.gerrit.bamboo.plugins.view.ViewGerritChainResultsAction" --]
+[#-- @ftlvariable name="action" type="com.houghtonassociates.bamboo.plugins.view.ViewGerritChainResultsAction" --]
 [#-- @ftlvariable name="resultsSummary" type="com.atlassian.bamboo.chains.ChainResultsSummary" --]
 
 <html>

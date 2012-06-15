@@ -33,7 +33,7 @@
     </web-resource>
 	
     <repository key="gerrit" name="Gerrit Repository"
-                     class="com.google.gerrit.bamboo.plugins.GerritRepositoryAdapter">
+                     class="com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter">
       <description>A Gerrit Interface Repository</description>
       <resource type="freemarker" name="edit" location="GerritRepositoryEdit.ftl"/>
       <resource type="freemarker" name="view" location="GerritRepositoryView.ftl"/>
@@ -42,12 +42,12 @@
     <web-item key="gerrit:${plan.key}-${resultsSummary.buildNumber}" name="gerrit" section="chainResults.subMenu/chainResults" weight="100">
     	<label key="webitems.build.submenu.gerrit" />
     	<link linkId="gerrit:${plan.key}-${resultsSummary.buildNumber}">/chain/result/viewChainGerritResults.action?planKey=${plan.key}&amp;buildNumber=${resultsSummary.buildNumber}</link>
-    	<condition class="com.google.gerrit.bamboo.plugins.view.ViewGerritResultsCondition" />
+    	<condition class="com.houghtonassociates.bamboo.plugins.view.ViewGerritResultsCondition" />
     </web-item> 
     
     <xwork key="gerritWebActions" name="Gerrit Result Actions">
     	<package name="gerritChainVIew" extends="chainViewResult">
-        	<action name="viewChainGerritResults" class="com.google.gerrit.bamboo.plugins.view.ViewGerritChainResultsAction">
+        	<action name="viewChainGerritResults" class="com.houghtonassociates.bamboo.plugins.view.ViewGerritChainResultsAction">
             	<result name="success" type="freemarker">/viewGerritChainResults.ftl</result>
             	<result name="error" type="freemarker">/error.ftl</result>
             </action>
@@ -60,7 +60,7 @@
     
     <!-- P O S T   B U I L D   P R O C E S S O R S -->
     <buildProcessor key="gerritBuildProcessor" name="Gerrit Verification Processor"
-                    class="com.google.gerrit.bamboo.plugins.processor.GerritProcessor">
+                    class="com.houghtonassociates.bamboo.plugins.processor.GerritProcessor">
     	<description>A Build Processor to execute the Gerrit Verification for the Build Plan.</description>
         <resource type="freemarker" name="edit" location="editGerritBuildProcessor.ftl" />
         <resource type="freemarker" name="view" location="viewGerritBuildProcessor.ftl" />

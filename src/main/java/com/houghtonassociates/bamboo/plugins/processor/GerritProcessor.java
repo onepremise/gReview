@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.gerrit.bamboo.plugins.processor;
+package com.houghtonassociates.bamboo.plugins.processor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,9 +36,9 @@ import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bamboo.v2.build.CurrentBuildResult;
 import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
 import com.atlassian.spring.container.LazyComponentReference;
-import com.google.gerrit.bamboo.plugins.GerritRepositoryAdapter;
-import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO;
-import com.google.gerrit.bamboo.plugins.dao.GerritService;
+import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
+import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
+import com.houghtonassociates.bamboo.plugins.dao.GerritService;
 import com.opensymphony.xwork.TextProvider;
 
 /**

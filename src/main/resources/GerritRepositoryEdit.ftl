@@ -16,7 +16,7 @@
 
 [#-- @ftlvariable name="buildConfiguration" type="com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration" --]
 [#-- @ftlvariable name="plan" type="com.atlassian.bamboo.plan.Plan" --]
-[#-- @ftlvariable name="repository" type="com.google.gerrit.bamboo.plugins.GerritRepositoryAdapter" --]
+[#-- @ftlvariable name="repository" type="com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter" --]
 
 [@ui.bambooSection]
 	[@ww.textfield labelKey='repository.gerrit.hostname' name='repository.gerrit.hostname' required='true' /]

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.gerrit.bamboo.plugins.view;
+package com.houghtonassociates.bamboo.plugins.view;
 
 import java.util.List;
 import java.util.Map;

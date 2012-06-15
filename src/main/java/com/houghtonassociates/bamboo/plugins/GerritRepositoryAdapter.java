@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.gerrit.bamboo.plugins;
+package com.houghtonassociates.bamboo.plugins;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,10 +67,10 @@ import com.atlassian.bandana.impl.MemoryBandanaPersister;
 import com.atlassian.plugin.ModuleDescriptor;
 import com.atlassian.spring.container.LazyComponentReference;
 import com.atlassian.util.concurrent.LazyReference;
-import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO;
-import com.google.gerrit.bamboo.plugins.dao.GerritChangeVO.FileSet;
-import com.google.gerrit.bamboo.plugins.dao.GerritService;
-import com.google.gerrit.bamboo.plugins.dao.GitRepoFactory;
+import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
+import com.houghtonassociates.bamboo.plugins.dao.GerritService;
+import com.houghtonassociates.bamboo.plugins.dao.GitRepoFactory;
+import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
 import com.opensymphony.xwork.TextProvider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;

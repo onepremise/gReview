@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.google.gerrit.bamboo.plugins.dao;
+package com.houghtonassociates.bamboo.plugins.dao;
 
 import java.io.File;
 
