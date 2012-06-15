@@ -54,20 +54,9 @@
     	</package>	
     </xwork>   
          
-	<web-panel key="myPanel" location="chainresult.summary.right">
+	<!-- <web-panel key="myPanel" location="chainresult.summary.right">
            <resource name="view" type="static"><![CDATA[<b>Hello World!</b>]]></resource>
-    </web-panel>
-  
-    <!-- defines an example task -->
-    <taskType name="gReview" class="com.google.gerrit.bamboo.plugins.ExampleTask" key="test">
-      <description>A simple Hello World Task</description>
-      <!-- Categories available in 3.1: "builder", "test" and "deployment"
-      <category name=""/>
-      -->
-      <configuration class="com.google.gerrit.bamboo.plugins.ExampleTaskConfigurator"/>
-      <resource type="freemarker" name="edit" location="editExampleTask.ftl"/>
-      <resource type="freemarker" name="view" location="viewExampleTask.ftl"/>
-    </taskType>
+    </web-panel> -->
     
     <!-- P O S T   B U I L D   P R O C E S S O R S -->
     <buildProcessor key="gerritBuildProcessor" name="Gerrit Verification Processor"

@@ -209,7 +209,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 try {
                     key = FileUtils.readFileToString(f);
                 } catch (IOException e) {
-                    log.error("Cannot read uploaded ssh key file", e);
+                    log.error(
+                        textProvider
+                            .getText("repository.gerrit.messages.error.ssh.key.read"),
+                        e);
                     return;
                 }
 
@@ -267,8 +270,11 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     .getProperty(TEMPORARY_GERRIT_SSH_KEY_FROM_FILE);
 
             if (o == null) {
-                errorCollection.addError(REPOSITORY_GERRIT_SSH_KEY,
-                    "You must provide your private key to connect!");
+                errorCollection
+                    .addError(
+                        REPOSITORY_GERRIT_SSH_KEY,
+                        textProvider
+                            .getText("repository.gerrit.messages.error.ssh.key.missing"));
             }
         }
 
@@ -276,8 +282,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             encrypterRef.get().decrypt(
                 buildConfiguration.getString(REPOSITORY_GERRIT_SSH_KEY, ""));
         if (!StringUtils.isNotBlank(key)) {
-            errorCollection.addError(REPOSITORY_GERRIT_SSH_KEY,
-                "You must provide your private key to connect!");
+            errorCollection.addError(REPOSITORY_GERRIT_SSH_KEY, textProvider
+                .getText("repository.gerrit.messages.error.ssh.key.missing"));
         }
 
         String strPhrase =
@@ -442,12 +448,14 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 SshConnectionFactory.getConnection(strHost, port, auth);
         } catch (IOException e) {
             throw new RepositoryException(
-                "Failed to establish connection to Gerrit!");
+                textProvider
+                    .getText("repository.gerrit.messages.error.connection"));
         }
 
         if (!sshConnection.isConnected()) {
             throw new RepositoryException(
-                "Failed to establish connection to Gerrit!");
+                textProvider
+                    .getText("repository.gerrit.messages.error.connection"));
         } else {
             sshConnection.disconnect();
         }
@@ -586,9 +594,12 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         CommitImpl commit = new CommitImpl();
 
-        commit.setComment(textProvider.getText("gerrit.change.secure.url",
-            Arrays.asList(this.hostname, change.getNumber(), change.getId(),
-                change.getSubject())));
+        commit.setComment(change.getSubject());
+        /*
+         * commit.setComment(textProvider.getText("gerrit.change.secure.url",
+         * Arrays.asList(this.hostname, change.getNumber(), change.getId(),
+         * change.getSubject())));
+         */
 
         commit.setAuthor(new AuthorCachingFacade(change.getOwnerName()));
         commit.setDate(change.getLastUpdate());
@@ -731,7 +742,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         if (change == null) {
             throw new RepositoryException(
-                "Failed to retrieve change from Gerrit via revision!");
+                textProvider
+                    .getText("repository.gerrit.messages.error.retrieve"));
         }
 
         String gitRepoUrl =
@@ -757,7 +769,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         if (change == null) {
             throw new RepositoryException(
-                "Failed to retrieve change from Gerrit via revision!");
+                textProvider
+                    .getText("repository.gerrit.messages.error.retrieve"));
         }
 
         String gitRepoUrl =
