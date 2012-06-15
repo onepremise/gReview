@@ -97,6 +97,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         "repository.gerrit.hostname";
     private static final String REPOSITORY_GERRIT_REPOSITORY_PORT =
         "repository.gerrit.port";
+    private static final String REPOSITORY_GERRIT_PROJECT =
+        "repository.gerrit.project";
     private static final String REPOSITORY_GERRIT_USERNAME =
         "repository.gerrit.username";
     private static final String REPOSITORY_GERRIT_SSH_KEY =
@@ -132,6 +134,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     private String hostname;
     private int port = 29418;
+    private String project;
     private String username;
     private String sshKey;
     private File sshKeyFile = null;
@@ -189,6 +192,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 .trim();
         buildConfiguration.setProperty(REPOSITORY_GERRIT_REPOSITORY_PORT,
             strPort);
+
+        String strProject =
+            buildConfiguration.getString(REPOSITORY_GERRIT_PROJECT, "").trim();
+        buildConfiguration.setProperty(REPOSITORY_GERRIT_PROJECT, strProject);
 
         String strUserName =
             buildConfiguration.getString(REPOSITORY_GERRIT_USERNAME, "").trim();
@@ -270,6 +277,14 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 "Port null!");
         }
 
+        String strProject =
+            buildConfiguration.getString(REPOSITORY_GERRIT_PROJECT, "").trim();
+
+        if (!StringUtils.isNotBlank(strProject)) {
+            errorCollection
+                .addError(REPOSITORY_GERRIT_PROJECT, "Project null!");
+        }
+
         String username =
             StringUtils.trim(buildConfiguration
                 .getString(REPOSITORY_GERRIT_USERNAME));
@@ -340,6 +355,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         sshKeyFile = new File(config.getString(REPOSITORY_GERRIT_SSH_KEY_FILE));
         sshPassphrase = config.getString(REPOSITORY_GERRIT_SSH_PASSPHRASE);
         port = config.getInt(REPOSITORY_GERRIT_REPOSITORY_PORT, 29418);
+        project = config.getString(REPOSITORY_GERRIT_PROJECT);
 
         useShallowClones =
             config.getBoolean(REPOSITORY_GERRIT_USE_SHALLOW_CLONES);
@@ -363,6 +379,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         configuration.setProperty(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
             hostname);
         configuration.setProperty(REPOSITORY_GERRIT_USERNAME, username);
+        configuration.setProperty(REPOSITORY_GERRIT_PROJECT, project);
         configuration.setProperty(REPOSITORY_GERRIT_SSH_KEY, sshKey);
         configuration.setProperty(REPOSITORY_GERRIT_SSH_PASSPHRASE,
             sshPassphrase);
@@ -583,10 +600,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             buildLoggerManager.getBuildLogger(PlanKeys.getPlanKey(planKey));
         List<Commit> commits = new ArrayList<Commit>();
 
-        GerritChangeVO change = getGerritDAO().getLastUnverifiedUpdate();
+        GerritChangeVO change = getGerritDAO().getLastUnverifiedChange(project);
 
         if (change == null)
-            change = getGerritDAO().getLastChange();
+            change = getGerritDAO().getLastChange(project);
 
         buildLogger.addBuildLogEntry(textProvider
             .getText("repository.gerrit.messages.ccRecover.completed"));

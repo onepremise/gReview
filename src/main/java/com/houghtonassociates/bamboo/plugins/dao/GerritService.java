@@ -210,8 +210,47 @@ public class GerritService {
         return selectedChange;
     }
 
-    public GerritChangeVO getLastUnverifiedUpdate() throws RepositoryException {
+    public GerritChangeVO getLastUnverifiedChange() throws RepositoryException {
         Set<GerritChangeVO> changes = getGerritChangeInfo();
+        GerritChangeVO selectedChange = null;
+
+        Date lastDt = new Date(0);
+
+        for (GerritChangeVO change : changes) {
+            Date dt = change.getLastUpdate();
+
+            if (dt.getTime() > lastDt.getTime()
+                && change.getVerificationScore() < 1) {
+                lastDt = change.getLastUpdate();
+                selectedChange = change;
+            }
+        }
+
+        return selectedChange;
+    }
+
+    public GerritChangeVO getLastChange(String project)
+                    throws RepositoryException {
+        Set<GerritChangeVO> changes = getGerritChangeInfo(project);
+        GerritChangeVO selectedChange = null;
+
+        Date lastDt = new Date(0);
+
+        for (GerritChangeVO change : changes) {
+            Date dt = change.getLastUpdate();
+
+            if (dt.getTime() > lastDt.getTime()) {
+                lastDt = change.getLastUpdate();
+                selectedChange = change;
+            }
+        }
+
+        return selectedChange;
+    }
+
+    public GerritChangeVO getLastUnverifiedChange(String project)
+                    throws RepositoryException {
+        Set<GerritChangeVO> changes = getGerritChangeInfo(project);
         GerritChangeVO selectedChange = null;
 
         Date lastDt = new Date(0);
@@ -255,6 +294,35 @@ public class GerritService {
 
         try {
             jsonObjects = runGerritQuery("is:open");
+        } catch (SshException e) {
+            throw new RepositoryException(e.getMessage());
+        } catch (IOException e) {
+            throw new RepositoryException(e.getMessage());
+        } catch (GerritQueryException e) {
+            throw new RepositoryException(e.getMessage());
+        }
+
+        log.info("Query result count: " + jsonObjects.size());
+
+        Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
+
+        for (JSONObject j : jsonObjects) {
+            if (j.containsKey(GerritChangeVO.JSON_KEY_PROJECT)) {
+                GerritChangeVO info = transformJSONObject(j);
+                results.add(info);
+            }
+        }
+
+        return results;
+    }
+
+    public Set<GerritChangeVO> getGerritChangeInfo(String project)
+                    throws RepositoryException {
+        List<JSONObject> jsonObjects = null;
+
+        try {
+            String strQuery = String.format("is:open project:%s", project);
+            jsonObjects = runGerritQuery(strQuery);
         } catch (SshException e) {
             throw new RepositoryException(e.getMessage());
         } catch (IOException e) {
