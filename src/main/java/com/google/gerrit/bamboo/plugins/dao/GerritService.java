@@ -117,15 +117,16 @@ public class GerritService {
     }
 
     public boolean verifyChange(Boolean pass, Integer changeNumber,
-                                Integer patchNumber) {
+                                Integer patchNumber, String message) {
         if (pass.booleanValue())
             return getGerritCmdProcessor().sendCommand(
-                String.format("gerrit review --verified +1 %s,%s",
-                    changeNumber.intValue(), patchNumber.intValue()));
+                String.format(
+                    "gerrit review --message \"%s\" --verified +1 %s,%s",
+                    message, changeNumber.intValue(), patchNumber.intValue()));
 
         return getGerritCmdProcessor().sendCommand(
-            String.format("gerrit review --verified -1 %s,%s",
-                changeNumber.intValue(), patchNumber.intValue()));
+            String.format("gerrit review --message \"%s\" --verified -1 %s,%s",
+                message, changeNumber.intValue(), patchNumber.intValue()));
     }
 
     private GerritCmdProcessor getGerritCmdProcessor() {

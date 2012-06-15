@@ -78,6 +78,8 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 
 /**
+ * This class allows bamboo to use Gerrit as if it were a repository.
+ * 
  * @author Jason Huntley
  * 
  */
