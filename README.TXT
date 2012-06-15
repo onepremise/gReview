@@ -1,13 +1,40 @@
-You have successfully created a plugin using the Bamboo plugin archetype!
+===============================================================================
+gReview - The Bamboo Gerrit Integration Plugin
+===============================================================================
 
-Here are the SDK commands you'll use immediately:
+This plugin polls Gerrit for changes submitted to the Gerrit review system. 
+When a new change is submitted, gReview will checkout the change and verify
+it builds.
 
-* atlas-run   -- installs this plugin into Bamboo and starts it on http://localhost:6990/bamboo
-* atlas-debug -- same as atlas-run, but allows a debugger to attach at port 5005
-* atlas-cli   -- after atlas-run or atlas-debug, opens a Maven command line window:
-                 - 'pi' reinstalls the plugin into the running Bamboo instance
-* atlas-help  -- prints description for all commands in the SDK
+===============================================================================
+How to build the Bamboo Gerrit Plugin
+===============================================================================
 
-Full documentation is always available at:
+Impatient way:
+1. `mvn package' (Apache Maven 2.2.1 was used to develop this plugin)
 
-https://developer.atlassian.com/display/DOCS/Developing+with+the+Atlassian+Plugin+SDK
+More patient way:
+1. Download and install the latest JDK:
+   * http://java.sun.com
+2. Download and install the Atlassian Plugin SDK:
+   * http://confluence.atlassian.com/display/DEVNET/Setting+up+your+Plugin+Development+Environment
+3. Run `atlas-package -DskipTests' in the directory containing Bamboo Gerrit Plugin pom.xml.
+4. Grab plugin JAR file from `./target/greview-<version>.jar'
+
+Full documentation on how to develop Atlassian Plugin is available at:
+* http://confluence.atlassian.com/display/DEVNET/How+to+Build+an+Atlassian+Plugin
+
+===============================================================================
+How to deploy Git Plugin into existing Bamboo instance
+===============================================================================
+
+Full documentation on how installing Atlassian Plugins is available at:
+* http://confluence.atlassian.com/display/BAMBOO/Installing+a+new+Plugin
+  (please note that Bamboo Git Plugin is 'Version 1' plugin)
+  
+===============================================================================
+Maintainer
+===============================================================================
+
+Jason Huntley - jhuntley@houghtonassociates.com
+                onepremise@gmail.com
