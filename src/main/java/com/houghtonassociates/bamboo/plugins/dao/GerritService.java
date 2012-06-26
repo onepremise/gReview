@@ -286,6 +286,13 @@ public class GerritService {
         if (jsonObjects == null || jsonObjects.size() == 0)
             return null;
 
+        JSONObject setInfo = jsonObjects.get(jsonObjects.size() - 1);
+
+        int rowCount = setInfo.getInt(GerritChangeVO.JSON_KEY_ROWCOUNT);
+
+        if (rowCount == 0)
+            return null;
+
         return this.transformJSONObject(jsonObjects.get(0));
     }
 

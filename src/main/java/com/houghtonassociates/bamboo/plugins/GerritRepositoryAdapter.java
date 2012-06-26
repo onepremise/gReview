@@ -50,6 +50,7 @@ import com.atlassian.bamboo.repository.PushCapableRepository;
 import com.atlassian.bamboo.repository.Repository;
 import com.atlassian.bamboo.repository.RepositoryException;
 import com.atlassian.bamboo.security.StringEncrypter;
+import com.atlassian.bamboo.ssh.SshProxyService;
 import com.atlassian.bamboo.template.TemplateRenderer;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
 import com.atlassian.bamboo.utils.i18n.I18nBeanFactory;
@@ -444,6 +445,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         gitRepository.setTextProvider(this.textProvider);
     }
 
+    public void setSshProxyService(SshProxyService sshProxyService) {
+        gitRepository.setSshProxyService(sshProxyService);
+    }
+
     public Authentication createGerritCredentials(File sshKeyFile,
                                                   String strUsername,
                                                   String phrase) {
@@ -615,6 +620,13 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         } else if (change == null) {
             buildLogger.addBuildLogEntry(textProvider
                 .getText("processor.gerrit.messages.build.verified.None"));
+
+            change = getGerritDAO().getChangeByRevision(lastVcsRevisionKey);
+
+            if (change == null) {
+                log.info("No open changes available, reverting to master branch.");
+
+            }
             return new BuildRepositoryChangesImpl(lastVcsRevisionKey);
         } else if (lastVcsRevisionKey == null) {
             buildLogger.addBuildLogEntry(textProvider.getText(
@@ -789,10 +801,11 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             "ssh://" + username + "@" + hostname + ":" + port + "/"
                 + change.getProject();
 
-        GitRepoFactory.configureSSHGitRepository(gitRepository, gitRepoUrl,
-            username, "", change.getCurrentPatchSet().getRef(),
-            this.sshKeyFile, sshPassphrase, true, false, 10000, false,
-            textProvider);
+        GitRepoFactory.configureSSHGitRepository(this.gitRepository,
+            gitRepoUrl, username, "", change.getCurrentPatchSet().getRef(),
+            this.sshKeyFile, sshPassphrase, this.useShallowClones,
+            this.useSubmodules, this.commandTimeout, this.verboseLogs,
+            this.textProvider);
 
         return gitRepository.retrieveSourceCode(buildContext, vcsRevisionKey,
             sourceDirectory);

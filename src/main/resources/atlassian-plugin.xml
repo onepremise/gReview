@@ -37,6 +37,7 @@
       <description>A Gerrit Interface Repository</description>
       <resource type="freemarker" name="edit" location="GerritRepositoryEdit.ftl"/>
       <resource type="freemarker" name="view" location="GerritRepositoryView.ftl"/>
+      <resource type="freemarker" name="advancedEdit" location="editGerritRepositoryAdvancedOptions.ftl"/>
     </repository>
     
     <web-item key="gerrit:${plan.key}-${resultsSummary.buildNumber}" name="gerrit" section="chainResults.subMenu/chainResults" weight="100">
