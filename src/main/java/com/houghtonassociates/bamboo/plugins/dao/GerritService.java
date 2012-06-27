@@ -273,8 +273,7 @@ public class GerritService {
         List<JSONObject> jsonObjects = null;
 
         try {
-            jsonObjects =
-                runGerritQuery(String.format("is:open commit:%s", rev));
+            jsonObjects = runGerritQuery(String.format("commit:%s", rev));
         } catch (SshException e) {
             throw new RepositoryException(e.getMessage());
         } catch (IOException e) {
@@ -427,8 +426,14 @@ public class GerritService {
 
                 apprv.setType(a
                     .getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_TYPE));
-                apprv.setDescription(a
-                    .getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_DESC));
+
+                if (a
+                    .containsKey(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_EMAIL)) {
+                    apprv
+                        .setDescription(a
+                            .getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_DESC));
+                }
+
                 apprv.setValue(a
                     .getInt(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_VALUE));
 
@@ -441,9 +446,13 @@ public class GerritService {
                 apprv
                     .setByName(by
                         .getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_NAME));
-                apprv
-                    .setByEmail(by
-                        .getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_EMAIL));
+
+                if (by
+                    .containsKey(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_EMAIL)) {
+                    apprv
+                        .setByEmail(by
+                            .getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_EMAIL));
+                }
 
                 if (isCurrent) {
                     if (apprv.getType().equals("VRIF"))

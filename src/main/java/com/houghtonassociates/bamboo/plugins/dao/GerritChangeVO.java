@@ -58,6 +58,8 @@ public class GerritChangeVO {
     public static final String JSON_KEY_PATCH_SET_FILES_TYPE = "type";
     public static final String JSON_KEY_ROWCOUNT = "rowCount";
 
+    private static final String CHANGE_STATUS_MERGED = "MERGED";
+
     private String project;
     private String branch;
     private String id;
@@ -367,5 +369,9 @@ public class GerritChangeVO {
 
     public Set<PatchSet> getPatchSets() {
         return patchSets;
+    }
+
+    public boolean isMerged() {
+        return this.getStatus().equalsIgnoreCase(CHANGE_STATUS_MERGED);
     }
 }

@@ -365,6 +365,15 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             config.getInt(REPOSITORY_GERRIT_COMMAND_TIMEOUT,
                 DEFAULT_COMMAND_TIMEOUT_IN_MINUTES);
         verboseLogs = config.getBoolean(REPOSITORY_GERRIT_VERBOSE_LOGS, false);
+
+        String gitRepoUrl =
+            "ssh://" + username + "@" + hostname + ":" + port + "/" + project;
+
+        GitRepoFactory.configureSSHGitRepository(this.gitRepository,
+            gitRepoUrl, username, "", GitRepoFactory.MASTER_BRANCH,
+            this.sshKeyFile, sshPassphrase, this.useShallowClones,
+            this.useSubmodules, this.commandTimeout, this.verboseLogs,
+            this.textProvider);
     }
 
     /*
@@ -614,20 +623,15 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             .getText("repository.gerrit.messages.ccRecover.completed"));
 
         if ((change == null) && (lastVcsRevisionKey == null)) {
-            buildLogger.addBuildLogEntry(textProvider
-                .getText("processor.gerrit.messages.build.verified.None"));
-            return null;
+            throw new RepositoryException(
+                textProvider
+                    .getText("processor.gerrit.messages.build.error.nochanges"));
         } else if (change == null) {
             buildLogger.addBuildLogEntry(textProvider
                 .getText("processor.gerrit.messages.build.verified.None"));
-
-            change = getGerritDAO().getChangeByRevision(lastVcsRevisionKey);
-
-            if (change == null) {
-                log.info("No open changes available, reverting to master branch.");
-
-            }
-            return new BuildRepositoryChangesImpl(lastVcsRevisionKey);
+            GitRepoFactory.configureBranchMaster(gitRepository);
+            return gitRepository.collectChangesSinceLastBuild(planKey,
+                lastVcsRevisionKey);
         } else if (lastVcsRevisionKey == null) {
             buildLogger.addBuildLogEntry(textProvider.getText(
                 "repository.gerrit.messages.ccRepositoryNeverChecked",
@@ -646,12 +650,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         CommitImpl commit = new CommitImpl();
 
         commit.setComment(change.getSubject());
-        /*
-         * commit.setComment(textProvider.getText("gerrit.change.secure.url",
-         * Arrays.asList(this.hostname, change.getNumber(), change.getId(),
-         * change.getSubject())));
-         */
-
         commit.setAuthor(new AuthorCachingFacade(change.getOwnerName()));
         commit.setDate(change.getLastUpdate());
         commit.setChangeSetId(change.getId());
@@ -797,15 +795,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     .getText("repository.gerrit.messages.error.retrieve"));
         }
 
-        String gitRepoUrl =
-            "ssh://" + username + "@" + hostname + ":" + port + "/"
-                + change.getProject();
-
-        GitRepoFactory.configureSSHGitRepository(this.gitRepository,
-            gitRepoUrl, username, "", change.getCurrentPatchSet().getRef(),
-            this.sshKeyFile, sshPassphrase, this.useShallowClones,
-            this.useSubmodules, this.commandTimeout, this.verboseLogs,
-            this.textProvider);
+        GitRepoFactory.configureBranch(gitRepository, change
+            .getCurrentPatchSet().getRef());
 
         return gitRepository.retrieveSourceCode(buildContext, vcsRevisionKey,
             sourceDirectory);
@@ -825,14 +816,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     .getText("repository.gerrit.messages.error.retrieve"));
         }
 
-        String gitRepoUrl =
-            "ssh://" + username + "@" + hostname + ":" + port + "/"
-                + change.getProject();
-
-        GitRepoFactory.configureSSHGitRepository(gitRepository, gitRepoUrl,
-            username, "", change.getCurrentPatchSet().getRef(),
-            this.sshKeyFile, sshPassphrase, true, false, 10000, false,
-            textProvider);
+        GitRepoFactory.configureBranch(gitRepository, change
+            .getCurrentPatchSet().getRef());
 
         return gitRepository.retrieveSourceCode(buildContext, vcsRevisionKey,
             sourceDirectory, depth);
