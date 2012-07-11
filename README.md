@@ -64,6 +64,11 @@ repository configuration, to the msysgit/.ssh/known_hosts file. Example:
 Bug Fixes and Enhancements
 ==========================
 
+1.2.1 Updates
+-------------
+
+ * Issue #11: Error message reported by failed build can break verification update.
+ 
 1.2.0 Updates
 -------------
 

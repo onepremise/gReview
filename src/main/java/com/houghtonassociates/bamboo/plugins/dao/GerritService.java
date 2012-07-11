@@ -28,7 +28,6 @@ import net.sf.json.JSONObject;
 import org.apache.log4j.Logger;
 
 import com.atlassian.bamboo.repository.RepositoryException;
-import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.Approval;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.PatchSet;
@@ -51,8 +50,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractS
  */
 public class GerritService {
 
-    private static final Logger log = Logger
-        .getLogger(GerritRepositoryAdapter.class);
+    private static final Logger log = Logger.getLogger(GerritService.class);
 
     private GerritHandler gHandler = null;
     private GerritQueryHandler gQueryHandler = null;
@@ -161,15 +159,23 @@ public class GerritService {
 
     public boolean verifyChange(Boolean pass, Integer changeNumber,
                                 Integer patchNumber, String message) {
-        if (pass.booleanValue())
-            return getGerritCmdProcessor().sendCommand(
-                String.format(
-                    "gerrit review --message \"%s\" --verified +1 %s,%s",
-                    message, changeNumber.intValue(), patchNumber.intValue()));
+        String command = "";
 
-        return getGerritCmdProcessor().sendCommand(
-            String.format("gerrit review --message \"%s\" --verified -1 %s,%s",
-                message, changeNumber.intValue(), patchNumber.intValue()));
+        if (pass.booleanValue()) {
+            command =
+                String.format(
+                    "gerrit review --message '%s' --verified +1 %s,%s",
+                    message, changeNumber.intValue(), patchNumber.intValue());
+        } else {
+            command =
+                String.format(
+                    "gerrit review --message '%s' --verified -1 %s,%s",
+                    message, changeNumber.intValue(), patchNumber.intValue());
+        }
+
+        log.debug("Sending Command: " + command);
+
+        return getGerritCmdProcessor().sendCommand(command);
     }
 
     private GerritCmdProcessor getGerritCmdProcessor() {
@@ -230,8 +236,8 @@ public class GerritService {
         return gQueryHandler;
     }
 
-    public List<JSONObject> runGerritQuery(String query)
-                    throws RepositoryException {
+    public List<JSONObject>
+                    runGerritQuery(String query) throws RepositoryException {
         List<JSONObject> jsonObjects = null;
 
         try {
@@ -295,8 +301,8 @@ public class GerritService {
         return selectedChange;
     }
 
-    public GerritChangeVO getLastChange(String project)
-                    throws RepositoryException {
+    public GerritChangeVO
+                    getLastChange(String project) throws RepositoryException {
         Set<GerritChangeVO> changes = getGerritChangeInfo(project);
         GerritChangeVO selectedChange = null;
 
@@ -314,8 +320,8 @@ public class GerritService {
         return selectedChange;
     }
 
-    public GerritChangeVO getLastUnverifiedChange(String project)
-                    throws RepositoryException {
+    public GerritChangeVO
+                    getLastUnverifiedChange(String project) throws RepositoryException {
         Set<GerritChangeVO> changes = getGerritChangeInfo(project);
         GerritChangeVO selectedChange = null;
 
@@ -334,8 +340,8 @@ public class GerritService {
         return selectedChange;
     }
 
-    public GerritChangeVO getChangeByID(String changeID)
-                    throws RepositoryException {
+    public GerritChangeVO
+                    getChangeByID(String changeID) throws RepositoryException {
         List<JSONObject> jsonObjects = null;
 
         jsonObjects = runGerritQuery(String.format("change:%s", changeID));
@@ -346,8 +352,8 @@ public class GerritService {
         return this.transformJSONObject(jsonObjects.get(0));
     }
 
-    public GerritChangeVO getChangeByRevision(String rev)
-                    throws RepositoryException {
+    public GerritChangeVO
+                    getChangeByRevision(String rev) throws RepositoryException {
         List<JSONObject> jsonObjects = null;
 
         jsonObjects = runGerritQuery(String.format("commit:%s", rev));
@@ -378,8 +384,8 @@ public class GerritService {
         return results;
     }
 
-    public Set<GerritChangeVO> getGerritChangeInfo(String project)
-                    throws RepositoryException {
+    public Set<GerritChangeVO>
+                    getGerritChangeInfo(String project) throws RepositoryException {
         String strQuery = String.format("is:open project:%s", project);
         List<JSONObject> jsonObjects = runGerritQuery(strQuery);
 
@@ -400,8 +406,8 @@ public class GerritService {
         return results;
     }
 
-    private GerritChangeVO transformJSONObject(JSONObject j)
-                    throws RepositoryException {
+    private GerritChangeVO
+                    transformJSONObject(JSONObject j) throws RepositoryException {
         if (j == null) {
             throw new RepositoryException("No data to parse!");
         }

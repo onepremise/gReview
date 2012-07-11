@@ -137,12 +137,15 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
         final Boolean runVerification =
             Boolean.parseBoolean(customConfiguration.get(GERRIT_RUN));
 
+        logger.info("Run verification: " + runVerification);
+
         if (runVerification) {
             final List<RepositoryDefinition> repositories =
                 buildContext.getRepositoryDefinitions();
 
             for (RepositoryDefinition rd : repositories) {
                 if (rd.getRepository() instanceof GerritRepositoryAdapter) {
+                    logger.info("Updating Change Verification...");
                     updateChangeVerification(rd, buildPlanKey, results);
                 }
             }
@@ -188,7 +191,7 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
         } else if (service.verifyChange(false, change.getNumber(), change
             .getCurrentPatchSet().getNumber(), buildStatusString(results))) {
             logger.info(textProvider
-                .getText("processor.gerrit.messages.build.verified.neg "));
+                .getText("processor.gerrit.messages.build.verified.neg"));
         } else {
             logger.error(textProvider.getText(
                 "processor.gerrit.messages.build.verified.failed",
