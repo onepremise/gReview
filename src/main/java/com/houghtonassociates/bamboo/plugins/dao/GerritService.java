@@ -104,6 +104,49 @@ public class GerritService {
         }
     }
 
+    /*
+     * public GerritHandler manageGerritHandler(String sshKey, String strHost,
+     * int port, String strUsername, String phrase, boolean test,
+     * boolean reset)
+     * throws RepositoryException {
+     * this.updateCredentials(sshKey, strHost, strUsername, phrase);
+     * 
+     * if (test)
+     * testGerritConnection(strHost, port);
+     * 
+     * if (gHandler==null) {
+     * synchronized (GerritRepositoryAdapter.class) {
+     * gHandler=new GerritHandler(strHost, port, authentication,
+     * NUM_WORKER_THREADS);
+     * gHandler.addListener(this);
+     * gHandler.addListener(new ConnectionListener() {
+     * 
+     * @Override
+     * public void connectionDown() {
+     * log.error("Gerrit connection down.");
+     * gHandler.shutdown(false);
+     * }
+     * 
+     * @Override
+     * public void connectionEstablished() {
+     * log.info("Gerrit connection established!");
+     * }
+     * });
+     * }
+     * }
+     * 
+     * if (reset) {
+     * if (gHandler.isAlive()) {
+     * gHandler.shutdown(true);
+     * }
+     * 
+     * gHandler.start();
+     * }
+     * 
+     * return gHandler;
+     * }
+     */
+
     private class GerritCmdProcessor extends AbstractSendCommandJob {
 
         protected GerritCmdProcessor(GerritConnectionConfig config) {
@@ -187,9 +230,32 @@ public class GerritService {
         return gQueryHandler;
     }
 
-    public List<JSONObject> runGerritQuery(String query) throws SshException,
-                    IOException, GerritQueryException {
-        return getGerritQueryHandler().queryJava(query, true, true, true);
+    public List<JSONObject> runGerritQuery(String query)
+                    throws RepositoryException {
+        List<JSONObject> jsonObjects = null;
+
+        try {
+            jsonObjects =
+                getGerritQueryHandler().queryJava(query, true, true, true);
+        } catch (SshException e) {
+            throw new RepositoryException(e.getMessage());
+        } catch (IOException e) {
+            throw new RepositoryException(e.getMessage());
+        } catch (GerritQueryException e) {
+            throw new RepositoryException(e.getMessage());
+        }
+
+        if (jsonObjects == null || jsonObjects.size() == 0)
+            return null;
+
+        JSONObject setInfo = jsonObjects.get(jsonObjects.size() - 1);
+
+        int rowCount = setInfo.getInt(GerritChangeVO.JSON_KEY_ROWCOUNT);
+
+        if (rowCount == 0)
+            return null;
+
+        return jsonObjects;
     }
 
     public GerritChangeVO getLastChange() throws RepositoryException {
@@ -268,45 +334,35 @@ public class GerritService {
         return selectedChange;
     }
 
+    public GerritChangeVO getChangeByID(String changeID)
+                    throws RepositoryException {
+        List<JSONObject> jsonObjects = null;
+
+        jsonObjects = runGerritQuery(String.format("change:%s", changeID));
+
+        if (jsonObjects == null)
+            return null;
+
+        return this.transformJSONObject(jsonObjects.get(0));
+    }
+
     public GerritChangeVO getChangeByRevision(String rev)
                     throws RepositoryException {
         List<JSONObject> jsonObjects = null;
 
-        try {
-            jsonObjects = runGerritQuery(String.format("commit:%s", rev));
-        } catch (SshException e) {
-            throw new RepositoryException(e.getMessage());
-        } catch (IOException e) {
-            throw new RepositoryException(e.getMessage());
-        } catch (GerritQueryException e) {
-            throw new RepositoryException(e.getMessage());
-        }
+        jsonObjects = runGerritQuery(String.format("commit:%s", rev));
 
-        if (jsonObjects == null || jsonObjects.size() == 0)
-            return null;
-
-        JSONObject setInfo = jsonObjects.get(jsonObjects.size() - 1);
-
-        int rowCount = setInfo.getInt(GerritChangeVO.JSON_KEY_ROWCOUNT);
-
-        if (rowCount == 0)
+        if (jsonObjects == null)
             return null;
 
         return this.transformJSONObject(jsonObjects.get(0));
     }
 
     public Set<GerritChangeVO> getGerritChangeInfo() throws RepositoryException {
-        List<JSONObject> jsonObjects = null;
+        List<JSONObject> jsonObjects = runGerritQuery("is:open");
 
-        try {
-            jsonObjects = runGerritQuery("is:open");
-        } catch (SshException e) {
-            throw new RepositoryException(e.getMessage());
-        } catch (IOException e) {
-            throw new RepositoryException(e.getMessage());
-        } catch (GerritQueryException e) {
-            throw new RepositoryException(e.getMessage());
-        }
+        if (jsonObjects == null)
+            return null;
 
         log.info("Query result count: " + jsonObjects.size());
 
@@ -324,18 +380,11 @@ public class GerritService {
 
     public Set<GerritChangeVO> getGerritChangeInfo(String project)
                     throws RepositoryException {
-        List<JSONObject> jsonObjects = null;
+        String strQuery = String.format("is:open project:%s", project);
+        List<JSONObject> jsonObjects = runGerritQuery(strQuery);
 
-        try {
-            String strQuery = String.format("is:open project:%s", project);
-            jsonObjects = runGerritQuery(strQuery);
-        } catch (SshException e) {
-            throw new RepositoryException(e.getMessage());
-        } catch (IOException e) {
-            throw new RepositoryException(e.getMessage());
-        } catch (GerritQueryException e) {
-            throw new RepositoryException(e.getMessage());
-        }
+        if (jsonObjects == null)
+            return null;
 
         log.info("Query result count: " + jsonObjects.size());
 

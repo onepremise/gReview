@@ -35,8 +35,8 @@
     <repository key="gerrit" name="Gerrit Repository"
                      class="com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter">
       <description>A Gerrit Interface Repository</description>
-      <resource type="freemarker" name="edit" location="GerritRepositoryEdit.ftl"/>
-      <resource type="freemarker" name="view" location="GerritRepositoryView.ftl"/>
+      <resource type="freemarker" name="edit" location="editGerritRepository.ftl"/>
+      <resource type="freemarker" name="view" location="viewGerritRepository.ftl"/>
       <resource type="freemarker" name="advancedEdit" location="editGerritRepositoryAdvancedOptions.ftl"/>
     </repository>
     
@@ -66,4 +66,11 @@
         <resource type="freemarker" name="edit" location="editGerritBuildProcessor.ftl" />
         <resource type="freemarker" name="view" location="viewGerritBuildProcessor.ftl" />
     </buildProcessor>
+    
+    <webRepositoryViewer key="gitwebRepositoryViewer" name="GitWeb"
+                       class="com.houghtonassociates.bamboo.plugins.view.GitWebRepositoryViewer">
+    <description>Renders Fisheye Links for commits.</description>
+    <resource type="freemarker" name="edit" location="editGitwebRepositoryViewer.ftl"/>
+    <resource type="freemarker" name="view" location="viewGitwebRepositoryViewer.ftl"/>
+  </webRepositoryViewer>
 </atlassian-plugin>

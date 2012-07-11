@@ -6,14 +6,41 @@ When a new change is submitted, gReview will checkout the change and verify
 it builds. gReview will update the Gerrit change to reflect the correct score
 for a successful or unsuccessful build.
 
+Features
+========
+
+ * Gerrit Code Review Integration.
+ * GitWeb Integration.
+ * Builds and Verifies Changes Submitted to Gerrit.
+ * Changes are built independently in the order they are submitted.
+ * Change dependencies are resolved naturally through Gerrit PatchSets.
+ * Change comments automatically updated with build results.
+ * Gerrit Change Display Tab available in Build Summary.
+ * [All the Features Provided By Bamboo](http://www.atlassian.com/software/bamboo/features/)
+
 Requirements
 ============
 
  * [Bamboo 4.0.1+](http://www.atlassian.com/software/bamboo/download)
- * [Gerrit Code Review (2.4)](http://code.google.com/p/gerrit/downloads/list)
+ * [Gerrit Code Review (2.4+)](http://code.google.com/p/gerrit/downloads/list)
 
 Install
 =======
+
+Bamboo
+------
+
+The Bamboo install guide can be found [here](https://confluence.atlassian.com/display/BAMBOO/Bamboo+installation+guide).
+
+Gerrit
+------
+
+A quick install is available [here](https://gerrit-review.googlesource.com/Documentation/install.html).
+
+A Tomcat install guide is also [in the works](https://gerrit-review.googlesource.com/#/c/35010/).
+
+gReview
+-------
 
 This plugin can be installed via the Universal Plugin Manager in Bamboo.
 
@@ -37,10 +64,24 @@ repository configuration, to the msysgit/.ssh/known_hosts file. Example:
 Bug Fixes and Enhancements
 ==========================
 
+1.2.0 Updates
+-------------
+
+ * Issue #10: Exclude Display of Commit Action Tag in Build Changes
+ * Issue #9: Exception on failed build
+ * Issue #8: Setting non standard port does not work
+ * Issue #7: Include Build Results URL for Verified Changes in Gerrit
+ * Issue #6: GitWeb Integration
+
+1.1.3 Updates
+-------------
+
+ * Issue #5: Gerrit Tab Displays on Unrelated Plans
+
 1.1.2 Updates
 -------------
 
- *  Issue #4:  Build Plan Fails When no Changes Open
+ * Issue #4:  Build Plan Fails When no Changes Open
 
 1.1 Updates
 -----------
@@ -72,7 +113,7 @@ How to deploy Git Plugin into existing Bamboo instance
 
 Full documentation on installing Atlassian Plugins is available at:
 * http://confluence.atlassian.com/display/BAMBOO/Installing+a+new+Plugin
-  (please note that Bamboo Git Plugin is 'Version 1' plugin)
+  (please note that gReview Plugin is 'Version 2' plugin)
   
 Maintainer
 ==========
@@ -82,3 +123,12 @@ Jason Huntley
 
 * jhuntley@houghtonassociates.com
 * onepremise@gmail.com
+
+<a href="http://stackexchange.com/users/1254855/jason-huntley">
+<img src="http://stackexchange.com/users/flair/1254855.png" 
+     width="208" 
+     height="58" 
+     alt="profile for Jason Huntley on Stack Exchange, a network of free, 
+          community-driven Q&amp;A sites" title="profile for Jason Huntley 
+          on Stack Exchange, a network of free, community-driven Q&amp;A sites" />
+</a>

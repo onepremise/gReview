@@ -21,10 +21,14 @@ import java.util.Map;
 import com.atlassian.bamboo.build.Job;
 import com.atlassian.bamboo.chains.Chain;
 import com.atlassian.bamboo.plan.IncorrectPlanTypeException;
+import com.atlassian.bamboo.plan.Plan;
+import com.atlassian.bamboo.plan.PlanHelper;
 import com.atlassian.bamboo.plan.PlanManager;
+import com.atlassian.bamboo.repository.Repository;
 import com.atlassian.plugin.PluginParseException;
 import com.atlassian.plugin.web.Condition;
 import com.google.common.collect.Lists;
+import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 
 /**
  * @author Jason Huntley
@@ -41,11 +45,18 @@ public class ViewGerritResultsCondition implements Condition {
 
     @Override
     public boolean shouldDisplay(Map<String, Object> context) {
-        // final String buildKey = (String) context.get("buildKey");
+        final String buildKey = (String) context.get("buildKey");
         // final Build build = buildManager.getBuildByKey(buildKey);
+        Plan plan = planManager.getPlanByKey(buildKey);
         // final String sonarRuns = (String)
         // build.getBuildDefinition().getCustomConfiguration().get(SONAR_RUN);
-        return true;
+        Repository repo = PlanHelper.getDefaultRepository(plan);
+
+        if (repo instanceof GerritRepositoryAdapter) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

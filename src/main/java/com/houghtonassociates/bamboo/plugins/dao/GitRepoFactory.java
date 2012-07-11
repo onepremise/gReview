@@ -173,4 +173,10 @@ public class GitRepoFactory {
     public static void configureBranchMaster(GitRepository g) {
         g.setVcsBranch(new VcsBranchImpl(MASTER_BRANCH));
     }
+
+    public static String getRepoProject(GitRepository g) {
+        String url = g.getRepositoryUrl();
+
+        return "";
+    }
 }

@@ -40,6 +40,7 @@ import com.atlassian.bamboo.commit.Commit;
 import com.atlassian.bamboo.commit.CommitFile;
 import com.atlassian.bamboo.commit.CommitFileImpl;
 import com.atlassian.bamboo.commit.CommitImpl;
+import com.atlassian.bamboo.configuration.AdministrationConfigurationManager;
 import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.branch.VcsBranch;
 import com.atlassian.bamboo.plugins.git.GitRepository;
@@ -127,6 +128,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         "repository.gerrit.verbose.logs";
     private static final int DEFAULT_COMMAND_TIMEOUT_IN_MINUTES = 180;
 
+    private static final String GIT_COMMIT_ACTION = "/COMMIT_MSG";
+
     private static final Logger log = Logger
         .getLogger(GerritRepositoryAdapter.class);
 
@@ -144,6 +147,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private boolean useSubmodules;
     private boolean verboseLogs;
     private int commandTimeout;
+
+    private AdministrationConfigurationManager administrationConfigurationManager;
 
     private GerritService gerritDAO = null;
 
@@ -260,6 +265,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
      */
     @Override
     public ErrorCollection validate(BuildConfiguration buildConfiguration) {
+        boolean error = false;
         ErrorCollection errorCollection = super.validate(buildConfiguration);
 
         String hostame =
@@ -268,6 +274,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         if (!StringUtils.isNotBlank(hostame)) {
             errorCollection.addError(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
                 "Hostname null!");
+            error = true;
         }
 
         String strPort =
@@ -276,6 +283,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         if (!StringUtils.isNotBlank(strPort)) {
             errorCollection.addError(REPOSITORY_GERRIT_REPOSITORY_PORT,
                 "Port null!");
+            error = true;
         }
 
         String strProject =
@@ -284,6 +292,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         if (!StringUtils.isNotBlank(strProject)) {
             errorCollection
                 .addError(REPOSITORY_GERRIT_PROJECT, "Project null!");
+            error = true;
         }
 
         String username =
@@ -293,6 +302,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         if (!StringUtils.isNotBlank(username)) {
             errorCollection.addError(REPOSITORY_GERRIT_USERNAME,
                 "Username null!");
+            error = true;
         }
 
         if (buildConfiguration.getBoolean(TEMPORARY_GERRIT_SSH_KEY_CHANGE)) {
@@ -306,6 +316,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                         REPOSITORY_GERRIT_SSH_KEY,
                         textProvider
                             .getText("repository.gerrit.messages.error.ssh.key.missing"));
+                error = true;
             }
         }
 
@@ -315,6 +326,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         if (!StringUtils.isNotBlank(key)) {
             errorCollection.addError(REPOSITORY_GERRIT_SSH_KEY, textProvider
                 .getText("repository.gerrit.messages.error.ssh.key.missing"));
+            error = true;
         }
 
         String strPhrase =
@@ -328,8 +340,12 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     "");
         }
 
+        if (error)
+            return errorCollection;
+
         try {
-            testGerritConnection(key, hostame, port, username, strPhrase);
+            testGerritConnection(key, hostame, Integer.valueOf(strPort),
+                username, strPhrase);
         } catch (RepositoryException e) {
             errorCollection.addError(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
                 e.getMessage());
@@ -481,9 +497,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return f;
     }
 
-    public void testGerritConnection(String sshKey, String strHost, int port,
-                                     String strUsername, String phrase)
-                    throws RepositoryException {
+    public void
+                    testGerritConnection(String sshKey, String strHost,
+                                         int port, String strUsername,
+                                         String phrase) throws RepositoryException {
         SshConnection sshConnection = null;
 
         Authentication auth =
@@ -516,49 +533,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         return gerritDAO;
     }
-
-    /*
-     * public GerritHandler manageGerritHandler(String sshKey, String strHost,
-     * int port, String strUsername, String phrase, boolean test,
-     * boolean reset)
-     * throws RepositoryException {
-     * this.updateCredentials(sshKey, strHost, strUsername, phrase);
-     * 
-     * if (test)
-     * testGerritConnection(strHost, port);
-     * 
-     * if (gHandler==null) {
-     * synchronized (GerritRepositoryAdapter.class) {
-     * gHandler=new GerritHandler(strHost, port, authentication,
-     * NUM_WORKER_THREADS);
-     * gHandler.addListener(this);
-     * gHandler.addListener(new ConnectionListener() {
-     * 
-     * @Override
-     * public void connectionDown() {
-     * log.error("Gerrit connection down.");
-     * gHandler.shutdown(false);
-     * }
-     * 
-     * @Override
-     * public void connectionEstablished() {
-     * log.info("Gerrit connection established!");
-     * }
-     * });
-     * }
-     * }
-     * 
-     * if (reset) {
-     * if (gHandler.isAlive()) {
-     * gHandler.shutdown(true);
-     * }
-     * 
-     * gHandler.start();
-     * }
-     * 
-     * return gHandler;
-     * }
-     */
 
     protected class GerritBandanaContext implements BambooBandanaContext {
 
@@ -608,8 +582,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     @Override
     public BuildRepositoryChanges
                     collectChangesSinceLastBuild(String planKey,
-                                                 String lastVcsRevisionKey)
-                                    throws RepositoryException {
+                                                 String lastVcsRevisionKey) throws RepositoryException {
         final BuildLogger buildLogger =
             buildLoggerManager.getBuildLogger(PlanKeys.getPlanKey(planKey));
         List<Commit> commits = new ArrayList<Commit>();
@@ -652,16 +625,19 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         commit.setComment(change.getSubject());
         commit.setAuthor(new AuthorCachingFacade(change.getOwnerName()));
         commit.setDate(change.getLastUpdate());
-        commit.setChangeSetId(change.getId());
+        commit.setChangeSetId(change.getLastRevision());
         commit.setCreationDate(change.getCreatedOn());
         commit.setLastModificationDate(change.getLastUpdate());
 
         Set<FileSet> fileSets = change.getCurrentPatchSet().getFileSets();
 
         for (FileSet fileSet : fileSets) {
-            CommitFile file =
-                new CommitFileImpl(change.getId(), fileSet.getFile());
-            commit.addFile(file);
+            if (!fileSet.getFile().equals(GIT_COMMIT_ACTION)) {
+                CommitFile file =
+                    new CommitFileImpl(change.getLastRevision(),
+                        fileSet.getFile());
+                commit.addFile(file);
+            }
         }
 
         commits.add(commit);
@@ -769,6 +745,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return textProvider.getText("repository.gerrit.name");
     }
 
+    public String getProject() {
+        return project;
+    }
+
     @Override
     @NotNull
     public VcsBranch getVcsBranch() {
@@ -784,8 +764,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     public String
                     retrieveSourceCode(BuildContext buildContext,
                                        String vcsRevisionKey,
-                                       File sourceDirectory)
-                                    throws RepositoryException {
+                                       File sourceDirectory) throws RepositoryException {
         GerritChangeVO change =
             this.getGerritDAO().getChangeByRevision(vcsRevisionKey);
 
@@ -803,10 +782,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     }
 
     @Override
-    public String retrieveSourceCode(BuildContext buildContext,
-                                     String vcsRevisionKey,
-                                     File sourceDirectory, int depth)
-                    throws RepositoryException {
+    public String
+                    retrieveSourceCode(BuildContext buildContext,
+                                       String vcsRevisionKey,
+                                       File sourceDirectory, int depth) throws RepositoryException {
         GerritChangeVO change =
             this.getGerritDAO().getChangeByRevision(vcsRevisionKey);
 
@@ -829,11 +808,17 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     }
 
     @Override
-    public boolean mergeWorkspaceWith(@NotNull final BuildContext buildContext,
-                                      @NotNull final File file,
-                                      @NotNull final String s)
-                    throws RepositoryException {
+    public boolean
+                    mergeWorkspaceWith(@NotNull final BuildContext buildContext,
+                                       @NotNull final File file,
+                                       @NotNull final String s) throws RepositoryException {
         return gitRepository.mergeWorkspaceWith(buildContext, file, s);
+    }
+
+    public void
+                    setAdministrationConfigurationManager(AdministrationConfigurationManager administrationConfigurationManager) {
+        this.administrationConfigurationManager =
+            administrationConfigurationManager;
     }
 
     @Override
@@ -884,15 +869,14 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     @Override
     public void
                     pushRevision(@NotNull final File file,
-                                 @Nullable final String s)
-                                    throws RepositoryException {
+                                 @Nullable final String s) throws RepositoryException {
         gitRepository.pushRevision(file, s);
     }
 
     @NotNull
     @Override
-    public String commit(@NotNull final File file, @NotNull final String s)
-                    throws RepositoryException {
+    public String
+                    commit(@NotNull final File file, @NotNull final String s) throws RepositoryException {
         return commit(file, s);
     }
 }
