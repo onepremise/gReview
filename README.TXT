@@ -21,7 +21,7 @@ Features
 Requirements
 ============
 
- * [Bamboo 4.0.1+](http://www.atlassian.com/software/bamboo/download)
+ * [Bamboo 4.0](http://www.atlassian.com/software/bamboo/download)
  * [Gerrit Code Review (2.4+)](http://code.google.com/p/gerrit/downloads/list)
 
 Install
