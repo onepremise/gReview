@@ -14,14 +14,14 @@
   <classpathentry kind="var" path="M2_REPO/javax/servlet/jsp/jsp-api/2.1/jsp-api-2.1.jar" sourcepath="M2_REPO/javax/servlet/jsp/jsp-api/2.1/jsp-api-2.1-sources.jar"/>
   <classpathentry kind="var" path="M2_REPO/javax/jms/jms/1.1/jms-1.1.jar"/>
   <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-core/4.0.1/atlassian-bamboo-core-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-core/4.0/atlassian-bamboo-core-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-core/4.0.1/atlassian-bamboo-core-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-core/4.0/atlassian-bamboo-core-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-api/4.0.1/atlassian-bamboo-api-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-api/4.0/atlassian-bamboo-api-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-api/4.0.1/atlassian-bamboo-api-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-api/4.0/atlassian-bamboo-api-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/com/atlassian/extras/atlassian-extras/2.4/atlassian-extras-2.4.jar"/>
@@ -521,14 +521,14 @@
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/org/antlr/stringtemplate/3.2.1/stringtemplate-3.2.1.jar" sourcepath="M2_REPO/org/antlr/stringtemplate/3.2.1/stringtemplate-3.2.1-sources.jar"/>
   <classpathentry kind="var" path="M2_REPO/antlr/antlr/2.7.7/antlr-2.7.7.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-web/4.0.1/atlassian-bamboo-web-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-web/4.0/atlassian-bamboo-web-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-web/4.0.1/atlassian-bamboo-web-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-web/4.0/atlassian-bamboo-web-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-persistence/4.0.1/atlassian-bamboo-persistence-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-persistence/4.0/atlassian-bamboo-persistence-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-persistence/4.0.1/atlassian-bamboo-persistence-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-persistence/4.0/atlassian-bamboo-persistence-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/hsqldb/hsqldb/1.8.0.7/hsqldb-1.8.0.7.jar"/>
@@ -537,9 +537,9 @@
       <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/c3p0/c3p0/0.9.1.2/c3p0-0.9.1.2-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-user-crowd-provider/4.0.1/atlassian-user-crowd-provider-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-user-crowd-provider/4.0/atlassian-user-crowd-provider-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-user-crowd-provider/4.0.1/atlassian-user-crowd-provider-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-user-crowd-provider/4.0/atlassian-user-crowd-provider-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/com/atlassian/crowd/crowd-integration-client-rest/2.3.0-rc2/crowd-integration-client-rest-2.3.0-rc2.jar">
@@ -572,9 +572,9 @@
       <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/commons-dbutils/commons-dbutils/1.3/commons-dbutils-1.3-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-migration/4.0.1/atlassian-bamboo-migration-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-migration/4.0/atlassian-bamboo-migration-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-migration/4.0.1/atlassian-bamboo-migration-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-migration/4.0/atlassian-bamboo-migration-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/de/schlichtherle/truezip/truezip-file/7.3.4/truezip-file-7.3.4.jar" sourcepath="M2_REPO/de/schlichtherle/truezip/truezip-file/7.3.4/truezip-file-7.3.4-sources.jar">
@@ -616,10 +616,10 @@
   <classpathentry kind="var" path="M2_REPO/org/codehaus/woodstox/woodstox-core-asl/4.1.2/woodstox-core-asl-4.1.2.jar" sourcepath="M2_REPO/org/codehaus/woodstox/woodstox-core-asl/4.1.2/woodstox-core-asl-4.1.2-sources.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/codehaus/woodstox/stax2-api/3.0.4/stax2-api-3.0.4.jar" sourcepath="M2_REPO/org/codehaus/woodstox/stax2-api/3.0.4/stax2-api-3.0.4-sources.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/codehaus/staxmate/staxmate/2.0.0/staxmate-2.0.0.jar" sourcepath="M2_REPO/org/codehaus/staxmate/staxmate/2.0.0/staxmate-2.0.0-sources.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-language/4.0.1/atlassian-bamboo-language-4.0.1.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-charts/4.0.1/atlassian-bamboo-charts-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-language/4.0/atlassian-bamboo-language-4.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-charts/4.0/atlassian-bamboo-charts-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-charts/4.0.1/atlassian-bamboo-charts-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-charts/4.0/atlassian-bamboo-charts-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/jfree/jfreechart/1.0.9/jfreechart-1.0.9.jar" sourcepath="M2_REPO/jfree/jfreechart/1.0.9/jfreechart-1.0.9-sources.jar">
@@ -632,39 +632,39 @@
       <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/jfree/jcommon/1.0.12/jcommon-1.0.12-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-upgrader/4.0.1/atlassian-bamboo-upgrader-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-upgrader/4.0/atlassian-bamboo-upgrader-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-upgrader/4.0.1/atlassian-bamboo-upgrader-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-upgrader/4.0/atlassian-bamboo-upgrader-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-license/4.0.1/atlassian-bamboo-license-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-license/4.0/atlassian-bamboo-license-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-license/4.0.1/atlassian-bamboo-license-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-license/4.0/atlassian-bamboo-license-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-classserver/4.0.1/atlassian-bamboo-agent-classserver-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-classserver/4.0/atlassian-bamboo-agent-classserver-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-classserver/4.0.1/atlassian-bamboo-agent-classserver-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-classserver/4.0/atlassian-bamboo-agent-classserver-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-remote/4.0.1/atlassian-bamboo-agent-remote-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-remote/4.0/atlassian-bamboo-agent-remote-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-remote/4.0.1/atlassian-bamboo-agent-remote-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-remote/4.0/atlassian-bamboo-agent-remote-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-bootstrap/4.0.1/atlassian-bamboo-agent-bootstrap-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-bootstrap/4.0/atlassian-bamboo-agent-bootstrap-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-bootstrap/4.0.1/atlassian-bamboo-agent-bootstrap-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-bootstrap/4.0/atlassian-bamboo-agent-bootstrap-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-core/4.0.1/atlassian-bamboo-agent-core-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-core/4.0/atlassian-bamboo-agent-core-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-core/4.0.1/atlassian-bamboo-agent-core-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-core/4.0/atlassian-bamboo-agent-core-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/plugins/atlassian-bamboo-plugin-ssh/4.0.1/atlassian-bamboo-plugin-ssh-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/plugins/atlassian-bamboo-plugin-ssh/4.0/atlassian-bamboo-plugin-ssh-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/plugins/atlassian-bamboo-plugin-ssh/4.0.1/atlassian-bamboo-plugin-ssh-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/plugins/atlassian-bamboo-plugin-ssh/4.0/atlassian-bamboo-plugin-ssh-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/org/apache/sshd/sshd-pam/0.6.0/sshd-pam-0.6.0.jar" sourcepath="M2_REPO/org/apache/sshd/sshd-pam/0.6.0/sshd-pam-0.6.0-sources.jar">
@@ -703,14 +703,14 @@
       <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/org/apache/geronimo/specs/geronimo-j2ee-connector_1.6_spec/1.0/geronimo-j2ee-connector_1.6_spec-1.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-elastic-shared/4.0.1/atlassian-bamboo-agent-elastic-shared-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-elastic-shared/4.0/atlassian-bamboo-agent-elastic-shared-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-elastic-shared/4.0.1/atlassian-bamboo-agent-elastic-shared-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-elastic-shared/4.0/atlassian-bamboo-agent-elastic-shared-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-elastic/4.0.1/atlassian-bamboo-agent-elastic-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-elastic/4.0/atlassian-bamboo-agent-elastic-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-elastic/4.0.1/atlassian-bamboo-agent-elastic-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-elastic/4.0/atlassian-bamboo-agent-elastic-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/com/atlassian/tunnel/atlassian-tunnel/0.15/atlassian-tunnel-0.15.jar" sourcepath="M2_REPO/com/atlassian/tunnel/atlassian-tunnel/0.15/atlassian-tunnel-0.15-sources.jar">
@@ -718,14 +718,14 @@
       <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/tunnel/atlassian-tunnel/0.15/atlassian-tunnel-0.15-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-local/4.0.1/atlassian-bamboo-agent-local-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-local/4.0/atlassian-bamboo-agent-local-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-local/4.0.1/atlassian-bamboo-agent-local-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-local/4.0/atlassian-bamboo-agent-local-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-elastic-server/4.0.1/atlassian-bamboo-agent-elastic-server-4.0.1.jar">
+  <classpathentry kind="var" path="M2_REPO/com/atlassian/bamboo/atlassian-bamboo-agent-elastic-server/4.0/atlassian-bamboo-agent-elastic-server-4.0.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-elastic-server/4.0.1/atlassian-bamboo-agent-elastic-server-4.0.1-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/Jason%20Huntley/.m2/repository/com/atlassian/bamboo/atlassian-bamboo-agent-elastic-server/4.0/atlassian-bamboo-agent-elastic-server-4.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/pjl-comp-filter/pjl-comp-filter/1.4/pjl-comp-filter-1.4.jar"/>

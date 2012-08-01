@@ -64,6 +64,11 @@ repository configuration, to the msysgit/.ssh/known_hosts file. Example:
 Bug Fixes and Enhancements
 ==========================
 
+1.2.2 Updates
+-------------
+
+ * Issue #12: NullPointer exception encountered in GerritService
+
 1.2.1 Updates
 -------------
 
@@ -129,11 +134,7 @@ Jason Huntley
 * jhuntley@houghtonassociates.com
 * onepremise@gmail.com
 
-<a href="http://stackexchange.com/users/1254855/jason-huntley">
-<img src="http://stackexchange.com/users/flair/1254855.png" 
-     width="208" 
-     height="58" 
-     alt="profile for Jason Huntley on Stack Exchange, a network of free, 
-          community-driven Q&amp;A sites" title="profile for Jason Huntley 
-          on Stack Exchange, a network of free, community-driven Q&amp;A sites" />
+<a href="http://stackexchange.com/users/1254855">
+<img src="http://stackexchange.com/users/flair/1254855.png" width="208" height="58" alt="profile for Jason Huntley on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Jason Huntley on Stack Exchange, a network of free, community-driven Q&amp;A sites">
 </a>
+

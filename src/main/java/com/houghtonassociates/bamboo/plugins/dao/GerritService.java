@@ -366,13 +366,12 @@ public class GerritService {
 
     public Set<GerritChangeVO> getGerritChangeInfo() throws RepositoryException {
         List<JSONObject> jsonObjects = runGerritQuery("is:open");
+        Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
 
         if (jsonObjects == null)
-            return null;
+            return results;
 
         log.info("Query result count: " + jsonObjects.size());
-
-        Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
 
         for (JSONObject j : jsonObjects) {
             if (j.containsKey(GerritChangeVO.JSON_KEY_PROJECT)) {
@@ -388,13 +387,12 @@ public class GerritService {
                     getGerritChangeInfo(String project) throws RepositoryException {
         String strQuery = String.format("is:open project:%s", project);
         List<JSONObject> jsonObjects = runGerritQuery(strQuery);
+        Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
 
         if (jsonObjects == null)
-            return null;
+            return results;
 
         log.info("Query result count: " + jsonObjects.size());
-
-        Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
 
         for (JSONObject j : jsonObjects) {
             if (j.containsKey(GerritChangeVO.JSON_KEY_PROJECT)) {
