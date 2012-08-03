@@ -61,6 +61,16 @@ repository configuration, to the msysgit/.ssh/known_hosts file. Example:
 > d0wNkqzl6EUAeU2iZjqFqQL2ZiNVqs2JrpTNadbgtXBNk9rhQIWajQZG9ZJG/OPxe+NOkbWQVev
 > rcELsw5N2wxcJOWz+ey1tFv3VCtNCLUGgF7yIg0kZZVQ+HvAzLoMbiHs0haVmEjnLherSw==
 
+If problems persist, you can turn on debugging in the Administration console to
+help resolve and report issues. Steps to turn on debugging:
+
+ * Goto Administration->System->Log Settings
+ * Add com.houghtonassociates.bamboo.plugins=DEBUG
+ 
+Check your Bamboo home directory for log output:
+
+Ex: bamboo-home\logs\atlassian-bamboo.log
+
 Bug Fixes and Enhancements
 ==========================
 

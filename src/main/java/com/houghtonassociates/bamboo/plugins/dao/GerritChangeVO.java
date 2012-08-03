@@ -149,6 +149,12 @@ public class GerritChangeVO {
         public Set<FileSet> getFileSets() {
             return fileSets;
         }
+
+        @Override
+        public String toString() {
+            return "PatchSet [number=" + number + ", revision=" + revision
+                + ", ref=" + ref + ", createdOn=" + createdOn + "]";
+        }
     }
 
     public static class Approval {
@@ -211,6 +217,14 @@ public class GerritChangeVO {
         public void setByEmail(String byEmail) {
             this.byEmail = byEmail;
         }
+
+        @Override
+        public String toString() {
+            return "Approval [type=" + type + ", description=" + description
+                + ", value=" + value + ", grantedOn=" + grantedOn + ", byName="
+                + byName + ", byEmail=" + byEmail + "]";
+        }
+
     }
 
     public static class FileSet {
@@ -232,6 +246,11 @@ public class GerritChangeVO {
 
         public void setType(String type) {
             this.type = type;
+        }
+
+        @Override
+        public String toString() {
+            return "FileSet [file=" + file + ", type=" + type + "]";
         }
     }
 
@@ -373,5 +392,14 @@ public class GerritChangeVO {
 
     public boolean isMerged() {
         return this.getStatus().equalsIgnoreCase(CHANGE_STATUS_MERGED);
+    }
+
+    @Override
+    public String toString() {
+        return "GerritChangeVO [project=" + project + ", branch=" + branch
+            + ", id=" + id + ", number=" + number + ", lastUpdate="
+            + lastUpdate + ", open=" + open + ", status=" + status
+            + ", verificationScore=" + verificationScore + ", reviewScore="
+            + reviewScore + "]";
     }
 }

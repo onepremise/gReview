@@ -240,6 +240,8 @@ public class GerritService {
                     runGerritQuery(String query) throws RepositoryException {
         List<JSONObject> jsonObjects = null;
 
+        log.debug("Gerrit query: " + query);
+
         try {
             jsonObjects =
                 getGerritQueryHandler().queryJava(query, true, true, true);
@@ -258,13 +260,22 @@ public class GerritService {
 
         int rowCount = setInfo.getInt(GerritChangeVO.JSON_KEY_ROWCOUNT);
 
-        if (rowCount == 0)
+        log.debug("Gerrit row count: " + rowCount);
+
+        if (rowCount == 0) {
+            log.debug("No JSON content to report.");
             return null;
+        } else {
+            log.debug("JSON content returned: ");
+            log.debug(jsonObjects);
+        }
 
         return jsonObjects;
     }
 
     public GerritChangeVO getLastChange() throws RepositoryException {
+        log.debug("getLastChange()...");
+
         Set<GerritChangeVO> changes = getGerritChangeInfo();
         GerritChangeVO selectedChange = null;
 
@@ -283,6 +294,8 @@ public class GerritService {
     }
 
     public GerritChangeVO getLastUnverifiedChange() throws RepositoryException {
+        log.debug("getLastUnverifiedChange()...");
+
         Set<GerritChangeVO> changes = getGerritChangeInfo();
         GerritChangeVO selectedChange = null;
 
@@ -303,6 +316,8 @@ public class GerritService {
 
     public GerritChangeVO
                     getLastChange(String project) throws RepositoryException {
+        log.debug(String.format("getLastChange(project=%s)...", project));
+
         Set<GerritChangeVO> changes = getGerritChangeInfo(project);
         GerritChangeVO selectedChange = null;
 
@@ -322,6 +337,9 @@ public class GerritService {
 
     public GerritChangeVO
                     getLastUnverifiedChange(String project) throws RepositoryException {
+        log.debug(String.format("getLastUnverifiedChange(project=%s)...",
+            project));
+
         Set<GerritChangeVO> changes = getGerritChangeInfo(project);
         GerritChangeVO selectedChange = null;
 
@@ -342,6 +360,8 @@ public class GerritService {
 
     public GerritChangeVO
                     getChangeByID(String changeID) throws RepositoryException {
+        log.debug(String.format("getChangeByID(changeID=%s)...", changeID));
+
         List<JSONObject> jsonObjects = null;
 
         jsonObjects = runGerritQuery(String.format("change:%s", changeID));
@@ -354,6 +374,8 @@ public class GerritService {
 
     public GerritChangeVO
                     getChangeByRevision(String rev) throws RepositoryException {
+        log.debug(String.format("getChangeByRevision(rev=%s)...", rev));
+
         List<JSONObject> jsonObjects = null;
 
         jsonObjects = runGerritQuery(String.format("commit:%s", rev));
@@ -365,6 +387,8 @@ public class GerritService {
     }
 
     public Set<GerritChangeVO> getGerritChangeInfo() throws RepositoryException {
+        log.debug("getGerritChangeInfo()...");
+
         List<JSONObject> jsonObjects = runGerritQuery("is:open");
         Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
 
@@ -386,6 +410,9 @@ public class GerritService {
     public Set<GerritChangeVO>
                     getGerritChangeInfo(String project) throws RepositoryException {
         String strQuery = String.format("is:open project:%s", project);
+
+        log.debug(String.format("getGerritChangeInfo(project=%s)...", project));
+
         List<JSONObject> jsonObjects = runGerritQuery(strQuery);
         Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
 
@@ -409,6 +436,8 @@ public class GerritService {
         if (j == null) {
             throw new RepositoryException("No data to parse!");
         }
+
+        log.debug(String.format("transformJSONObject(j=%s)", j));
 
         GerritChangeVO info = new GerritChangeVO();
 
@@ -448,11 +477,15 @@ public class GerritService {
             throw new RepositoryException(e.getMessage());
         }
 
+        log.debug(String.format("Object Transformed change=%s", info.toString()));
+
         return info;
     }
 
     private void assignPatchSet(GerritChangeVO info, JSONObject p,
                                 boolean isCurrent) throws ParseException {
+        log.debug(String.format("Assigning Patchset to: %s", info.toString()));
+
         PatchSet patch = new PatchSet();
 
         patch.setNumber(p.getInt(GerritChangeVO.JSON_KEY_PATCH_SET_NUM));
@@ -541,5 +574,7 @@ public class GerritService {
         } else {
             info.getPatchSets().add(patch);
         }
+
+        log.debug(String.format("Patchset assigned: %s", patch.toString()));
     }
 }
