@@ -100,6 +100,14 @@ repository configuration, to the msysgit/.ssh/known_hosts file. Example:
 > d0wNkqzl6EUAeU2iZjqFqQL2ZiNVqs2JrpTNadbgtXBNk9rhQIWajQZG9ZJG/OPxe+NOkbWQVev
 > rcELsw5N2wxcJOWz+ey1tFv3VCtNCLUGgF7yIg0kZZVQ+HvAzLoMbiHs0haVmEjnLherSw==
 
+NullPointerException Encountered after Upgrade
+----------------------------------------------
+
+If this is an upgrade, and you encouter a NullException when attempting to 
+build, you may need to resave your repository settings.Release 1.2.3 changed 
+the way the ssh private key is stored for multiple repositories. Resaving 
+should resolve this issue.
+
 Unable to Delete Repository
 ---------------------------
 
