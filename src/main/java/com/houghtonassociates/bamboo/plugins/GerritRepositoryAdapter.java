@@ -141,6 +141,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private String project;
     private String username;
     private String sshKey;
+    private String relativeSSHKeyFilePath;
     private File sshKeyFile = null;
     private String sshPassphrase;
     private boolean useShallowClones;
@@ -248,24 +249,32 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                             ""));
         }
 
-        File file = prepareSSHKeyFile(buildConfiguration, key);
+        relativeSSHKeyFilePath = getRelativeRepoPath(buildConfiguration);
 
-        buildConfiguration.setProperty(REPOSITORY_GERRIT_SSH_KEY_FILE,
-            file.getAbsolutePath());
+        File f = prepareSSHKeyFile(relativeSSHKeyFilePath, key);
+
+        if (f != null) {
+            buildConfiguration.setProperty(REPOSITORY_GERRIT_SSH_KEY_FILE,
+                relativeSSHKeyFilePath);
+        }
     }
 
-    public File prepareSSHKeyFile(BuildConfiguration buildConfiguration,
-                                  String sshKey) {
+    private String getBaseBuildWorkingDirectory() {
+        File parentDirectoryFile =
+            this.buildDirectoryManager.getBaseBuildWorkingDirectory();
+
+        String parentDirectory = parentDirectoryFile.getAbsolutePath();
+
+        return parentDirectory;
+    }
+
+    private String getRelativeRepoPath(BuildConfiguration buildConfiguration) {
         String planKey =
             buildConfiguration.getString(REPOSITORY_GERRIT_PLAN_KEY);
         String repoDisplayName =
             buildConfiguration.getString(REPOSITORY_GERRIT_REPO_DISP_NAME);
 
-        File parentDirectoryFile =
-            this.buildDirectoryManager.getBaseBuildWorkingDirectory();
-        String parentDirectory = parentDirectoryFile.getAbsolutePath();
-        String workingDirectory =
-            parentDirectory + File.separator + this.getShortKey();
+        String workingDirectory = this.getShortKey();
 
         if (planKey != null) {
             workingDirectory = workingDirectory + File.separator + planKey;
@@ -279,12 +288,20 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 workingDirectory + File.separator + repoDisplayName;
         }
 
-        File f = new File(workingDirectory + "/GerritSSHKey.txt");
+        return workingDirectory + File.separator + "GerritSSHKey.txt";
+    }
+
+    public File prepareSSHKeyFile(String strRelativePath, String sshKey) {
+        String filePath =
+            getBaseBuildWorkingDirectory() + File.separator + strRelativePath;
+
+        File f = new File(filePath);
 
         try {
             FileUtils.writeStringToFile(f, sshKey);
         } catch (IOException e) {
             log.error(e.getMessage());
+            return null;
         }
 
         return f;
@@ -387,7 +404,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             return errorCollection;
 
         try {
-            testGerritConnection(keyFilePath, hostame,
+            testGerritConnection(keyFilePath, key, hostame,
                 Integer.valueOf(strPort), username, strProject, strPhrase);
         } catch (RepositoryException e) {
             errorCollection.addError(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
@@ -407,12 +424,12 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     @Override
     public void populateFromConfig(HierarchicalConfiguration config) {
         super.populateFromConfig(config);
+
         hostname =
             StringUtils.trimToEmpty(config
                 .getString(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME));
         username = config.getString(REPOSITORY_GERRIT_USERNAME);
         sshKey = config.getString(REPOSITORY_GERRIT_SSH_KEY, "");
-        sshKeyFile = new File(config.getString(REPOSITORY_GERRIT_SSH_KEY_FILE));
         sshPassphrase = config.getString(REPOSITORY_GERRIT_SSH_PASSPHRASE);
         port = config.getInt(REPOSITORY_GERRIT_REPOSITORY_PORT, 29418);
         project = config.getString(REPOSITORY_GERRIT_PROJECT);
@@ -428,11 +445,19 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         String gitRepoUrl =
             "ssh://" + username + "@" + hostname + ":" + port + "/" + project;
 
+        relativeSSHKeyFilePath =
+            config.getString(REPOSITORY_GERRIT_SSH_KEY_FILE);
+
+        String decryptedKey = encrypterRef.get().decrypt(sshKey);
+
+        sshKeyFile = prepareSSHKeyFile(relativeSSHKeyFilePath, decryptedKey);
+
         GitRepoFactory.configureSSHGitRepository(this.gitRepository,
             gitRepoUrl, username, "", GitRepoFactory.MASTER_BRANCH,
             this.sshKeyFile, sshPassphrase, this.useShallowClones,
             this.useSubmodules, this.commandTimeout, this.verboseLogs,
             this.textProvider);
+
     }
 
     /*
@@ -452,7 +477,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         configuration.setProperty(REPOSITORY_GERRIT_SSH_KEY, sshKey);
         configuration.setProperty(REPOSITORY_GERRIT_SSH_PASSPHRASE,
             sshPassphrase);
-        configuration.setProperty(REPOSITORY_GERRIT_SSH_KEY_FILE, sshKeyFile);
+        configuration.setProperty(REPOSITORY_GERRIT_SSH_KEY_FILE,
+            relativeSSHKeyFilePath);
         configuration.setProperty(REPOSITORY_GERRIT_REPOSITORY_PORT, port);
 
         configuration.setProperty(REPOSITORY_GERRIT_USE_SHALLOW_CLONES,
@@ -523,13 +549,13 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return new Authentication(sshKeyFile, strUsername, phrase);
     }
 
-    public void
-                    testGerritConnection(String sshKeyFile, String strHost,
-                                         int port, String strUsername,
-                                         String strProject, String phrase) throws RepositoryException {
+    public void testGerritConnection(String sshKeyFile, String key,
+                                     String strHost, int port,
+                                     String strUsername, String strProject,
+                                     String phrase) throws RepositoryException {
         SshConnection sshConnection = null;
 
-        File f = new File(sshKeyFile);
+        File f = prepareSSHKeyFile(sshKeyFile, key);
 
         if (!f.isFile()) {
             throw new RepositoryException(
