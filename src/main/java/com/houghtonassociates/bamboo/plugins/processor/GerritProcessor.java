@@ -17,7 +17,6 @@ package com.houghtonassociates.bamboo.plugins.processor;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -30,16 +29,14 @@ import com.atlassian.bamboo.plan.Plan;
 import com.atlassian.bamboo.repository.RepositoryDefinition;
 import com.atlassian.bamboo.repository.RepositoryException;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
-import com.atlassian.bamboo.utils.i18n.I18nBeanFactory;
-import com.atlassian.bamboo.utils.i18n.TextProviderAdapter;
 import com.atlassian.bamboo.v2.build.BaseConfigurableBuildPlugin;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bamboo.v2.build.CurrentBuildResult;
 import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
-import com.atlassian.spring.container.LazyComponentReference;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
+import com.houghtonassociates.bamboo.plugins.utils.I18NUtils;
 import com.opensymphony.xwork.TextProvider;
 
 /**
@@ -53,8 +50,6 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
 
     private final Logger logger = Logger.getLogger(GerritProcessor.class);
     private TextProvider textProvider = null;
-    private static final LazyComponentReference<I18nBeanFactory> i18nBeanFactoryReference =
-        new LazyComponentReference<I18nBeanFactory>("i18nBeanFactory");
     private Map<String, String> customConfiguration = null;
     private static final String GERRIT_RUN = "custom.gerrit.run";
     private AdministrationConfigurationManager administrationConfigurationManager;
@@ -63,11 +58,20 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
     public void init(BuildContext buildContext) {
         super.init(buildContext);
 
-        I18nBeanFactory i18nBeanFactory = i18nBeanFactoryReference.get();
+        final List<RepositoryDefinition> repositories =
+            buildContext.getRepositoryDefinitions();
 
-        this.textProvider =
-            new TextProviderAdapter(i18nBeanFactory.getI18nBean(Locale
-                .getDefault()));
+        for (RepositoryDefinition rd : repositories) {
+            if (rd.getRepository() instanceof GerritRepositoryAdapter) {
+                GerritRepositoryAdapter gra =
+                    (GerritRepositoryAdapter) rd.getRepository();
+                this.textProvider = gra.getTextProvider();
+                break;
+            }
+        }
+
+        I18NUtils.updateTextProvider(this.textProvider,
+            "repository.gerrit.name");
 
         this.customConfiguration =
             buildContext.getBuildDefinition().getCustomConfiguration();

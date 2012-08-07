@@ -24,7 +24,7 @@
     </plugin-info>
 
     <!-- internationalize your plugin -->
-    <resource type="i18n" name="i18n" location="english" />
+    <resource type="i18n" name="gReview_i18n" location="com.houghtonassociates.bamboo.plugins.i18n.i18n" />
     <resource type="download" name="favicon.gif" location="favicon.gif"/>
     
     <web-resource key="webCss">

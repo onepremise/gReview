@@ -1,157 +1,163 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>com.houghtonassociates.bamboo.plugins</groupId>
-    <artifactId>gReview</artifactId>
-    <version>1.2.2</version>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.houghtonassociates.bamboo.plugins</groupId>
+	<artifactId>gReview</artifactId>
+	<version>1.2.3</version>
 
-    <organization>
-        <name>Houghton Associates</name>
-        <url>http://www.houghtonassociates.com</url>
-    </organization>
+	<organization>
+		<name>Houghton Associates</name>
+		<url>http://www.houghtonassociates.com</url>
+	</organization>
 
-    <name>gReview</name>
-    <description>This is the Gerrit plugin for Atlassian Bamboo.</description>
-    <packaging>atlassian-plugin</packaging>
+	<name>gReview</name>
+	<description>This is the Gerrit plugin for Atlassian Bamboo.</description>
+	<packaging>atlassian-plugin</packaging>
 
-    <properties>
-        <bamboo.version>4.0</bamboo.version>
-        <bamboo.data.version>3.2.2</bamboo.data.version>
-        <amps.version>3.7.2</amps.version>
-    </properties>
-    
-    <repositories>
-      <!--required for Gerrit Events-->
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
+	<properties>
+		<bamboo.version>4.0</bamboo.version>
+		<bamboo.data.version>3.2.2</bamboo.data.version>
+		<amps.version>3.7.2</amps.version>
+	</properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>2.5</version>
-            <scope>provided</scope>
-        </dependency>
-            
-        <dependency>
-            <groupId>com.atlassian.bamboo</groupId>
-            <artifactId>atlassian-bamboo-core</artifactId>
-            <version>${bamboo.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.atlassian.bamboo</groupId>
-            <artifactId>atlassian-bamboo-web</artifactId>
-            <version>${bamboo.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.atlassian.bamboo.plugins</groupId>
-            <artifactId>atlassian-bamboo-plugin-ssh</artifactId>
-            <version>${bamboo.version}</version>
-            <scope>test</scope>
-        </dependency>
+	<repositories>
+		<!--required for Gerrit Events -->
+		<repository>
+			<id>repo.jenkins-ci.org</id>
+			<url>http://repo.jenkins-ci.org/public/</url>
+		</repository>
+	</repositories>
 
-        <dependency>
-            <groupId>com.atlassian.bamboo.plugins</groupId>
-            <artifactId>atlassian-bamboo-plugin-git</artifactId>
-            <version>1.8.18</version>
-            <scope>provided</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.6</version>
-            <scope>test</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
-            <artifactId>gerrit-events</artifactId>
-            <version>1.2.7</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.eclipse.jgit</groupId>
-            <artifactId>org.eclipse.jgit</artifactId>
-            <version>1.1.0.201109151100-r-ATLASSIAN-4</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.jcraft</groupId>
-                    <artifactId>jsch</artifactId>
-                </exclusion>
-            </exclusions>
-            <scope>system</scope>
-            <systemPath>${basedir}/libs/org.eclipse.jgit-1.1.0.201109151100-r-ATLASSIAN-4.jar</systemPath>
-        </dependency>
-    </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.1.1</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>commons-collections</groupId>
+			<artifactId>commons-collections</artifactId>
+			<version>3.2.1</version>
+			<scope>provided</scope>
+		</dependency>
 
-    <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-        
-        <plugins>
-            <plugin>
-                <groupId>com.atlassian.maven.plugins</groupId>
-                <artifactId>maven-bamboo-plugin</artifactId>
-                <version>3.7.2</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <productVersion>${bamboo.version}</productVersion>
-                    <productDataVersion>${bamboo.data.version}</productDataVersion>
-                </configuration>
-            </plugin>        
-          
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-            </plugin>
-            
-            <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                            <executions>
-                                <execution>
-                                    <phase>install</phase>
-                                    <goals>
-                                        <goal>copy-dependencies</goal>
-                                    </goals>
-                                    <configuration>
-                                        <outputDirectory>lib</outputDirectory>
-                                    </configuration>
-                                </execution>
-                            </executions>
-           </plugin>
-        </plugins>
-    </build>
-    <scm>
-    	<developerConnection>Jason Huntley</developerConnection>
-    	<url>https://github.com/onepremise/gReview.git</url>
-    </scm>
-    <issueManagement>
-    	<url>https://github.com/onepremise/gReview/issues</url>
-    	<system>GitHub Issue Tracking</system>
-    </issueManagement>
-    <url>https://github.com/onepremise/gReview</url>
-    <ciManagement>
-    	<system>Bamboo</system>
-    	<url>http://build.houghtonassociates.com</url>
-    </ciManagement>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.5</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.atlassian.bamboo</groupId>
+			<artifactId>atlassian-bamboo-core</artifactId>
+			<version>${bamboo.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.atlassian.bamboo</groupId>
+			<artifactId>atlassian-bamboo-web</artifactId>
+			<version>${bamboo.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.atlassian.bamboo.plugins</groupId>
+			<artifactId>atlassian-bamboo-plugin-git</artifactId>
+			<version>1.8.18</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.6</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
+			<artifactId>gerrit-events</artifactId>
+			<version>1.2.7</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.jgit</groupId>
+			<artifactId>org.eclipse.jgit</artifactId>
+			<version>1.1.0.201109151100-r-ATLASSIAN-4</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.jcraft</groupId>
+					<artifactId>jsch</artifactId>
+				</exclusion>
+			</exclusions>
+			<scope>system</scope>
+			<systemPath>${basedir}/libs/org.eclipse.jgit-1.1.0.201109151100-r-ATLASSIAN-4.jar</systemPath>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+
+		<plugins>
+			<plugin>
+				<groupId>com.atlassian.maven.plugins</groupId>
+				<artifactId>maven-bamboo-plugin</artifactId>
+				<version>3.7.2</version>
+				<extensions>true</extensions>
+				<configuration>
+					<productVersion>${bamboo.version}</productVersion>
+					<productDataVersion>${bamboo.data.version}</productDataVersion>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unpack-dependencies</id>
+						<goals>
+							<goal>unpack-dependencies</goal>
+						</goals>
+						<configuration>
+							<includeScope>system</includeScope>
+							<outputDirectory>${build.outputDirectory}</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<scm>
+		<developerConnection>Jason Huntley</developerConnection>
+		<url>https://github.com/onepremise/gReview.git</url>
+	</scm>
+	<issueManagement>
+		<url>https://github.com/onepremise/gReview/issues</url>
+		<system>GitHub Issue Tracking</system>
+	</issueManagement>
+	<url>https://github.com/onepremise/gReview</url>
+	<ciManagement>
+		<system>Bamboo</system>
+		<url>http://build.houghtonassociates.com</url>
+	</ciManagement>
 </project>

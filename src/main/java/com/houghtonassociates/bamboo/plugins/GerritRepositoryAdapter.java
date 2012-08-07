@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
@@ -40,7 +39,6 @@ import com.atlassian.bamboo.commit.Commit;
 import com.atlassian.bamboo.commit.CommitFile;
 import com.atlassian.bamboo.commit.CommitFileImpl;
 import com.atlassian.bamboo.commit.CommitImpl;
-import com.atlassian.bamboo.configuration.AdministrationConfigurationManager;
 import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.branch.VcsBranch;
 import com.atlassian.bamboo.plugins.git.GitRepository;
@@ -54,8 +52,6 @@ import com.atlassian.bamboo.security.StringEncrypter;
 import com.atlassian.bamboo.ssh.SshProxyService;
 import com.atlassian.bamboo.template.TemplateRenderer;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
-import com.atlassian.bamboo.utils.i18n.I18nBeanFactory;
-import com.atlassian.bamboo.utils.i18n.TextProviderAdapter;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bamboo.v2.build.BuildRepositoryChanges;
 import com.atlassian.bamboo.v2.build.BuildRepositoryChangesImpl;
@@ -67,12 +63,12 @@ import com.atlassian.bandana.BandanaManager;
 import com.atlassian.bandana.DefaultBandanaManager;
 import com.atlassian.bandana.impl.MemoryBandanaPersister;
 import com.atlassian.plugin.ModuleDescriptor;
-import com.atlassian.spring.container.LazyComponentReference;
 import com.atlassian.util.concurrent.LazyReference;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
 import com.houghtonassociates.bamboo.plugins.dao.GitRepoFactory;
+import com.houghtonassociates.bamboo.plugins.utils.I18NUtils;
 import com.opensymphony.xwork.TextProvider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
@@ -94,6 +90,13 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 	 * 
 	 */
     private static final long serialVersionUID = -3518800283574344591L;
+
+    private static final String REPOSITORY_GERRIT_STORAGE = "repositories";
+
+    private static final String REPOSITORY_GERRIT_PLAN_KEY = "planKey";
+    private static final String REPOSITORY_GERRIT_REPO_ID = "repositoryId";
+    private static final String REPOSITORY_GERRIT_REPO_DISP_NAME =
+        "repositoryName";
 
     private static final String REPOSITORY_GERRIT_REPOSITORY_HOSTNAME =
         "repository.gerrit.hostname";
@@ -133,9 +136,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private static final Logger log = Logger
         .getLogger(GerritRepositoryAdapter.class);
 
-    private static final LazyComponentReference<I18nBeanFactory> i18nBeanFactoryReference =
-        new LazyComponentReference<I18nBeanFactory>("i18nBeanFactory");
-
     private String hostname;
     private int port = 29418;
     private String project;
@@ -147,8 +147,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private boolean useSubmodules;
     private boolean verboseLogs;
     private int commandTimeout;
-
-    private AdministrationConfigurationManager administrationConfigurationManager;
 
     private GerritService gerritDAO = null;
 
@@ -250,10 +248,46 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                             ""));
         }
 
-        File file = prepareSSHKeyFile(key);
+        File file = prepareSSHKeyFile(buildConfiguration, key);
 
         buildConfiguration.setProperty(REPOSITORY_GERRIT_SSH_KEY_FILE,
             file.getAbsolutePath());
+    }
+
+    public File prepareSSHKeyFile(BuildConfiguration buildConfiguration,
+                                  String sshKey) {
+        String planKey =
+            buildConfiguration.getString(REPOSITORY_GERRIT_PLAN_KEY);
+        String repoDisplayName =
+            buildConfiguration.getString(REPOSITORY_GERRIT_REPO_DISP_NAME);
+
+        File parentDirectoryFile =
+            this.buildDirectoryManager.getBaseBuildWorkingDirectory();
+        String parentDirectory = parentDirectoryFile.getAbsolutePath();
+        String workingDirectory =
+            parentDirectory + File.separator + this.getShortKey();
+
+        if (planKey != null) {
+            workingDirectory = workingDirectory + File.separator + planKey;
+        }
+
+        workingDirectory =
+            workingDirectory + File.separator + REPOSITORY_GERRIT_STORAGE;
+
+        if (repoDisplayName != null) {
+            workingDirectory =
+                workingDirectory + File.separator + repoDisplayName;
+        }
+
+        File f = new File(workingDirectory + "/GerritSSHKey.txt");
+
+        try {
+            FileUtils.writeStringToFile(f, sshKey);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+
+        return f;
     }
 
     /*
@@ -340,12 +374,21 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     "");
         }
 
+        String keyFilePath =
+            buildConfiguration.getString(REPOSITORY_GERRIT_SSH_KEY_FILE);
+
+        if (!StringUtils.isNotBlank(keyFilePath)) {
+            errorCollection.addError(REPOSITORY_GERRIT_SSH_KEY_FILE,
+                "Your SSH private key is required for connection!");
+            error = true;
+        }
+
         if (error)
             return errorCollection;
 
         try {
-            testGerritConnection(key, hostame, Integer.valueOf(strPort),
-                username, strPhrase);
+            testGerritConnection(keyFilePath, hostame,
+                Integer.valueOf(strPort), username, strProject, strPhrase);
         } catch (RepositoryException e) {
             errorCollection.addError(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
                 e.getMessage());
@@ -460,14 +503,14 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             this.textProvider = textProvider;
         }
 
-        if (getName() == null) {
-            I18nBeanFactory i18nBeanFactory = i18nBeanFactoryReference.get();
-            this.textProvider =
-                new TextProviderAdapter(i18nBeanFactory.getI18nBean(Locale
-                    .getDefault()));
-        }
+        I18NUtils.updateTextProvider(this.textProvider,
+            "repository.gerrit.name");
 
-        gitRepository.setTextProvider(this.textProvider);
+        gitRepository.setTextProvider(textProvider);
+    }
+
+    public TextProvider getTextProvider() {
+        return this.textProvider;
     }
 
     public void setSshProxyService(SshProxyService sshProxyService) {
@@ -480,31 +523,21 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return new Authentication(sshKeyFile, strUsername, phrase);
     }
 
-    public File prepareSSHKeyFile(String sshKey) {
-        File parentDirectoryFile =
-            this.buildDirectoryManager.getBaseBuildWorkingDirectory();
-        String parentDirectory = parentDirectoryFile.getAbsolutePath();
-        String workingDirectory =
-            parentDirectory + File.separator + this.getShortKey();
-        File f = new File(workingDirectory + "/GerritSSHKey.txt");
-
-        try {
-            FileUtils.writeStringToFile(f, sshKey);
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
-
-        return f;
-    }
-
     public void
-                    testGerritConnection(String sshKey, String strHost,
+                    testGerritConnection(String sshKeyFile, String strHost,
                                          int port, String strUsername,
-                                         String phrase) throws RepositoryException {
+                                         String strProject, String phrase) throws RepositoryException {
         SshConnection sshConnection = null;
 
-        Authentication auth =
-            new Authentication(prepareSSHKeyFile(sshKey), strUsername, phrase);
+        File f = new File(sshKeyFile);
+
+        if (!f.isFile()) {
+            throw new RepositoryException(
+                textProvider
+                    .getText("repository.gerrit.messages.error.ssh.key.missing"));
+        }
+
+        Authentication auth = new Authentication(f, strUsername, phrase);
 
         try {
             sshConnection =
@@ -665,9 +698,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 (GerritRepositoryAdapter) repository;
             return !new EqualsBuilder()
                 .append(this.hostname, gerrit.getHostname())
+                .append(this.project, gerrit.getProject())
                 .append(this.username, gerrit.getUsername()).isEquals();
         } else {
-            return true;
+            return false;
         }
     }
 
@@ -703,6 +737,19 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     /*
      * (non-Javadoc)
      * 
+     * @see
+     * com.atlassian.bamboo.repository.Repository#getMinimalEditHtml(com.atlassian
+     * .bamboo.ww2.actions.build.admin.create.BuildConfiguration)
+     */
+    @Override
+    public String getMinimalEditHtml(BuildConfiguration buildConfiguration) {
+        // TODO Auto-generated method stub
+        return super.getMinimalEditHtml(buildConfiguration);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.atlassian.bamboo.repository.Repository#getHost()
      */
     @Override
@@ -720,19 +767,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     public String getUsername() {
         return username;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.atlassian.bamboo.repository.Repository#getMinimalEditHtml(com.atlassian
-     * .bamboo.ww2.actions.build.admin.create.BuildConfiguration)
-     */
-    @Override
-    public String getMinimalEditHtml(BuildConfiguration buildConfiguration) {
-        // TODO Auto-generated method stub
-        return super.getMinimalEditHtml(buildConfiguration);
     }
 
     /*
@@ -813,12 +847,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                                        @NotNull final File file,
                                        @NotNull final String s) throws RepositoryException {
         return gitRepository.mergeWorkspaceWith(buildContext, file, s);
-    }
-
-    public void
-                    setAdministrationConfigurationManager(AdministrationConfigurationManager administrationConfigurationManager) {
-        this.administrationConfigurationManager =
-            administrationConfigurationManager;
     }
 
     @Override
