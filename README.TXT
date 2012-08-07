@@ -47,6 +47,9 @@ This plugin can be installed via the Universal Plugin Manager in Bamboo.
 Troubleshooting
 ===============
 
+Connection Issues
+-----------------
+
 Make sure you have Gerrit setup correctly with SSH identity key generated and 
 host used in the SSH connection string added to known host. Detailed instructions 
 are available in the [Gerrit documentation](https://gerrit-review.googlesource.com/Documentation/install-quick.html#usersetup).
@@ -61,6 +64,15 @@ repository configuration, to the msysgit/.ssh/known_hosts file. Example:
 > d0wNkqzl6EUAeU2iZjqFqQL2ZiNVqs2JrpTNadbgtXBNk9rhQIWajQZG9ZJG/OPxe+NOkbWQVev
 > rcELsw5N2wxcJOWz+ey1tFv3VCtNCLUGgF7yIg0kZZVQ+HvAzLoMbiHs0haVmEjnLherSw==
 
+Unable to Delete Repository
+---------------------------
+
+This is an old issue and has been fixed in new releases of Bamboo. Here's the 
+[ticket](https://jira.atlassian.com/browse/BAM-11377).
+
+Debugging
+---------
+
 If problems persist, you can turn on debugging in the Administration console to
 help resolve and report issues. Steps to turn on debugging:
 
@@ -73,6 +85,11 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 
 Bug Fixes and Enhancements
 ==========================
+
+1.2.3 Updates
+-------------
+
+ * Issue #13 gReview doesn't uniquely store connections settings per plan.
 
 1.2.2 Updates
 -------------
