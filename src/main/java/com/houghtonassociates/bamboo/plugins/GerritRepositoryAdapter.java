@@ -291,7 +291,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return workingDirectory + File.separator + "GerritSSHKey.txt";
     }
 
-    public File prepareSSHKeyFile(String strRelativePath, String sshKey) {
+    public synchronized File prepareSSHKeyFile(String strRelativePath,
+                                               String sshKey) {
         String filePath =
             getBaseBuildWorkingDirectory() + File.separator + strRelativePath;
 

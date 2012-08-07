@@ -44,6 +44,42 @@ gReview
 
 This plugin can be installed via the Universal Plugin Manager in Bamboo.
 
+Usage
+=======
+
+Setup Gerrit
+------------
+
+ * Login as admin.
+ * Select 'Configure Plan' under 'Actions' in the dropdown menu on the right.
+ * Select the 'Source Repositoryies' Tab.
+ * [Select 'Add Repository'.](https://plus.google.com/u/0/photos/111679711947778743513/albums/5751797380554349169/5754399119605434834)
+
+Enable Gerrit Verification
+--------------------------
+
+ * Login as admin.
+ * Select 'Plan Configuration' under 'Actions' in the dropdown menu on the right.
+ * Select the 'Stages' Tab.
+ * Select the job you're interested in. Usually there is only one, 'Default Job'.
+ * Under the job configuration, select the "Miscellaneous" tab.
+ * Check ['Run Gerrit Verification after main build.'](https://lh4.googleusercontent.com/-oawKtjfHbbo/T9J9PgwUF9I/AAAAAAAAANU/C0kOBQYFkC8/s1303/gerritConfig2.JPG)
+
+Viewing Gerrit Change Information
+---------------------------------
+
+Gerrit change information is available under the Build Summary [Gerrit Tab](https://lh6.googleusercontent.com/-k0Oy_CnsufA/T9J9PglbtTI/AAAAAAAAANM/vPKpt8nsgUY/s785/gerritTab.JPG)
+
+Adding Gitweb
+-------------
+
+ * Login as admin.
+ * Select 'Configure Plan' under 'Actions' in the dropdown menu on the right.
+ * [Select the 'Source Repositoryies' Tab.](https://lh3.googleusercontent.com/-EbLti6gv3xo/UCKuvN1j7vI/AAAAAAAAAPQ/OaZ8MsXwGjs/s939/source-repositories.JPG)
+ * Select an existing Gerrit Repository or add one.
+ * Drop down 'Advanced Options' and select the GitWeb repository.
+ * [Provide your details and save](https://lh5.googleusercontent.com/-wd7iOs6EmhQ/UCKvWNPlPJI/AAAAAAAAAPY/9LkFAJtksFI/s917/source-repositories2.JPG)
+
 Troubleshooting
 ===============
 
