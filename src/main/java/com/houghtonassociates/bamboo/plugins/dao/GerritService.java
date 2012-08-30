@@ -235,7 +235,7 @@ public class GerritService {
             jsonObjects =
                 getGerritQueryHandler().queryJava(query, true, true, true);
         } catch (SshException e) {
-            throw new RepositoryException(e.getMessage());
+            throw new RepositoryException("SSH connection error", e);
         } catch (IOException e) {
             throw new RepositoryException(e.getMessage());
         } catch (GerritQueryException e) {

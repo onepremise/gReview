@@ -113,9 +113,9 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private static final String REPOSITORY_GERRIT_SSH_PASSPHRASE =
         "repository.gerrit.ssh.passphrase";
     private static final String TEMPORARY_GERRIT_SSH_PASSPHRASE =
-        "temporary.git.ssh.passphrase";
+        "temporary.gerrit.ssh.passphrase";
     private static final String TEMPORARY_GERRIT_SSH_PASSPHRASE_CHANGE =
-        "temporary.git.ssh.passphrase.change";
+        "temporary.gerrit.ssh.passphrase.change";
     private static final String TEMPORARY_GERRIT_SSH_KEY_FROM_FILE =
         "temporary.gerrit.ssh.keyfile";
     private static final String TEMPORARY_GERRIT_SSH_KEY_CHANGE =
@@ -385,7 +385,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             buildConfiguration.getString(TEMPORARY_GERRIT_SSH_PASSPHRASE);
         if (buildConfiguration
             .getBoolean(TEMPORARY_GERRIT_SSH_PASSPHRASE_CHANGE)) {
-            strPhrase = encrypterRef.get().encrypt(strPhrase);
         } else if (strPhrase == null) {
             strPhrase =
                 buildConfiguration.getString(REPOSITORY_GERRIT_SSH_PASSPHRASE,
@@ -431,7 +430,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 .getString(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME));
         username = config.getString(REPOSITORY_GERRIT_USERNAME);
         sshKey = config.getString(REPOSITORY_GERRIT_SSH_KEY, "");
-        sshPassphrase = config.getString(REPOSITORY_GERRIT_SSH_PASSPHRASE);
+        sshPassphrase = encrypterRef.get().decrypt(
+				config.getString(REPOSITORY_GERRIT_SSH_PASSPHRASE));
         port = config.getInt(REPOSITORY_GERRIT_REPOSITORY_PORT, 29418);
         project = config.getString(REPOSITORY_GERRIT_PROJECT);
 
@@ -477,7 +477,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         configuration.setProperty(REPOSITORY_GERRIT_PROJECT, project);
         configuration.setProperty(REPOSITORY_GERRIT_SSH_KEY, sshKey);
         configuration.setProperty(REPOSITORY_GERRIT_SSH_PASSPHRASE,
-            sshPassphrase);
+            encrypterRef.get().encrypt(sshPassphrase));
         configuration.setProperty(REPOSITORY_GERRIT_SSH_KEY_FILE,
             relativeSSHKeyFilePath);
         configuration.setProperty(REPOSITORY_GERRIT_REPOSITORY_PORT, port);
