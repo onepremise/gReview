@@ -66,20 +66,9 @@ public class GerritService {
         this.port = port;
     }
 
-    public GerritService(String strHost, File sshKeyFile, String strUsername,
-                         String phrase) {
-        auth = new Authentication(sshKeyFile, strUsername, phrase);
-        this.strHost = strHost;
-    }
-
     public GerritService(String strHost, int port, Authentication auth) {
         this.strHost = strHost;
         this.port = port;
-        this.auth = auth;
-    }
-
-    public GerritService(String strHost, Authentication auth) {
-        this.strHost = strHost;
         this.auth = auth;
     }
 
@@ -246,7 +235,7 @@ public class GerritService {
             jsonObjects =
                 getGerritQueryHandler().queryJava(query, true, true, true);
         } catch (SshException e) {
-            throw new RepositoryException(e.getMessage());
+            throw new RepositoryException("SSH connection error", e);
         } catch (IOException e) {
             throw new RepositoryException(e.getMessage());
         } catch (GerritQueryException e) {
