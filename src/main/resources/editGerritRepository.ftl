@@ -35,15 +35,10 @@
         [@ww.file labelKey='repository.gerrit.ssh.key' name='temporary.gerrit.ssh.keyfile' /]
     [/#if]
 
-    [#if buildConfiguration.getString('repository.gerrit.ssh.passphrase')?has_content]
         [@ww.checkbox labelKey='repository.passphrase.change' toggle='true' name='temporary.gerrit.ssh.passphrase.change' /]
         [@ui.bambooSection dependsOn='temporary.gerrit.ssh.passphrase.change' showOn='true']
             [@ww.password labelKey='repository.gerrit.ssh.passphrase' name='temporary.gerrit.ssh.passphrase' /]
         [/@ui.bambooSection]
-    [#else]
-        [@ww.hidden name='temporary.git.gerrit.passphrase.change' value="true" /]
-        [@ww.password labelKey='repository.gerrit.ssh.passphrase' name='temporary.gerrit.ssh.passphrase' /]
-    [/#if]
 [/@ui.bambooSection]
 
 [@ww.checkbox labelKey='repository.gerrit.useShallowClones' toggle='true' name='repository.gerrit.useShallowClones' /]
