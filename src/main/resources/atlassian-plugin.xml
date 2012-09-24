@@ -19,8 +19,8 @@
         <version>${project.version}</version>
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
         <bundle-instructions>
-      	    <Import-Package>com.atlassian.bamboo.plugins.git,*;resolution:=optional</Import-Package>
-    	</bundle-instructions>
+            <Import-Package>*;resolution:=optional</Import-Package>
+        </bundle-instructions>
     </plugin-info>
 
     <!-- internationalize your plugin -->
@@ -31,6 +31,11 @@
       <resource type="download" name="gerrit.css" location="gerrit.css" />
       <context>atl.general</context>
     </web-resource>
+
+
+	<component-import key="i18nResolver" interface="com.atlassian.sal.api.message.I18nResolver"/>
+
+
     <repository key="gerrit" name="Gerrit Repository"
                      class="com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter">
       <description>A Gerrit Interface Repository</description>

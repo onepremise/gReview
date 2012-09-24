@@ -8,7 +8,11 @@ import java.io.File;
 import com.atlassian.bamboo.plan.branch.VcsBranchImpl;
 import com.atlassian.bamboo.plugins.git.GitAuthenticationType;
 import com.atlassian.bamboo.plugins.git.GitRepository;
+import com.atlassian.bamboo.security.EncryptionService;
+import com.atlassian.bamboo.ssh.SshProxyService;
+import com.atlassian.bamboo.v2.build.agent.capability.CapabilityContext;
 import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
+import com.atlassian.sal.api.message.I18nResolver;
 import com.opensymphony.xwork.TextProvider;
 
 /**
@@ -41,42 +45,10 @@ public class GitRepoFactory {
 
     public static final String MASTER_BRANCH = "refs/heads/master";
 
-    public static GitRepository
-                    createSSHGitRepository(TextProvider txtProvider) {
-        GitRepository gitRepository = new GitRepository();
-
-        gitRepository.setTextProvider(txtProvider);
-
-        return gitRepository;
-    }
-
-    public static GitRepository
-                    createSSHGitRepository(String url, String username,
-                                           String password, String branch,
-                                           File sshKeyFile,
-                                           String sshPassphrase,
-                                           boolean useShallowClones,
-                                           boolean useSubmodules, int timeout,
-                                           boolean verbose,
-                                           TextProvider txtProvider) {
-        GitRepository gitRepository = new GitRepository();
-
-        configureSSHGitRepository(gitRepository, url, username, password,
-            branch, sshKeyFile, sshPassphrase, useShallowClones, useSubmodules,
-            timeout, verbose, txtProvider);
-
-        return gitRepository;
-    }
-
-    public static void configureSSHGitRepository(GitRepository g, String url,
-                                                 String username,
-                                                 String password,
-                                                 String branch,
-                                                 File sshKeyFile,
-                                                 String sshPassphrase,
-                                                 boolean useShallowClones,
-                                                 boolean useSubmodules,
-                                                 int timeout, boolean verbose) {
+	public static void configureSSHGitRepository(GitRepository repository, String url, String username, String password,
+			String branch, File sshKeyFile, String sshPassphrase, boolean useShallowClones, boolean useSubmodules,
+			int timeout, boolean verbose, TextProvider txtProvider, I18nResolver i18nResolver,
+			CapabilityContext capabilityContext, SshProxyService sshProxyService, EncryptionService encryptionService) {
         BuildConfiguration buildConfig = new BuildConfiguration();
 
         buildConfig.setProperty(REPOSITORY_GIT_REPOSITORY_URL, url);
@@ -98,8 +70,12 @@ public class GitRepoFactory {
         repository.prepareConfigObject(buildConfig);
         repository.populateFromConfig(buildConfig);
 
-        g.setVcsBranch(new VcsBranchImpl(branch));
-        g.setTextProvider(txtProvider);
+        repository.setVcsBranch(new VcsBranchImpl(branch));
+        repository.setTextProvider(txtProvider);
+		repository.setI18nResolver(i18nResolver);
+		repository.setCapabilityContext(capabilityContext);
+		repository.setSshProxyService(sshProxyService);
+		repository.setEncryptionService(encryptionService);
     }
 
     public static void configureBranch(GitRepository g, String branch) {

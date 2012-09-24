@@ -48,6 +48,7 @@ import com.atlassian.bamboo.repository.BranchMergingAwareRepository;
 import com.atlassian.bamboo.repository.PushCapableRepository;
 import com.atlassian.bamboo.repository.Repository;
 import com.atlassian.bamboo.repository.RepositoryException;
+import com.atlassian.bamboo.security.EncryptionService;
 import com.atlassian.bamboo.security.StringEncrypter;
 import com.atlassian.bamboo.ssh.SshProxyService;
 import com.atlassian.bamboo.template.TemplateRenderer;
@@ -63,6 +64,7 @@ import com.atlassian.bandana.BandanaManager;
 import com.atlassian.bandana.DefaultBandanaManager;
 import com.atlassian.bandana.impl.MemoryBandanaPersister;
 import com.atlassian.plugin.ModuleDescriptor;
+import com.atlassian.sal.api.message.I18nResolver;
 import com.atlassian.util.concurrent.LazyReference;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
@@ -129,6 +131,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private GerritService gerritDAO = null;
 
     private BandanaManager bandanaManager = null;
+	private I18nResolver i18nResolver;
+	private CapabilityContext capabilityContext;
+	private SshProxyService sshProxyService;
+	private EncryptionService encryptionService;
 
     private GitRepository gitRepository = new GitRepository();
 
@@ -346,11 +352,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         sshKeyFile = prepareSSHKeyFile(relativeSSHKeyFilePath, decryptedKey);
 
-        GitRepoFactory.configureSSHGitRepository(this.gitRepository,
-            gitRepoUrl, username, "", GitRepoFactory.MASTER_BRANCH,
-            this.sshKeyFile, sshPassphrase, this.useShallowClones,
-            this.useSubmodules, this.commandTimeout, this.verboseLogs,
-            this.textProvider);
+        GitRepoFactory.configureSSHGitRepository(gitRepository, gitRepoUrl, username, "",
+				GitRepoFactory.MASTER_BRANCH, sshKeyFile, sshPassphrase, useShallowClones,
+				useSubmodules, commandTimeout, verboseLogs, textProvider, i18nResolver, capabilityContext,
+				sshProxyService, encryptionService);
 
     }
 
@@ -393,6 +398,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     }
 
     public void setCapabilityContext(final CapabilityContext capabilityContext) {
+		this.capabilityContext = capabilityContext;
         gitRepository.setCapabilityContext(capabilityContext);
     }
 
@@ -404,22 +410,16 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     @Override
     public synchronized void setTextProvider(TextProvider textProvider) {
-        if (this.textProvider == null) {
-            super.setTextProvider(textProvider);
-            this.textProvider = textProvider;
-        }
+		super.setTextProvider(textProvider);
 
-        I18NUtils.updateTextProvider(this.textProvider,
-            "repository.gerrit.name");
-
-        gitRepository.setTextProvider(textProvider);
-    }
-
-    public TextProvider getTextProvider() {
-        return this.textProvider;
+		if (this.textProvider != null) {
+			I18NUtils.updateTextProvider(this.textProvider, "repository.gerrit.name");
+			gitRepository.setTextProvider(this.textProvider);
+		}
     }
 
     public void setSshProxyService(SshProxyService sshProxyService) {
+		this.sshProxyService = sshProxyService;
         gitRepository.setSshProxyService(sshProxyService);
     }
 
@@ -484,11 +484,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         @Override
         public String getPluginKey() {
             return moduleDescriptor.getPluginKey();
-        }
-
-        @Override
-        public boolean isGlobal() {
-            return false;
         }
     }
 
@@ -713,4 +708,15 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     public String commit(@NotNull final File file, @NotNull final String s) throws RepositoryException {
         return commit(file, s);
     }
+
+    public void setEncryptionService(EncryptionService encryptionService)
+    {
+		this.encryptionService = encryptionService;
+		gitRepository.setEncryptionService(encryptionService);
+    }
+
+	public void setI18nResolver(I18nResolver i18nResolver) {
+		this.i18nResolver = i18nResolver;
+		gitRepository.setI18nResolver(i18nResolver);
+	}
 }
