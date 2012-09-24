@@ -18,7 +18,7 @@
 	<packaging>atlassian-plugin</packaging>
 
 	<properties>
-		<bamboo.version>4.0</bamboo.version>
+		<bamboo.version>4.2.1</bamboo.version>
 		<bamboo.data.version>3.2.2</bamboo.data.version>
 		<amps.version>3.7.2</amps.version>
 	</properties>
@@ -70,8 +70,7 @@
 		<dependency>
 			<groupId>com.atlassian.bamboo.plugins</groupId>
 			<artifactId>atlassian-bamboo-plugin-git</artifactId>
-			<version>1.8.18</version>
-			<scope>provided</scope>
+			<version>1.9.9</version>
 		</dependency>
 
 		<dependency>
