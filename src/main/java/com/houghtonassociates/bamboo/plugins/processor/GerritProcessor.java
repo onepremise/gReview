@@ -41,40 +41,40 @@ import com.opensymphony.xwork.TextProvider;
 
 /**
  * Post processor which updates Gerrit after build completes
- * 
- * @author Jason Huntley
- * 
  */
-public class GerritProcessor extends BaseConfigurableBuildPlugin implements
-    CustomBuildProcessor {
+public class GerritProcessor extends BaseConfigurableBuildPlugin implements CustomBuildProcessor {
 
     private final Logger logger = Logger.getLogger(GerritProcessor.class);
+
+	// dependencies
     private TextProvider textProvider = null;
+    private AdministrationConfigurationManager administrationConfigurationManager;
+
     private Map<String, String> customConfiguration = null;
     private static final String GERRIT_RUN = "custom.gerrit.run";
-    private AdministrationConfigurationManager administrationConfigurationManager;
+
 
     @Override
     public void init(BuildContext buildContext) {
         super.init(buildContext);
 
-        final List<RepositoryDefinition> repositories =
-            buildContext.getRepositoryDefinitions();
+        final List<RepositoryDefinition> repositories = buildContext.getRepositoryDefinitions();
 
-        for (RepositoryDefinition rd : repositories) {
-            if (rd.getRepository() instanceof GerritRepositoryAdapter) {
-                GerritRepositoryAdapter gra =
-                    (GerritRepositoryAdapter) rd.getRepository();
-                this.textProvider = gra.getTextProvider();
-                break;
-            }
-        }
+        I18NUtils.updateTextProvider(textProvider, "repository.gerrit.name");
 
-        I18NUtils.updateTextProvider(this.textProvider,
-            "repository.gerrit.name");
+        this.customConfiguration = buildContext.getBuildDefinition().getCustomConfiguration();
+    }
 
-        this.customConfiguration =
-            buildContext.getBuildDefinition().getCustomConfiguration();
+    public synchronized void setTextProvider(TextProvider textProvider) {
+		this.textProvider = textProvider;
+		
+		if (textProvider !=  null) {
+			I18NUtils.updateTextProvider(this.textProvider, "repository.gerrit.name");
+		}
+    }
+
+    public void setAdministrationConfigurationManager(AdministrationConfigurationManager administrationConfigurationManager) {
+        this.administrationConfigurationManager = administrationConfigurationManager;
     }
 
     @Override
@@ -88,64 +88,46 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
     }
 
     @Override
-    protected void
-                    populateContextForView(Map<String, Object> context,
-                                           Plan plan) {
+    protected void populateContextForView(Map<String, Object> context, Plan plan) {
         super.populateContextForView(context, plan);
     }
 
     @Override
-    protected void
-                    populateContextForEdit(Map<String, Object> context,
-                                           BuildConfiguration buildConfiguration,
-                                           Plan plan) {
+    protected void populateContextForEdit(Map<String, Object> context, BuildConfiguration buildConfiguration,
+			Plan plan) {
         super.populateContextForEdit(context, buildConfiguration, plan);
 
     }
 
     private String buildStatusString(CurrentBuildResult results) {
-        AdministrationConfiguration config =
-            administrationConfigurationManager.getAdministrationConfiguration();
+        AdministrationConfiguration config = administrationConfigurationManager.getAdministrationConfiguration();
 
-        String resultsUrl =
-            config.getBaseUrl() + "/browse/"
-                + buildContext.getPlanResultKey().toString();
+        String resultsUrl = config.getBaseUrl() + "/browse/" + buildContext.getPlanResultKey().toString();
 
         List<String> errors = results.getBuildErrors();
 
         if (!results.getBuildState().equals(BuildState.SUCCESS)) {
             if (errors != null && errors.size() > 0) {
-                return textProvider.getText(
-                    "processor.gerrit.messages.build.custom",
-                    Arrays.asList(errors.toString(), resultsUrl));
+                return textProvider.getText("processor.gerrit.messages.build.custom", Arrays.asList(errors.toString(),
+						resultsUrl));
             } else {
-                return textProvider.getText(
-                    "processor.gerrit.messages.build.failed",
-                    Arrays.asList(resultsUrl));
+                return textProvider.getText("processor.gerrit.messages.build.failed", Arrays.asList(resultsUrl));
             }
         }
 
-        return textProvider.getText("processor.gerrit.messages.build.sucess",
-            Arrays.asList(resultsUrl));
+        return textProvider.getText("processor.gerrit.messages.build.sucess", Arrays.asList(resultsUrl));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.atlassian.bamboo.v2.build.task.BuildTask#call()
-     */
     @Override
     public BuildContext call() throws InterruptedException, Exception {
         final String buildPlanKey = buildContext.getPlanKey();
         final CurrentBuildResult results = buildContext.getBuildResult();
-        final Boolean runVerification =
-            Boolean.parseBoolean(customConfiguration.get(GERRIT_RUN));
+        final Boolean runVerification = Boolean.parseBoolean(customConfiguration.get(GERRIT_RUN));
 
         logger.info("Run verification: " + runVerification);
 
         if (runVerification) {
-            final List<RepositoryDefinition> repositories =
-                buildContext.getRepositoryDefinitions();
+            final List<RepositoryDefinition> repositories = buildContext.getRepositoryDefinitions();
 
             for (RepositoryDefinition rd : repositories) {
                 if (rd.getRepository() instanceof GerritRepositoryAdapter) {
@@ -158,54 +140,37 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
         return buildContext;
     }
 
-    private void
-                    updateChangeVerification(RepositoryDefinition rd,
-                                             String buildPlanKey,
-                                             CurrentBuildResult results) throws RepositoryException {
-        final GerritRepositoryAdapter gra =
-            (GerritRepositoryAdapter) rd.getRepository();
-        final String revision =
-            buildContext.getBuildChanges().getVcsRevisionKey(rd.getId());
-        final GerritService service =
-            new GerritService(gra.getHostname(), gra.getPort(), gra.getGerritAuthentication());
+    private void updateChangeVerification(RepositoryDefinition rd, String buildPlanKey, CurrentBuildResult results)
+			throws RepositoryException {
+        final GerritRepositoryAdapter gra = (GerritRepositoryAdapter) rd.getRepository();
+        final String revision = buildContext.getBuildChanges().getVcsRevisionKey(rd.getId());
+        final GerritService service = new GerritService(gra.getHostname(), gra.getPort(), gra.getGerritAuthentication());
         final GerritChangeVO change = service.getChangeByRevision(revision);
 
         if (change == null) {
-            logger.error(textProvider
-                .getText("repository.gerrit.messages.error.retrieve"));
+            logger.error(textProvider.getText("repository.gerrit.messages.error.retrieve"));
             return;
         } else if (change.isMerged()) {
-            logger.info(textProvider.getText(
-                "processor.gerrit.messages.build.verified.merged",
-                Arrays.asList(change.getId())));
+            logger.info(textProvider.getText( "processor.gerrit.messages.build.verified.merged",
+					Arrays.asList(change.getId())));
             return;
         }
 
-        if ((results.getBuildReturnCode() == 0)
-            && results.getBuildState().equals(BuildState.SUCCESS)) {
-            if (service.verifyChange(true, change.getNumber(), change
-                .getCurrentPatchSet().getNumber(), buildStatusString(results)))
-                logger.info(textProvider
-                    .getText("processor.gerrit.messages.build.verified.pos"));
-            else {
-                logger.error(textProvider.getText(
-                    "processor.gerrit.messages.build.verified.failed",
-                    Arrays.asList(change.getId())));
-            }
-        } else if (service.verifyChange(false, change.getNumber(), change
-            .getCurrentPatchSet().getNumber(), buildStatusString(results))) {
-            logger.info(textProvider
-                .getText("processor.gerrit.messages.build.verified.neg"));
-        } else {
-            logger.error(textProvider.getText(
-                "processor.gerrit.messages.build.verified.failed",
-                Arrays.asList(change.getId())));
-        }
-    }
+        if ((results.getBuildReturnCode() == 0) && results.getBuildState().equals(BuildState.SUCCESS)) {
+            if (service.verifyChange(true, change.getNumber(), change.getCurrentPatchSet().getNumber(),
+					buildStatusString(results))) {
 
-    public void
-                    setAdministrationConfigurationManager(AdministrationConfigurationManager administrationConfigurationManager) {
-        this.administrationConfigurationManager =
-            administrationConfigurationManager;
+                logger.info(textProvider .getText("processor.gerrit.messages.build.verified.pos"));
+			} else {
+                logger.error(textProvider.getText("processor.gerrit.messages.build.verified.failed",
+						Arrays.asList(change.getId())));
+            }
+        } else if (service.verifyChange(false, change.getNumber(), change.getCurrentPatchSet().getNumber(),
+				buildStatusString(results))) {
+            logger.info(textProvider .getText("processor.gerrit.messages.build.verified.neg"));
+        } else {
+            logger.error(textProvider.getText( "processor.gerrit.messages.build.verified.failed",
+					Arrays.asList(change.getId())));
+        }
     }
 }

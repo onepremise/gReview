@@ -19,19 +19,23 @@
         <version>${project.version}</version>
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
         <bundle-instructions>
-      	    <Import-Package>com.atlassian.bamboo.plugins.git,*;resolution:=optional</Import-Package>
-    	</bundle-instructions>
+            <Import-Package>*;resolution:=optional</Import-Package>
+        </bundle-instructions>
     </plugin-info>
 
     <!-- internationalize your plugin -->
     <resource type="i18n" name="gReview_i18n" location="com.houghtonassociates.bamboo.plugins.i18n.i18n" />
     <resource type="download" name="favicon.gif" location="favicon.gif"/>
-    
+
     <web-resource key="webCss">
       <resource type="download" name="gerrit.css" location="gerrit.css" />
       <context>atl.general</context>
     </web-resource>
-	
+
+
+	<component-import key="i18nResolver" interface="com.atlassian.sal.api.message.I18nResolver"/>
+
+
     <repository key="gerrit" name="Gerrit Repository"
                      class="com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter">
       <description>A Gerrit Interface Repository</description>
@@ -39,26 +43,26 @@
       <resource type="freemarker" name="view" location="viewGerritRepository.ftl"/>
       <resource type="freemarker" name="advancedEdit" location="editGerritRepositoryAdvancedOptions.ftl"/>
     </repository>
-    
+
     <web-item key="gerrit:${plan.key}-${resultsSummary.buildNumber}" name="gerrit" section="chainResults.subMenu/chainResults" weight="100">
     	<label key="webitems.build.submenu.gerrit" />
     	<link linkId="gerrit:${plan.key}-${resultsSummary.buildNumber}">/chain/result/viewChainGerritResults.action?planKey=${plan.key}&amp;buildNumber=${resultsSummary.buildNumber}</link>
     	<condition class="com.houghtonassociates.bamboo.plugins.view.ViewGerritResultsCondition" />
-    </web-item> 
-    
+    </web-item>
+
     <xwork key="gerritWebActions" name="Gerrit Result Actions">
     	<package name="gerritChainVIew" extends="chainViewResult">
         	<action name="viewChainGerritResults" class="com.houghtonassociates.bamboo.plugins.view.ViewGerritChainResultsAction">
             	<result name="success" type="freemarker">/viewGerritChainResults.ftl</result>
             	<result name="error" type="freemarker">/error.ftl</result>
             </action>
-    	</package>	
-    </xwork>   
-         
+    	</package>
+    </xwork>
+
 	<!-- <web-panel key="myPanel" location="chainresult.summary.right">
            <resource name="view" type="static"><![CDATA[<b>Hello World!</b>]]></resource>
     </web-panel> -->
-    
+
     <!-- P O S T   B U I L D   P R O C E S S O R S -->
     <buildProcessor key="gerritBuildProcessor" name="Gerrit Verification Processor"
                     class="com.houghtonassociates.bamboo.plugins.processor.GerritProcessor">
@@ -66,7 +70,7 @@
         <resource type="freemarker" name="edit" location="editGerritBuildProcessor.ftl" />
         <resource type="freemarker" name="view" location="viewGerritBuildProcessor.ftl" />
     </buildProcessor>
-    
+
     <webRepositoryViewer key="gitwebRepositoryViewer" name="GitWeb"
                        class="com.houghtonassociates.bamboo.plugins.view.GitWebRepositoryViewer">
     <description>Renders Fisheye Links for commits.</description>
