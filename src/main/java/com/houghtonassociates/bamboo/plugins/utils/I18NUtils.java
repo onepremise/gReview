@@ -16,6 +16,9 @@ import com.opensymphony.xwork.util.LocalizedTextUtil;
 public class I18NUtils {
 
     public static String getKeyValue(TextProvider textProvider, String key) {
+        if (textProvider == null)
+            return null;
+
         return textProvider.getText(key);
     }
 

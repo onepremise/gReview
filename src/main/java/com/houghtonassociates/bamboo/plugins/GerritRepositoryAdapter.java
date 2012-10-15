@@ -78,7 +78,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 
 /**
- * Allows bamboo to use Gerrit as if it were a repository.
+ * This class allows bamboo to use Gerrit as if it were a repository.
  */
 public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     implements CustomSourceDirectoryAwareRepository,

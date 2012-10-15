@@ -3,10 +3,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
+	<parent>
+		<groupId>com.atlassian.pom</groupId>
+		<artifactId>atlassian-public-pom</artifactId>
+		<version>28</version>
+	</parent>
+
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.houghtonassociates.bamboo.plugins</groupId>
 	<artifactId>gReview</artifactId>
-	<version>1.2.3</version>
+	<version>1.2.4</version>
 
 	<organization>
 		<name>Houghton Associates</name>
@@ -38,7 +44,7 @@
 			<version>1.1.1</version>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>commons-collections</groupId>
 			<artifactId>commons-collections</artifactId>
@@ -52,6 +58,14 @@
 			<version>2.5</version>
 			<scope>provided</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>com.atlassian.bamboo</groupId>
+			<artifactId>atlassian-bamboo-api</artifactId>
+			<version>${bamboo.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
 
 		<dependency>
 			<groupId>com.atlassian.bamboo</groupId>

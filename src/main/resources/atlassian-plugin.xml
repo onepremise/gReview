@@ -19,8 +19,8 @@
         <version>${project.version}</version>
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
         <bundle-instructions>
-            <Import-Package>*;resolution:=optional</Import-Package>
-        </bundle-instructions>
+      	    <Import-Package>com.atlassian.bamboo.plugins.git;resolution:=optional;version="[1.8.18,1.9.9]"</Import-Package>
+    	</bundle-instructions>
     </plugin-info>
 
     <!-- internationalize your plugin -->
