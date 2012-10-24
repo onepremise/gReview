@@ -147,6 +147,11 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 Bug Fixes and Enhancements
 ==========================
 
+1.2.8 Updates
+-------------
+
+ * Issue #16 4.2.X Support.
+ 
 1.2.3 Updates
 -------------
 
