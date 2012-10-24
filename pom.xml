@@ -3,16 +3,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-	<parent>
-		<groupId>com.atlassian.pom</groupId>
-		<artifactId>atlassian-public-pom</artifactId>
-		<version>28</version>
-	</parent>
-
+    <parent>
+      <groupId>com.atlassian.pom</groupId>
+      <artifactId>atlassian-public-pom</artifactId>
+      <version>28</version>
+    </parent>
+    
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.houghtonassociates.bamboo.plugins</groupId>
 	<artifactId>gReview</artifactId>
-	<version>1.2.4</version>
+	<version>1.2.8</version>
 
 	<organization>
 		<name>Houghton Associates</name>
@@ -24,7 +24,7 @@
 	<packaging>atlassian-plugin</packaging>
 
 	<properties>
-		<bamboo.version>4.2.1</bamboo.version>
+		<bamboo.version>4.2</bamboo.version>
 		<bamboo.data.version>3.2.2</bamboo.data.version>
 		<amps.version>3.7.2</amps.version>
 	</properties>
@@ -42,14 +42,12 @@
 			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>
 			<version>1.1.1</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>commons-collections</groupId>
 			<artifactId>commons-collections</artifactId>
 			<version>3.2.1</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -58,14 +56,14 @@
 			<version>2.5</version>
 			<scope>provided</scope>
 		</dependency>
-
+		
 		<dependency>
 			<groupId>com.atlassian.bamboo</groupId>
 			<artifactId>atlassian-bamboo-api</artifactId>
 			<version>${bamboo.version}</version>
+			<type>jar</type>
 			<scope>provided</scope>
 		</dependency>
-
 
 		<dependency>
 			<groupId>com.atlassian.bamboo</groupId>
@@ -80,13 +78,19 @@
 			<version>${bamboo.version}</version>
 			<scope>provided</scope>
 		</dependency>
-
+		
 		<dependency>
 			<groupId>com.atlassian.bamboo.plugins</groupId>
 			<artifactId>atlassian-bamboo-plugin-git</artifactId>
 			<version>1.9.9</version>
 		</dependency>
-
+		
+		<dependency>
+			<groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
+			<artifactId>gerrit-events</artifactId>
+			<version>1.2.7</version>
+		</dependency>
+		
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -95,15 +99,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
-			<artifactId>gerrit-events</artifactId>
-			<version>1.2.7</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.eclipse.jgit</groupId>
 			<artifactId>org.eclipse.jgit</artifactId>
-			<version>1.1.0.201109151100-r-ATLASSIAN-4</version>
+			<version>2.1.0.201209190230-r</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.jcraft</groupId>
@@ -111,7 +109,7 @@
 				</exclusion>
 			</exclusions>
 			<scope>system</scope>
-			<systemPath>${basedir}/libs/org.eclipse.jgit-1.1.0.201109151100-r-ATLASSIAN-4.jar</systemPath>
+			<systemPath>${basedir}/libs/org.eclipse.jgit-2.1.0.201209190230-r.jar</systemPath>
 		</dependency>
 	</dependencies>
 
@@ -142,6 +140,16 @@
 					<target>1.6</target>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.12</version>
+				<configuration>
+					<excludedGroups>manual</excludedGroups>
+					<parallel>methods</parallel>
+					<threadCount>16</threadCount>
+				</configuration>
+			</plugin>			
 
 			<plugin>
 				<artifactId>maven-dependency-plugin</artifactId>

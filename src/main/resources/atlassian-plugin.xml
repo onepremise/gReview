@@ -19,7 +19,9 @@
         <version>${project.version}</version>
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
         <bundle-instructions>
-      	    <Import-Package>com.atlassian.bamboo.plugins.git;resolution:=optional;version="[1.8.18,1.9.9]"</Import-Package>
+      	    <Import-Package>com.atlassian.bamboo.plugins.git;resolution:=optional;version="[1.8.26,1.9.9]"</Import-Package>
+      	    <Import-Package>com.sonyericsson.hudson.plugins.gerrit;resolution:=optional;version="[1.2.7,1.3.1]"</Import-Package>
+      	    <Import-Package>*;resolution:=optional</Import-Package>
     	</bundle-instructions>
     </plugin-info>
 
@@ -32,9 +34,10 @@
       <context>atl.general</context>
     </web-resource>
 
-
 	<component-import key="i18nResolver" interface="com.atlassian.sal.api.message.I18nResolver"/>
-
+	<component-import key="branchIntegrationHelper" interface="com.atlassian.bamboo.plan.branch.BranchIntegrationHelper" />
+    <component-import key="encryptionService" interface="com.atlassian.bamboo.security.EncryptionService" />
+    <component-import key="repositoryDefinitionManager" interface="com.atlassian.bamboo.repository.RepositoryDefinitionManager" />
 
     <repository key="gerrit" name="Gerrit Repository"
                      class="com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter">

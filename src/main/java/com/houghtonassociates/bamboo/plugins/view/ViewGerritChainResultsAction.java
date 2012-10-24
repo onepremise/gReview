@@ -27,7 +27,6 @@ import com.atlassian.bamboo.ww2.aware.permissions.PlanReadSecurityAware;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
-import com.houghtonassociates.bamboo.plugins.utils.I18NUtils;
 
 /**
  * @author Jason Huntley
@@ -47,9 +46,6 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
         super();
 
         changeVO = new GerritChangeVO();
-
-        I18NUtils.updateTextProvider(this.getTextProvider(),
-            "repository.gerrit.name");
     }
 
     public GerritRepositoryAdapter getRepository() {

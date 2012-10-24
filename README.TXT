@@ -21,7 +21,8 @@ Features
 Requirements
 ============
 
- * [Bamboo 4.0](http://www.atlassian.com/software/bamboo/download)
+ * [Bamboo 4.2+](http://www.atlassian.com/software/bamboo/download)
+ * [Native Git 1.8.0+](http://git-scm.com/downloads)
  * [Gerrit Code Review (2.4+)](http://code.google.com/p/gerrit/downloads/list)
 
 Install
@@ -31,6 +32,11 @@ Bamboo
 ------
 
 The Bamboo install guide can be found [here](https://confluence.atlassian.com/display/BAMBOO/Bamboo+installation+guide).
+
+Native Git
+----------
+
+Native Git can be downloaded from the git website [here](http://git-scm.com/downloads).
 
 Gerrit
 ------
@@ -46,6 +52,17 @@ This plugin can be installed via the Universal Plugin Manager in Bamboo.
 
 Usage
 =======
+
+Enable Native Git
+-----------------
+
+ * Login as admin.
+ * Goto the Administration console by selecting "Administration" link at top.
+ * Click on "Executables" link on the left under "Build Resources".
+ * Click on "add an executable as a server capability".
+ * Select "Git" as "Capability Type".
+ * Provide path to "git.exe".
+ * Click on "Add".
 
 Setup Gerrit
 ------------
