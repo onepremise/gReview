@@ -348,14 +348,17 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             error = true;
         }
 
-        String strPhrase =
-            buildConfiguration.getString(TEMPORARY_GERRIT_SSH_PASSPHRASE);
+        String strPhrase;
         if (buildConfiguration
             .getBoolean(TEMPORARY_GERRIT_SSH_PASSPHRASE_CHANGE)) {
-        } else if (strPhrase == null) {
+            strPhrase =
+                buildConfiguration.getString(TEMPORARY_GERRIT_SSH_PASSPHRASE);
+        } else {
             strPhrase =
                 buildConfiguration.getString(REPOSITORY_GERRIT_SSH_PASSPHRASE,
                     "");
+            if (StringUtils.isNotBlank(strPhrase))
+                strPhrase = encryptionService.decrypt(strPhrase);
         }
 
         String keyFilePath =
