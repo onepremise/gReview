@@ -41,6 +41,8 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
     private GerritRepositoryAdapter repository = null;
     private static final Logger log = Logger
         .getLogger(ViewGerritChainResultsAction.class);
+    private static final String GERRIT_REPOSITORY_PLUGIN_KEY =
+        "com.houghtonassociates.bamboo.plugins.gReview:gerrit";
 
     public ViewGerritChainResultsAction() {
         super();
@@ -77,16 +79,21 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
 
     @Override
     public String doExecute() throws Exception {
-        GerritChangeVO c =
-            getGerritService().getChangeByRevision(this.getRevision());
+        final String revision = this.getRevision();
 
-        if (c == null) {
-            log.error(this.getTextProvider().getText(
-                "repository.gerrit.messages.error.retrieve"));
-
+        if (revision == null) {
             changeVO = new GerritChangeVO();
         } else {
-            changeVO = c;
+            final GerritChangeVO change =
+                getGerritService().getChangeByRevision(revision);
+
+            if (change == null) {
+                log.error(this.getTextProvider().getText(
+                    "repository.gerrit.messages.error.retrieve"));
+                changeVO = new GerritChangeVO();
+            } else {
+                changeVO = change;
+            }
         }
         return super.doExecute();
     }
@@ -104,10 +111,13 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
     }
 
     public String getRevision() {
-        List<RepositoryChangeset> changeset =
+        final List<RepositoryChangeset> changesets =
             this.getResultsSummary().getRepositoryChangesets();
-        RepositoryChangeset rcs = changeset.get(0);
-        String revision = rcs.getChangesetId();
-        return revision;
+        for (RepositoryChangeset changeset : changesets) {
+            if (changeset.getRepositoryData().getPluginKey()
+                .equals(GERRIT_REPOSITORY_PLUGIN_KEY))
+                return changeset.getChangesetId();
+        }
+        return null;
     }
 }
