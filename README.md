@@ -146,7 +146,13 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 
 Bug Fixes and Enhancements
 ==========================
+1.2.9 Updates
+-------------
 
+ * Issue #21 Gerrit Chain Results screen shows changes from other repositories
+ * Issue #20 Edit Gerrit Repository' screen force to re-enter passphrase for private key
+ * Issue #19 NPE on Bamboo agent after job is dispatched by gReview
+ 
 1.2.8 Updates
 -------------
 

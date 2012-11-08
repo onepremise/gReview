@@ -158,6 +158,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         bandanaManager =
             new DefaultBandanaManager(new MemoryBandanaPersister());
+
+        log.debug("Initialized repository adapter.");
     }
 
     public BandanaManager getBandanaManager() {
@@ -167,6 +169,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     @Override
     public void
                     prepareConfigObject(@NotNull BuildConfiguration buildConfiguration) {
+        log.debug("Preparing repository adapter...");
+
         String strHostName =
             buildConfiguration.getString(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
                 "").trim();
