@@ -15,15 +15,6 @@
  */
 package com.houghtonassociates.bamboo.plugins.view;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.configuration.HierarchicalConfiguration;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-
 import com.atlassian.bamboo.collections.ActionParametersMap;
 import com.atlassian.bamboo.commit.Commit;
 import com.atlassian.bamboo.commit.CommitFile;
@@ -43,6 +34,14 @@ import com.atlassian.util.concurrent.Nullable;
 import com.google.common.collect.Maps;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
+import org.apache.commons.configuration.HierarchicalConfiguration;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * GitWeb Repository Browser Integration.
@@ -264,7 +263,7 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
         return result.toString();
     }
 
-    @Override
+
     public String
                     getHtmlForCommitsFull(ResultsSummary resultsSummary,
                                           RepositoryChangeset repositoryChangeset,
@@ -279,7 +278,7 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
         return templateRenderer.render(FULL_COMMIT_VIEW_TEMPLATE, context);
     }
 
-    @Override
+
     public String
                     getHtmlForCommitsSummary(ResultsSummary resultsSummary,
                                              RepositoryChangeset repositoryChangeset,
@@ -299,7 +298,7 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
         return result;
     }
 
-    @Override
+
     public String
                     getHtmlForCommitsSummary(ResultsSummary resultsSummary,
                                              RepositoryChangeset repositoryChangeset,
@@ -409,7 +408,7 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
     /**
      * Pulls back gitweb file urls for each file listed under changes.
      * 
-     * @param revisions
+     * @param file
      * @param repositoryData
      * @return
      */

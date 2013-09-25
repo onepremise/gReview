@@ -15,18 +15,6 @@
  */
 package com.houghtonassociates.bamboo.plugins.dao;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import net.sf.json.JSONObject;
-
-import org.apache.log4j.Logger;
-
 import com.atlassian.bamboo.repository.RepositoryException;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.Approval;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
@@ -40,6 +28,16 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
+import net.sf.json.JSONObject;
+import org.apache.log4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Facade for witing with ssh, gerrit-events, parsing JSON results, and Gerrit related data.
@@ -146,12 +144,17 @@ public class GerritService {
                                 Integer patchNumber, String message) {
         String command = "";
 
-        if (pass.booleanValue()) {
-            command = String.format( "gerrit review --message '%s' --verified +1 %s,%s",
+        if (pass == null) {
+            command = String.format( "gerrit review --message '%s' --verified 0 %s,%s",
                     message, changeNumber.intValue(), patchNumber.intValue());
         } else {
-            command = String.format( "gerrit review --message '%s' --verified -1 %s,%s",
-                    message, changeNumber.intValue(), patchNumber.intValue());
+            if (pass.booleanValue()) {
+                command = String.format( "gerrit review --message '%s' --verified +1 %s,%s",
+                        message, changeNumber.intValue(), patchNumber.intValue());
+            } else {
+                command = String.format( "gerrit review --message '%s' --verified -1 %s,%s",
+                        message, changeNumber.intValue(), patchNumber.intValue());
+            }
         }
 
         log.debug("Sending Command: " + command);
@@ -216,13 +219,13 @@ public class GerritService {
         return gQueryHandler;
     }
 
-    public List<JSONObject> runGerritQuery(String query) throws RepositoryException {
+    public List<JSONObject> runGerritQuery(String query, boolean withPatchSets) throws RepositoryException {
         List<JSONObject> jsonObjects = null;
 
         log.debug("Gerrit query: " + query);
 
         try {
-            jsonObjects = getGerritQueryHandler().queryJava(query, true, true, true);
+            jsonObjects = getGerritQueryHandler().queryJava(query, withPatchSets, true, true);
         } catch (SshException e) {
             throw new RepositoryException("SSH connection error", e);
         } catch (IOException e) {
@@ -252,51 +255,10 @@ public class GerritService {
         return jsonObjects;
     }
 
-    public GerritChangeVO getLastChange() throws RepositoryException {
-        log.debug("getLastChange()...");
-
-        Set<GerritChangeVO> changes = getGerritChangeInfo();
-        GerritChangeVO selectedChange = null;
-
-        Date lastDt = new Date(0);
-
-        for (GerritChangeVO change : changes) {
-            Date dt = change.getLastUpdate();
-
-            if (dt.getTime() > lastDt.getTime()) {
-                lastDt = change.getLastUpdate();
-                selectedChange = change;
-            }
-        }
-
-        return selectedChange;
-    }
-
-    public GerritChangeVO getLastUnverifiedChange() throws RepositoryException {
-        log.debug("getLastUnverifiedChange()...");
-
-        Set<GerritChangeVO> changes = getGerritChangeInfo();
-        GerritChangeVO selectedChange = null;
-
-        Date lastDt = new Date(0);
-
-        for (GerritChangeVO change : changes) {
-            Date dt = change.getLastUpdate();
-
-            if (dt.getTime() > lastDt.getTime()
-                && change.getVerificationScore() < 1) {
-                lastDt = change.getLastUpdate();
-                selectedChange = change;
-            }
-        }
-
-        return selectedChange;
-    }
-
-    public GerritChangeVO getLastChange(String project) throws RepositoryException {
+    public GerritChangeVO getLastChange(String project, boolean onlyOpen) throws RepositoryException {
         log.debug(String.format("getLastChange(project=%s)...", project));
 
-        Set<GerritChangeVO> changes = getGerritChangeInfo(project);
+        Set<GerritChangeVO> changes = getGerritChangeInfo(project, onlyOpen);
         GerritChangeVO selectedChange = null;
 
         Date lastDt = new Date(0);
@@ -310,26 +272,38 @@ public class GerritService {
             }
         }
 
+        log.info(String.format("getLastChange(project=%s) is: %s", project, selectedChange));
         return selectedChange;
     }
 
-    public GerritChangeVO getLastUnverifiedChange(String project) throws RepositoryException {
-        log.debug(String.format("getLastUnverifiedChange(project=%s)...", project));
+    /**
+     * Return the oldest unverived change.
+     *
+     *
+     * @param project
+     * @param lastVcsRevisionKey
+     * @return
+     * @throws RepositoryException
+     */
+    public GerritChangeVO getFirstUnverifiedChange(String project, String lastVcsRevisionKey) throws RepositoryException {
+        log.debug(String.format("getFirstUnverifiedChange(project=%s)...", project));
 
-        Set<GerritChangeVO> changes = getGerritChangeInfo(project);
+        Set<GerritChangeVO> changes = getGerritChangeInfo(project, true);
         GerritChangeVO selectedChange = null;
 
-        Date lastDt = new Date(0);
+        Date firstDt = new Date();
 
         for (GerritChangeVO change : changes) {
             Date dt = change.getLastUpdate();
 
-            if (dt.getTime() > lastDt.getTime() && change.getVerificationScore() < 1) {
-                lastDt = change.getLastUpdate();
+            if (dt.getTime() < firstDt.getTime() && change.getVerificationScore() == 0 && !change.isMerged()
+                    && !change.getCurrentPatchSet().getRevision().equals(lastVcsRevisionKey) ) {
+                firstDt = change.getLastUpdate();
                 selectedChange = change;
             }
         }
 
+        log.debug(String.format("getFirstUnverifiedChange(project=%s) is: %s", project, selectedChange));
         return selectedChange;
     }
 
@@ -338,7 +312,7 @@ public class GerritService {
 
         List<JSONObject> jsonObjects = null;
 
-        jsonObjects = runGerritQuery(String.format("change:%s", changeID));
+        jsonObjects = runGerritQuery(String.format("change:%s", changeID), false);
 
         if (jsonObjects == null) {
 			return null;
@@ -352,50 +326,43 @@ public class GerritService {
 
         List<JSONObject> jsonObjects = null;
 
-        jsonObjects = runGerritQuery(String.format("commit:%s", rev));
+        jsonObjects = runGerritQuery(String.format("commit:%s", rev), true);
 
         if (jsonObjects == null) {
 			return null;
 		}
 
-        return this.transformJSONObject(jsonObjects.get(0));
-    }
-
-    public Set<GerritChangeVO> getGerritChangeInfo() throws RepositoryException {
-        log.debug("getGerritChangeInfo()...");
-
-        List<JSONObject> jsonObjects = runGerritQuery("is:open");
-        Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
-
-        if (jsonObjects == null) {
-			return results;
-		}
-
-        log.info("Query result count: " + jsonObjects.size());
-
-        for (JSONObject j : jsonObjects) {
-            if (j.containsKey(GerritChangeVO.JSON_KEY_PROJECT)) {
-                GerritChangeVO info = transformJSONObject(j);
-                results.add(info);
-            }
+        GerritChangeVO changeVO = this.transformJSONObject(jsonObjects.get(0));
+        if (!rev.equals(changeVO.getLastRevision())) {
+             for (PatchSet p : changeVO.getPatchSets()) {
+                if (rev.equals(p.getRevision())) {
+                    changeVO.setCurrentPatchSet(p);
+                    break;
+                }
+             }
         }
-
-        return results;
+        return changeVO;
     }
 
-    public Set<GerritChangeVO> getGerritChangeInfo(String project) throws RepositoryException {
-        String strQuery = String.format("is:open project:%s", project);
-
+    public Set<GerritChangeVO> getGerritChangeInfo(String project, boolean onlyOpen) throws RepositoryException {
         log.debug(String.format("getGerritChangeInfo(project=%s)...", project));
 
-        List<JSONObject> jsonObjects = runGerritQuery(strQuery);
+
+        String strQuery;
+        if (onlyOpen) {
+            strQuery = String.format("is:open project:%s", project);
+        } else {
+            strQuery = String.format("is:merged project:%s limit:1", project);
+        }
+
+        List<JSONObject> jsonObjects = runGerritQuery(strQuery, false);
         Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
 
         if (jsonObjects == null) {
 			return results;
 		}
 
-        log.info("Query result count: " + jsonObjects.size());
+        log.debug("Query result count: " + jsonObjects.size());
 
         for (JSONObject j : jsonObjects) {
             if (j.containsKey(GerritChangeVO.JSON_KEY_PROJECT)) {
@@ -437,19 +404,24 @@ public class GerritService {
         info.setOpen(j.getBoolean(GerritChangeVO.JSON_KEY_OPEN));
         info.setStatus(j.getString(GerritChangeVO.JSON_KEY_STATUS));
 
-        JSONObject cp =
-            j.getJSONObject(GerritChangeVO.JSON_KEY_CURRENT_PATCH_SET);
+        JSONObject cp = j.getJSONObject(GerritChangeVO.JSON_KEY_CURRENT_PATCH_SET);
         try {
-            assignPatchSet(info, cp, true);
+            PatchSet p = assignPatchSet(info, cp);
+            info.setCurrentPatchSet(p);
 
-            List<JSONObject> patchSets =
-                j.getJSONArray(GerritChangeVO.JSON_KEY_PATCH_SET);
-
-            for (JSONObject p : patchSets) {
-                assignPatchSet(info, p, false);
-            }
         } catch (ParseException e) {
             throw new RepositoryException(e.getMessage());
+        }
+
+        if (j.containsKey(GerritChangeVO.JSON_KEY_PATCH_SET)) {
+            List<JSONObject> psets = j.getJSONArray(GerritChangeVO.JSON_KEY_PATCH_SET);
+            for (JSONObject jset : psets) {
+                try {
+                    info.getPatchSets().add(assignPatchSet(info, jset));
+                } catch (ParseException e) {
+                    throw new RepositoryException(e.getMessage());
+                }
+            }
         }
 
         log.debug(String.format("Object Transformed change=%s", info.toString()));
@@ -457,8 +429,7 @@ public class GerritService {
         return info;
     }
 
-    private void assignPatchSet(GerritChangeVO info, JSONObject p,
-                                boolean isCurrent) throws ParseException {
+    private PatchSet assignPatchSet(GerritChangeVO info, JSONObject p) throws ParseException {
         log.debug(String.format("Assigning Patchset to: %s", info.toString()));
 
         PatchSet patch = new PatchSet();
@@ -483,30 +454,27 @@ public class GerritService {
                 Approval apprv = new Approval();
 
                 apprv.setType(a.getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_TYPE));
-
-                if (a .containsKey(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_EMAIL)) {
+                if (a.has(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_DESC)) {
                     apprv.setDescription(a.getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_DESC));
                 }
-
                 apprv.setValue(a.getInt(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_VALUE));
 
                 Integer grantedOn = a.getInt(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_GRANTED_ON);
                 apprv.setGrantedOn(new Date(grantedOn.longValue() * 1000));
 
                 JSONObject by = a.getJSONObject(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY);
-                apprv .setByName(by .getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_NAME));
+                apprv.setByName(by.getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_NAME));
+                apprv.setByEmail(by .getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_EMAIL));
 
-                if (by.containsKey(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_EMAIL)) {
-                    apprv .setByEmail(by .getString(GerritChangeVO.JSON_KEY_PATCH_SET_APPRVS_BY_EMAIL));
-                }
-
-                if (isCurrent) {
-                    if (apprv.getType().equals("VRIF")) {
-						info.setVerificationScore(info.getVerificationScore() + apprv.getValue());
-					} else if (apprv.getType().equals("CRVW")) {
-						info.setReviewScore(info.getReviewScore() + apprv.getValue());
-					}
-                }
+                if ("Verified".equals(apprv.getType()) || "VRIF".equals(apprv.getType())) {
+                    if (info.getVerificationScore()==0 || info.getVerificationScore() > apprv.getValue()) {
+                        info.setVerificationScore(apprv.getValue());
+                    }
+				} else if ("Code-Review".equals(apprv.getType()) || "CRVW".equals(apprv.getType())) {
+                    if (info.getReviewScore()==0 || info.getReviewScore() > apprv.getValue()) {
+                        info.setReviewScore(apprv.getValue());
+                    }
+				}
 
                 patch.getApprovals().add(apprv);
             }
@@ -525,12 +493,10 @@ public class GerritService {
             }
         }
 
-        if (isCurrent) {
-            info.setCurrentPatchSet(patch);
-        } else {
-            info.getPatchSets().add(patch);
+        if (log.isDebugEnabled()){
+            log.debug(String.format("Patchset assigned: %s", patch.toString()));
         }
 
-        log.debug(String.format("Patchset assigned: %s", patch.toString()));
+        return patch;
     }
 }

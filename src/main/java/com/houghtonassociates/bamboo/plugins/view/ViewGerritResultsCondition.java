@@ -15,9 +15,6 @@
  */
 package com.houghtonassociates.bamboo.plugins.view;
 
-import java.util.List;
-import java.util.Map;
-
 import com.atlassian.bamboo.build.Job;
 import com.atlassian.bamboo.chains.Chain;
 import com.atlassian.bamboo.plan.IncorrectPlanTypeException;
@@ -30,6 +27,9 @@ import com.atlassian.plugin.web.Condition;
 import com.google.common.collect.Lists;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Jason Huntley
  * 
@@ -40,7 +40,6 @@ public class ViewGerritResultsCondition implements Condition {
 
     @Override
     public void init(Map<String, String> params) throws PluginParseException {
-
     }
 
     @Override
