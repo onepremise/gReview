@@ -74,6 +74,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -792,11 +793,15 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             }
         }
 
-        AdministrationConfiguration config = administrationConfigurationManager.getAdministrationConfiguration();
-        String resultsUrl = config.getBaseUrl() + "/browse/" + buildContext.getPlanResultKey().toString();
-        getGerritDAO().verifyChange(null, change.getNumber(), change.getCurrentPatchSet().getNumber(),
-                String.format("Bamboo: Build started: %s", resultsUrl));
 
+        Map<String,String> customConfiguration = buildContext.getBuildDefinition().getCustomConfiguration();
+        boolean gerritVerify = Boolean.parseBoolean(customConfiguration.get("custom.gerrit.run"));
+        if (gerritVerify) {
+            AdministrationConfiguration config = administrationConfigurationManager.getAdministrationConfiguration();
+            String resultsUrl = config.getBaseUrl() + "/browse/" + buildContext.getPlanResultKey().toString();
+            getGerritDAO().verifyChange(null, change.getNumber(), change.getCurrentPatchSet().getNumber(),
+                    String.format("Bamboo: Build started: %s", resultsUrl));
+        }
         return vcsRevisionKey;
     }
 
