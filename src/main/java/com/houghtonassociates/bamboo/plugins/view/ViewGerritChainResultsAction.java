@@ -91,10 +91,6 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
         return super.doExecute();
     }
 
-    public String getHTTPHost() {
-        return getRepository().getHostname();
-    }
-
     public GerritChangeVO getChange() {
         return changeVO;
     }
