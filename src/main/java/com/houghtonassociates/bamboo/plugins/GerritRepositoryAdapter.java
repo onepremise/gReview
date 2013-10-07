@@ -27,6 +27,7 @@ import com.atlassian.bamboo.plan.Plan;
 import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.PlanManager;
 import com.atlassian.bamboo.repository.AbstractStandaloneRepository;
+import com.atlassian.bamboo.repository.CustomVariableProviderRepository;
 import com.atlassian.bamboo.repository.Repository;
 import com.atlassian.bamboo.repository.RepositoryException;
 import com.atlassian.bamboo.security.EncryptionService;
@@ -63,6 +64,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,7 +73,7 @@ import java.util.Set;
  * This class allows bamboo to use Gerrit as if it were a repository.
  */
 public class GerritRepositoryAdapter extends AbstractStandaloneRepository
-    implements  CustomSourceDirectoryAwareRepository {
+    implements  CustomSourceDirectoryAwareRepository, CustomVariableProviderRepository {
 
     private static final long serialVersionUID = -3518800283574344591L;
 
@@ -120,6 +122,15 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     private static final String GIT_COMMIT_ACTION = "/COMMIT_MSG";
 
+    private static final String REPOSITORY_GERRIT_BRANCH =
+            "repository.gerrit.branch";
+
+    private static final String REPOSITORY_GERRIT_CHANGE_ID =
+            "repository.gerrit.change.id";
+
+    private static final String REPOSITORY_GERRIT_CHANGE_NUMBER =
+            "repository.gerrit.change.number";
+
     private static final Logger log = Logger
         .getLogger(GerritRepositoryAdapter.class);
 
@@ -142,6 +153,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private BandanaManager bandanaManager = null;
     private EncryptionService encryptionService;
     private PlanManager planManager;
+    private GerritChangeVO lastGerritChange = null;
 
     @SuppressWarnings("unused")
     public void setBandanaManager(BandanaManager bandanaManager) {
@@ -660,6 +672,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         log.info("retrieveSourceCode.. rev=" + vcsRevisionKey + " in=" + sourceDirectory);
 
+        lastGerritChange = null;
+
         GerritChangeVO change =
             this.getGerritDAO().getChangeByRevision(vcsRevisionKey);
 
@@ -668,6 +682,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 textProvider
                     .getText("repository.gerrit.messages.error.retrieve"));
         }
+
+        lastGerritChange = change;
 
         BuildLogger buildLogger = buildLoggerManager.getBuildLogger(buildContext.getPlanResultKey());
         RefSpec refSpec = new RefSpec().setForceUpdate(true).setSource(change.getCurrentPatchSet().getRef());
@@ -743,4 +759,16 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     }
 
 
+    @Override
+    @NotNull
+    public Map<String, String> getCustomVariables() {
+
+        Map<String, String> ret = new HashMap<String, String>();
+        if (lastGerritChange != null) {
+            ret.put(REPOSITORY_GERRIT_BRANCH, lastGerritChange.getBranch());
+            ret.put(REPOSITORY_GERRIT_CHANGE_ID, lastGerritChange.getId());
+            ret.put(REPOSITORY_GERRIT_CHANGE_NUMBER, String.valueOf(lastGerritChange.getNumber()));
+        }
+        return ret;
+    }
 }
