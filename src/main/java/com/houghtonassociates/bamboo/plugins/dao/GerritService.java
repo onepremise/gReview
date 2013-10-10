@@ -88,14 +88,15 @@ public class GerritService {
      *
      *
      * @param project
+     * @param branch
      * @param lastVcsRevisionKey
      * @return
      * @throws RepositoryException
      */
-    public GerritChangeVO getFirstUnverifiedChange(String project, String lastVcsRevisionKey) throws RepositoryException {
-        log.debug(String.format("getFirstUnverifiedChange(project=%s)...", project));
+    public GerritChangeVO getFirstUnverifiedChange(String project, String branch, String lastVcsRevisionKey) throws RepositoryException {
+        log.debug(String.format("getFirstUnverifiedChange(project=%s branch=%s)...", project, branch));
 
-        Set<GerritChangeVO> changes = getGerritChangeInfo(project, true);
+        Set<GerritChangeVO> changes = getGerritChangeInfo(project, branch);
         GerritChangeVO selectedChange = null;
 
         Date firstDt = new Date();
@@ -150,17 +151,17 @@ public class GerritService {
         return changeVO;
     }
 
-    private Set<GerritChangeVO> getGerritChangeInfo(String project, boolean onlyOpen) throws RepositoryException {
-        log.debug(String.format("getGerritChangeInfo(project=%s)...", project));
+    private Set<GerritChangeVO> getGerritChangeInfo(String project, String branch) throws RepositoryException {
 
-        String strQuery;
-        if (onlyOpen) {
-            strQuery = String.format("is:open project:%s", project);
-        } else {
-            strQuery = String.format("is:merged project:%s limit:1", project);
+        StringBuffer strQuery = new StringBuffer();
+
+        strQuery.append("is:open project:").append(project);
+
+        if (branch!=null) {
+            strQuery.append(" branch:").append(branch);
         }
 
-        List<JSONObject> jsonObjects = runGerritQuery(strQuery, false);
+        List<JSONObject> jsonObjects = runGerritQuery(strQuery.toString(), false);
         Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
 
         if (jsonObjects == null) {
