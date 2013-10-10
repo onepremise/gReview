@@ -37,6 +37,7 @@
    <li><B>Revision:</B> ${rev}</li>
    <li><B>Subject:</B> ${change.getSubject()}</li>
    <li><B>Owner:</B> ${change.getOwnerName()}</li>
+   <li><B>Owner Username:</B> ${change.getOwnerUserName()}</li>
    <li><B>Owner Email:</B> ${change.getOwnerEmail()}</li>
    <li><B>Created On:</B> ${change.getCreatedOn()?datetime}</li>
    <li><B>Last Update:</B> ${change.getLastUpdate()?datetime}</li>

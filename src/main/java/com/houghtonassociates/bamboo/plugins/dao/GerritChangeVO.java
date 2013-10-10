@@ -26,9 +26,12 @@ public class GerritChangeVO {
     public static final String JSON_KEY_ID = "id";
     public static final String JSON_KEY_NUMBER = "number";
     public static final String JSON_KEY_SUBJECT = "subject";
+
     public static final String JSON_KEY_OWNER = "owner";
-    public static final String JSON_KEY_OWNER_NAME = "name";
-    public static final String JSON_KEY_OWNER_EMAIL = "email";
+    public static final String JSON_KEY_NAME = "name";
+    public static final String JSON_KEY_EMAIL = "email";
+    public static final String JSON_KEY_USERNAME = "username";
+
     public static final String JSON_KEY_URL = "url";
     public static final String JSON_KEY_CREATED_ON = "createdOn";
     public static final String JSON_KEY_LAST_UPDATE = "lastUpdated";
@@ -41,8 +44,7 @@ public class GerritChangeVO {
     public static final String JSON_KEY_PATCH_SET_REV = "revision";
     public static final String JSON_KEY_PATCH_SET_REF = "ref";
     public static final String JSON_KEY_PATCH_SET_UPDLOADER = "uploader";
-    public static final String JSON_KEY_OWNER_SET_UPDLOADER_NAME = "name";
-    public static final String JSON_KEY_OWNER_SET_UPDLOADER_EMAIL = "email";
+    public static final String JSON_KEY_PATCH_SET_AUTHOR = "author";
     public static final String JSON_KEY_PATCH_SET_CREATED_ON = "createdOn";
     public static final String JSON_KEY_PATCH_SET_APPRVS = "approvals";
     public static final String JSON_KEY_PATCH_SET_APPRVS_TYPE = "type";
@@ -51,11 +53,11 @@ public class GerritChangeVO {
     public static final String JSON_KEY_PATCH_SET_APPRVS_GRANTED_ON =
         "grantedOn";
     public static final String JSON_KEY_PATCH_SET_APPRVS_BY = "by";
-    public static final String JSON_KEY_PATCH_SET_APPRVS_BY_NAME = "name";
-    public static final String JSON_KEY_PATCH_SET_APPRVS_BY_EMAIL = "email";
     public static final String JSON_KEY_PATCH_SET_FILES = "files";
     public static final String JSON_KEY_PATCH_SET_FILES_FILE = "file";
     public static final String JSON_KEY_PATCH_SET_FILES_TYPE = "type";
+    public static final String JSON_KEY_PATCH_SET_FILES_INSRT = "insertions";
+    public static final String JSON_KEY_PATCH_SET_FILES_DELT = "deletions";
     public static final String JSON_KEY_ROWCOUNT = "rowCount";
 
     private static final String CHANGE_STATUS_MERGED = "MERGED";
@@ -65,8 +67,11 @@ public class GerritChangeVO {
     private String id;
     private Integer number;
     private String subject;
+
     private String ownerName;
+    private String ownerUserName;
     private String ownerEmail;
+
     private String url;
     private Date createdOn;
     private Date lastUpdate;
@@ -86,6 +91,9 @@ public class GerritChangeVO {
         private String ref;
         private String uploaderName;
         private String uploaderEmail;
+        private String authorName;
+        private String authorEmail;
+        private String authorUserName;
         private Date createdOn;
         private final Set<Approval> approvals = new HashSet<Approval>(0);
         private final Set<FileSet> fileSets = new HashSet<FileSet>(0);
@@ -132,6 +140,30 @@ public class GerritChangeVO {
 
         public void setUploaderEmail(String uploaderEmail) {
             this.uploaderEmail = uploaderEmail;
+        }
+
+        public String getAuthorName() {
+            return authorName;
+        }
+
+        public void setAuthorName(String authorName) {
+            this.authorName = authorName;
+        }
+
+        public String getAuthorEmail() {
+            return authorEmail;
+        }
+
+        public void setAuthorEmail(String authorEmail) {
+            this.authorEmail = authorEmail;
+        }
+
+        public String getAuthorUserName() {
+            return authorUserName;
+        }
+
+        public void setAuthorUserName(String authorUserName) {
+            this.authorUserName = authorUserName;
         }
 
         public Date getCreatedOn() {
@@ -231,6 +263,8 @@ public class GerritChangeVO {
 
         private String file;
         private String type;
+        private int insertions;
+        private int deletions;
 
         public String getFile() {
             return file;
@@ -246,6 +280,22 @@ public class GerritChangeVO {
 
         public void setType(String type) {
             this.type = type;
+        }
+
+        public int getInsertions() {
+            return insertions;
+        }
+
+        public void setInsertions(int insertions) {
+            this.insertions = insertions;
+        }
+
+        public int getDeletions() {
+            return deletions;
+        }
+
+        public void setDeletions(int deletions) {
+            this.deletions = deletions;
         }
 
         @Override
@@ -304,6 +354,14 @@ public class GerritChangeVO {
 
     public void setOwnerName(String ownerName) {
         this.ownerName = ownerName;
+    }
+
+    public String getOwnerUserName() {
+        return ownerUserName;
+    }
+
+    public void setOwnerUserName(String ownerUserName) {
+        this.ownerUserName = ownerUserName;
     }
 
     public String getOwnerEmail() {

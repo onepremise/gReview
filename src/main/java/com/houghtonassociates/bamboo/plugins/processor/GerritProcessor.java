@@ -17,11 +17,13 @@ package com.houghtonassociates.bamboo.plugins.processor;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import com.atlassian.bamboo.build.CustomBuildProcessor;
+import com.atlassian.bamboo.build.fileserver.BuildDirectoryManager;
 import com.atlassian.bamboo.builder.BuildState;
 import com.atlassian.bamboo.configuration.AdministrationConfiguration;
 import com.atlassian.bamboo.configuration.AdministrationConfigurationManager;
@@ -29,10 +31,13 @@ import com.atlassian.bamboo.plan.Plan;
 import com.atlassian.bamboo.repository.RepositoryDefinition;
 import com.atlassian.bamboo.repository.RepositoryException;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
+import com.atlassian.bamboo.utils.i18n.I18nBeanFactory;
+import com.atlassian.bamboo.utils.i18n.TextProviderAdapter;
 import com.atlassian.bamboo.v2.build.BaseConfigurableBuildPlugin;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bamboo.v2.build.CurrentBuildResult;
 import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
+import com.atlassian.spring.container.LazyComponentReference;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
@@ -48,6 +53,7 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
 
     // dependencies
     private TextProvider textProvider = null;
+    private BuildDirectoryManager buildDirectoryManager = null;
     private AdministrationConfigurationManager administrationConfigurationManager;
 
     private Map<String, String> customConfiguration = null;
@@ -64,8 +70,35 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
             buildContext.getBuildDefinition().getCustomConfiguration();
     }
 
+    public void
+                    setBuildDirectoryManager(BuildDirectoryManager buildDirectoryManager) {
+        logger.debug(String.format(
+            "setBuildDirectoryManager: setting build directory manager, %s..",
+            buildDirectoryManager.toString()));
+        this.buildDirectoryManager = buildDirectoryManager;
+    }
+
     public synchronized void setTextProvider(TextProvider textProvider) {
-        this.textProvider = textProvider;
+        // perform a quick test
+        // not sure why this is the case, but textprovider fails on remote agent
+        // There's some tickets open against it and open end questions:
+        // https://answers.atlassian.com/questions/20566/textprovider-in-sdk-bamboo-helloworld-task-example-does-not-work
+        String test = textProvider.getText("repository.gerrit.name");
+        if (test != null) {
+            logger
+                .debug("setTextProvider: On local agent, keeping textProvider..");
+            this.textProvider = textProvider;
+        } else {
+            logger
+                .debug("setTextProvider: On remote agent, switching textProvider..");
+            LazyComponentReference<I18nBeanFactory> i18nBeanFactoryReference =
+                new LazyComponentReference<I18nBeanFactory>("i18nBeanFactory");
+            I18nBeanFactory i18nBeanFactory = i18nBeanFactoryReference.get();
+            this.textProvider =
+                new TextProviderAdapter(i18nBeanFactory.getI18nBean(Locale
+                    .getDefault()));
+        }
+
     }
 
     public void
@@ -122,8 +155,13 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
             }
         }
 
-        return textProvider.getText("processor.gerrit.messages.build.sucess",
-            Arrays.asList(resultsUrl));
+        String msg =
+            textProvider.getText("processor.gerrit.messages.build.sucess",
+                Arrays.asList(resultsUrl));
+
+        logger.debug("buildStatusString: " + msg);
+
+        return msg;
     }
 
     @Override
@@ -156,12 +194,24 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
                                              CurrentBuildResult results) throws RepositoryException {
         final GerritRepositoryAdapter gra =
             (GerritRepositoryAdapter) rd.getRepository();
-        final String revision =
+        String revNumber =
+            results.getCustomBuildData().get("repository.revision.number");
+        final String vcsRevision =
             buildContext.getBuildChanges().getVcsRevisionKey(rd.getId());
+        final String prevVcsRevision =
+            buildContext.getBuildChanges()
+                .getPreviousVcsRevisionKey(rd.getId());
+
         final GerritService service =
             new GerritService(gra.getHostname(), gra.getPort(),
                 gra.getGerritAuthentication());
-        final GerritChangeVO change = service.getChangeByRevision(revision);
+
+        logger.debug(String.format(
+            "revNumber=%s, vcsRevision=%s, prevVcsRevision=%s", revNumber,
+            vcsRevision, prevVcsRevision));
+
+        final GerritChangeVO change =
+            service.getChangeByRevision(prevVcsRevision);
 
         if (change == null) {
             logger.error(textProvider

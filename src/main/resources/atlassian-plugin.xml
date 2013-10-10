@@ -19,9 +19,53 @@
         <version>${project.version}</version>
         <vendor name="${project.organization.name}" url="${project.organization.url}" />
         <bundle-instructions>
-      	    <Import-Package>com.atlassian.bamboo.plugins.git;resolution:=optional;version="[1.8.26,1.9.9]"</Import-Package>
-      	    <Import-Package>com.sonyericsson.hudson.plugins.gerrit;resolution:=optional;version="[1.2.7,1.3.1]"</Import-Package>
-      	    <Import-Package>*;resolution:=optional</Import-Package>
+      	    <Import-Package>
+      	    com.houghtonassociates.bamboo.*,
+      	    com.sonyericsson.hudson.plugins.gerrit.*;version="1.5.2",
+      	    com.atlassian.bamboo.plugins.git.*;resolution:=optional;version="2.5.8",
+      	    com.atlassian.bamboo.ww2.*;resolution:=optional,
+      	    com.atlassian.bamboo.agent.*;resolution:=optional,
+      	    com.atlassian.bamboo.applinks.*;resolution:=optional,
+      	    com.atlassian.bamboo.author.*;resolution:=optional,
+      	    com.atlassian.bamboo.build.*;resolution:=optional,
+      	    com.atlassian.bamboo.builder.*;resolution:=optional,
+      	    com.atlassian.bamboo.caching.*;resolution:=optional,
+      	    com.atlassian.bamboo.chains.*;resolution:=optional,
+      	    com.atlassian.bamboo.collections.*;resolution:=optional,
+      	    com.atlassian.bamboo.commit.*;resolution:=optional,
+      	    com.atlassian.bamboo.configuration.*;resolution:=optional,
+      	    com.atlassian.bamboo.core.*;resolution:=optional,
+      	    com.atlassian.bamboo.event.*;resolution:=optional,
+      	    com.atlassian.bamboo.labels.*;resolution:=optional,
+      	    com.atlassian.bamboo.license.*;resolution:=optional,
+      	    com.atlassian.bamboo.logger.*;resolution:=optional,
+      	    com.atlassian.bamboo.persister.*;resolution:=optional,
+      	    com.atlassian.bamboo.plan.*;resolution:=optional,
+      	    com.atlassian.bamboo.repository.*;resolution:=optional,
+      	    com.atlassian.bamboo.results.*;resolution:=optional,
+      	    com.atlassian.bamboo.resultsummary.*;resolution:=optional,
+      	    com.atlassian.bamboo.security.*;resolution:=optional,
+      	    com.atlassian.bamboo.ssh.*;resolution:=optional,
+      	    com.atlassian.bamboo.task.*;resolution:=optional,
+      	    com.atlassian.bamboo.template.*;resolution:=optional,
+      	    com.atlassian.bamboo.user.*;resolution:=optional,
+      	    com.atlassian.bamboo.variable.*;resolution:=optional,
+      	    com.atlassian.bamboo.webrepository.*;resolution:=optional,
+      	    com.atlassian.bamboo.v2.build.*;resolution:=optional,
+            com.atlassian.bamboo.bandana.*;resolution:=optional,
+            com.atlassian.bamboo.collections.*;resolution:=optional,
+            com.atlassian.bamboo.resultsummary.vcs.*;resolution:=optional,
+            com.atlassian.bamboo.utils.*;resolution:=optional,
+            com.atlassian.bandana.impl.*;resolution:=optional,
+            com.atlassian.applinks.api.*;resolution:=optional,
+            com.atlassian.sal.*;resolution:=optional,
+            com.atlassian.spring.container.*;resolution:=optional,
+            com.atlassian.util.concurrent.*;resolution:=optional,
+            org.apache.log4j;resolution:=optional,
+            org.apache.commons.*;resolution:=optional,
+            org.slf4j.*;resolution:=optional,
+            javax.crypto.*;resolution:=optional
+      	    </Import-Package>
     	</bundle-instructions>
     </plugin-info>
 
