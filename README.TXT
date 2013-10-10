@@ -96,7 +96,7 @@ Adding Gitweb
  * Select an existing Gerrit Repository or add one.
  * Drop down 'Advanced Options' and select the GitWeb repository.
  * [Provide your details and save](https://lh5.googleusercontent.com/-wd7iOs6EmhQ/UCKvWNPlPJI/AAAAAAAAAPY/9LkFAJtksFI/s917/source-repositories2.JPG)
- 
+
 Troubleshooting
 ===============
 
@@ -146,18 +146,28 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 
 Bug Fixes and Enhancements
 ==========================
+
+1.3.0 Updates
+-------------
+ * Issue #23 Changes discovering problem - resolved partially, correct build triger ordering
+ * Issue #24 Checkout failed - remove dependency for native git
+ * Issue #26 How to restrict bamboo to poll the changes only on a particular branch - added branch support
+ * Issue #27 Bamboo 4.3 support - tested witch 4.3.3
+
+
+
 1.2.9 Updates
 -------------
 
  * Issue #21 Gerrit Chain Results screen shows changes from other repositories
  * Issue #20 Edit Gerrit Repository' screen force to re-enter passphrase for private key
  * Issue #19 NPE on Bamboo agent after job is dispatched by gReview
-
+ 
 1.2.8 Updates
 -------------
 
  * Issue #16 4.2.X Support.
- 
+
 1.2.3 Updates
 -------------
 
@@ -232,4 +242,8 @@ Jason Huntley
 
 * jhuntley@houghtonassociates.com
 * onepremise@gmail.com
-* http://stackoverflow.com/users/1214542/jason-huntley
+
+<a href="http://stackexchange.com/users/1254855">
+<img src="http://stackexchange.com/users/flair/1254855.png" width="208" height="58" alt="profile for Jason Huntley on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Jason Huntley on Stack Exchange, a network of free, community-driven Q&amp;A sites">
+</a>
+

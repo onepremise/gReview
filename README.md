@@ -146,6 +146,16 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 
 Bug Fixes and Enhancements
 ==========================
+
+1.3.0 Updates
+-------------
+ * Issue #23 Changes discovering problem - resolved partially, correct build triger ordering
+ * Issue #24 Checkout failed - remove dependency for native git
+ * Issue #26 How to restrict bamboo to poll the changes only on a particular branch - added branch support
+ * Issue #27 Bamboo 4.3 support - tested witch 4.3.3
+
+
+
 1.2.9 Updates
 -------------
 
