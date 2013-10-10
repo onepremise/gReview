@@ -134,6 +134,9 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private static final String REPOSITORY_GERRIT_BRANCH =
             "repository.gerrit.branch";
 
+    private static final String REPOSITORY_GERRIT_DRAFTS =
+            "repository.gerrit.drafts";
+
     private static final String REPOSITORY_GERRIT_CHANGE_ID =
             "repository.gerrit.change.id";
 
@@ -156,6 +159,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private String relativeSSHKeyFilePath;
     private File sshKeyFile = null;
     private String sshPassphrase;
+    private boolean drafts;
     private boolean useShallowClones;
     private boolean useSubmodules;
     private boolean verboseLogs;
@@ -444,6 +448,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             vcsBranch = new VcsBranchImpl(strBranch);
         }
 
+        drafts = config.getBoolean(REPOSITORY_GERRIT_DRAFTS, false);
+
         useShallowClones =
             config.getBoolean(REPOSITORY_GERRIT_USE_SHALLOW_CLONES);
         useSubmodules = config.getBoolean(REPOSITORY_GERRIT_USE_SUBMODULES);
@@ -485,6 +491,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             relativeSSHKeyFilePath);
         configuration.setProperty(REPOSITORY_GERRIT_REPOSITORY_PORT, port);
 
+        configuration.setProperty(REPOSITORY_GERRIT_DRAFTS,
+                drafts);
         configuration.setProperty(REPOSITORY_GERRIT_USE_SHALLOW_CLONES,
             useShallowClones);
         configuration.setProperty(REPOSITORY_GERRIT_USE_SUBMODULES,
@@ -588,7 +596,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             strBranch = vcsBranch.getName();
         }
 
-        GerritChangeVO change = getGerritDAO().getFirstUnverifiedChange(project, strBranch, lastVcsRevisionKey);
+        GerritChangeVO change = getGerritDAO().getFirstUnverifiedChange(project, strBranch, drafts, lastVcsRevisionKey);
 
         log.info(String.format("[%s] collectChangesSinceLastBuild last unverified is: %s", planKey, change ) );
 

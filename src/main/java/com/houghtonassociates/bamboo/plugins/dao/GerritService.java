@@ -89,14 +89,15 @@ public class GerritService {
      *
      * @param project
      * @param branch
+     * @param drafts
      * @param lastVcsRevisionKey
      * @return
      * @throws RepositoryException
      */
-    public GerritChangeVO getFirstUnverifiedChange(String project, String branch, String lastVcsRevisionKey) throws RepositoryException {
+    public GerritChangeVO getFirstUnverifiedChange(String project, String branch, boolean drafts, String lastVcsRevisionKey) throws RepositoryException {
         log.debug(String.format("getFirstUnverifiedChange(project=%s branch=%s)...", project, branch));
 
-        Set<GerritChangeVO> changes = getGerritChangeInfo(project, branch);
+        Set<GerritChangeVO> changes = getGerritChangeInfo(project, branch, drafts);
         GerritChangeVO selectedChange = null;
 
         Date firstDt = new Date();
@@ -151,11 +152,15 @@ public class GerritService {
         return changeVO;
     }
 
-    private Set<GerritChangeVO> getGerritChangeInfo(String project, String branch) throws RepositoryException {
+    private Set<GerritChangeVO> getGerritChangeInfo(String project, String branch, boolean drafts) throws RepositoryException {
 
         StringBuffer strQuery = new StringBuffer();
 
         strQuery.append("is:open project:").append(project);
+
+        if  (!drafts) {
+            strQuery.append(" NOT is:draft");
+        }
 
         if (branch!=null) {
             strQuery.append(" branch:").append(branch);
