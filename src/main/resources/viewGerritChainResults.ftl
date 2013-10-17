@@ -26,7 +26,6 @@
 <body>
    [@ui.header page='Gerrit Change Information' cssClass="headingGerrit"/]
    <HR>
-   [#assign host = action.getHTTPHost() /]
    [#assign change = action.getChange() /]
    [#assign rev = action.getRevision() /]
    <ul>

@@ -22,7 +22,8 @@
 	[@ww.textfield labelKey='repository.gerrit.hostname' name='repository.gerrit.hostname' required='true' /]
 	[@ww.textfield labelKey='repository.gerrit.port' name='repository.gerrit.port' required='true' /]
 	[@ww.textfield labelKey='repository.gerrit.project' name='repository.gerrit.project' required='true' /]
-	
+    [@ww.textfield labelKey='repository.gerrit.branch' name='repository.gerrit.branch' required='false' /]
+
 	[@ww.textfield labelKey='repository.gerrit.username' name='repository.gerrit.username' required='true' /]
 	
 	[#if buildConfiguration.getString('repository.gerrit.ssh.key')?has_content]
@@ -40,6 +41,8 @@
             [@ww.password labelKey='repository.gerrit.ssh.passphrase' name='temporary.gerrit.ssh.passphrase' /]
         [/@ui.bambooSection]
 [/@ui.bambooSection]
+
+[@ww.checkbox labelKey='repository.gerrit.drafts' toggle='true' name='repository.gerrit.drafts' /]
 
 [@ww.checkbox labelKey='repository.gerrit.useShallowClones' toggle='true' name='repository.gerrit.useShallowClones' /]
 [@ui.bambooSection dependsOn='repository.gerrit.useShallowClones' showOn='true']

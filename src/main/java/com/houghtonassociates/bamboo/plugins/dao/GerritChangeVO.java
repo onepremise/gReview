@@ -76,7 +76,6 @@ public class GerritChangeVO {
     private Integer verificationScore = new Integer(0);
     private Integer reviewScore = new Integer(0);
     private PatchSet currentPatchSet = new PatchSet();
-
     private final Set<PatchSet> patchSets = new HashSet<PatchSet>(0);
 
     public static class PatchSet {
@@ -397,7 +396,7 @@ public class GerritChangeVO {
     @Override
     public String toString() {
         return "GerritChangeVO [project=" + project + ", branch=" + branch
-            + ", id=" + id + ", number=" + number + ", lastUpdate="
+            + ", id=" + id + ",rev=" + getLastRevision() +", number=" + number + ", lastUpdate="
             + lastUpdate + ", open=" + open + ", status=" + status
             + ", verificationScore=" + verificationScore + ", reviewScore="
             + reviewScore + "]";

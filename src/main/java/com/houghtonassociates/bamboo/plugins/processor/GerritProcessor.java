@@ -15,28 +15,24 @@
  */
 package com.houghtonassociates.bamboo.plugins.processor;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-
 import com.atlassian.bamboo.build.CustomBuildProcessor;
 import com.atlassian.bamboo.builder.BuildState;
 import com.atlassian.bamboo.configuration.AdministrationConfiguration;
 import com.atlassian.bamboo.configuration.AdministrationConfigurationManager;
-import com.atlassian.bamboo.plan.Plan;
 import com.atlassian.bamboo.repository.RepositoryDefinition;
 import com.atlassian.bamboo.repository.RepositoryException;
-import com.atlassian.bamboo.utils.error.ErrorCollection;
 import com.atlassian.bamboo.v2.build.BaseConfigurableBuildPlugin;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bamboo.v2.build.CurrentBuildResult;
-import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
 import com.opensymphony.xwork.TextProvider;
+import org.apache.log4j.Logger;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Post processor which updates Gerrit after build completes
@@ -68,36 +64,8 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
         this.textProvider = textProvider;
     }
 
-    public void
-                    setAdministrationConfigurationManager(AdministrationConfigurationManager administrationConfigurationManager) {
-        this.administrationConfigurationManager =
-            administrationConfigurationManager;
-    }
-
-    @Override
-    public void prepareConfigObject(BuildConfiguration buildConfiguration) {
-        super.prepareConfigObject(buildConfiguration);
-    }
-
-    @Override
-    public ErrorCollection validate(BuildConfiguration buildConfiguration) {
-        return super.validate(buildConfiguration);
-    }
-
-    @Override
-    protected void
-                    populateContextForView(Map<String, Object> context,
-                                           Plan plan) {
-        super.populateContextForView(context, plan);
-    }
-
-    @Override
-    protected void
-                    populateContextForEdit(Map<String, Object> context,
-                                           BuildConfiguration buildConfiguration,
-                                           Plan plan) {
-        super.populateContextForEdit(context, buildConfiguration, plan);
-
+    public void setAdministrationConfigurationManager(AdministrationConfigurationManager administrationConfigurationManager) {
+        this.administrationConfigurationManager = administrationConfigurationManager;
     }
 
     private String buildStatusString(CurrentBuildResult results) {
@@ -108,30 +76,18 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
             config.getBaseUrl() + "/browse/"
                 + buildContext.getPlanResultKey().toString();
 
-        List<String> errors = results.getBuildErrors();
-
         if (!results.getBuildState().equals(BuildState.SUCCESS)) {
-            if (errors != null && errors.size() > 0) {
-                return textProvider.getText(
-                    "processor.gerrit.messages.build.custom",
-                    Arrays.asList(errors.toString(), resultsUrl));
-            } else {
-                return textProvider.getText(
-                    "processor.gerrit.messages.build.failed",
-                    Arrays.asList(resultsUrl));
-            }
+                return String.format("Bamboo: Build Failed: %s", resultsUrl);
         }
 
-        return textProvider.getText("processor.gerrit.messages.build.sucess",
-            Arrays.asList(resultsUrl));
+        return String.format("Bamboo: Build Successful: %s", resultsUrl);
     }
 
     @Override
     public BuildContext call() throws InterruptedException, Exception {
         final String buildPlanKey = buildContext.getPlanKey();
         final CurrentBuildResult results = buildContext.getBuildResult();
-        final Boolean runVerification =
-            Boolean.parseBoolean(customConfiguration.get(GERRIT_RUN));
+        final Boolean runVerification = Boolean.parseBoolean(customConfiguration.get(GERRIT_RUN));
 
         logger.info("Run verification: " + runVerification);
 
@@ -158,9 +114,7 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
             (GerritRepositoryAdapter) rd.getRepository();
         final String revision =
             buildContext.getBuildChanges().getVcsRevisionKey(rd.getId());
-        final GerritService service =
-            new GerritService(gra.getHostname(), gra.getPort(),
-                gra.getGerritAuthentication());
+        final GerritService service = gra.getGerritDAO();
         final GerritChangeVO change = service.getChangeByRevision(revision);
 
         if (change == null) {

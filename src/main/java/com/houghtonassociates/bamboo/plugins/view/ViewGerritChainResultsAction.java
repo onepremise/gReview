@@ -15,10 +15,6 @@
  */
 package com.houghtonassociates.bamboo.plugins.view;
 
-import java.util.List;
-
-import org.apache.log4j.Logger;
-
 import com.atlassian.bamboo.plan.PlanHelper;
 import com.atlassian.bamboo.repository.Repository;
 import com.atlassian.bamboo.resultsummary.vcs.RepositoryChangeset;
@@ -27,6 +23,9 @@ import com.atlassian.bamboo.ww2.aware.permissions.PlanReadSecurityAware;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
+import org.apache.log4j.Logger;
+
+import java.util.List;
 
 /**
  * @author Jason Huntley
@@ -46,9 +45,9 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
 
     public ViewGerritChainResultsAction() {
         super();
-
         changeVO = new GerritChangeVO();
     }
+
 
     public GerritRepositoryAdapter getRepository() {
         if (repository == null) {
@@ -62,16 +61,10 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
         return repository;
     }
 
+
     public GerritService getGerritService() {
         if (gerritService == null) {
-            Repository repo = PlanHelper.getDefaultRepository(this.getPlan());
-
-            if (repo instanceof GerritRepositoryAdapter) {
-                GerritRepositoryAdapter gra = getRepository();
-                gerritService =
-                    new GerritService(gra.getHostname(), gra.getPort(),
-                        gra.getGerritAuthentication());
-            }
+                gerritService = getRepository().getGerritDAO();
         }
 
         return gerritService;
@@ -96,10 +89,6 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
             }
         }
         return super.doExecute();
-    }
-
-    public String getHTTPHost() {
-        return getRepository().getHostname();
     }
 
     public GerritChangeVO getChange() {
