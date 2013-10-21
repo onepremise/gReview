@@ -15,6 +15,7 @@
  */
 package com.houghtonassociates.bamboo.plugins.view;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +28,6 @@ import com.atlassian.bamboo.plan.PlanManager;
 import com.atlassian.bamboo.repository.Repository;
 import com.atlassian.plugin.PluginParseException;
 import com.atlassian.plugin.web.Condition;
-import com.google.common.collect.Lists;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 
 /**
@@ -69,7 +69,7 @@ public class ViewGerritResultsCondition implements Condition {
      * @return the {@link List} of {@link Job} objects
      */
     private List<Job> getAllJobsByKey(String key) {
-        List<Job> jobs = Lists.newArrayList();
+        List<Job> jobs = new ArrayList<Job>();
         try {
             Chain plan = planManager.getPlanByKey(key, Chain.class);
             jobs.addAll(plan.getAllJobs());

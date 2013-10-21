@@ -15,29 +15,36 @@
  */
 package com.houghtonassociates.bamboo.plugins.dao;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Scanner;
 import java.util.Set;
 
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.log4j.Logger;
+import org.eclipse.jgit.transport.PushResult;
 
 import com.atlassian.bamboo.repository.RepositoryException;
-import com.google.common.primitives.Ints;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.Approval;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.PatchSet;
+import com.houghtonassociates.bamboo.plugins.dao.jgit.JGitRepository;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig2;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
@@ -53,32 +60,36 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractS
  */
 public class GerritService {
 
+    public static final String SYSTEM_DIRECTORY = "gerrit";
+    public static final String CONFIG_DIRECTORY = "config";
     private static final Logger log = Logger.getLogger(GerritService.class);
 
-    private GerritHandler gHandler = null;
+    private GerritConfig gc = new GerritConfig();
+    private GerritUserVO gerritSystemUser = null;
+    // private GerritHandler gHandler = null;
     private GerritSQLHandler gQueryHandler = null;
     private GerritCmdProcessor cmdProcessor = null;
-    private GerritUserVO gerritSystemUser = null;
-    private String strHost;
-    private String strProxy;
-    private String userEmail;
 
-    private int port = 29418;
-    private Authentication auth = null;
-    private int watchdogTimeoutMinutes;
-    private WatchTimeExceptionData watchTimeExceptionData;
+    // private int watchdogTimeoutMinutes;
+    // private WatchTimeExceptionData watchTimeExceptionData;
+    private static boolean dbAccessGranted = false;
+    private static boolean verifiedLabelAdded = false;
+    private boolean isInitialized = false;
 
-    public GerritService(String strHost, int port, File sshKeyFile,
-                         String strUsername, String phrase) {
-        auth = new Authentication(sshKeyFile, strUsername, phrase);
-        this.strHost = strHost;
-        this.port = port;
+    public GerritService(GerritConfig gc) {
+        this.gc = gc;
     }
 
-    public GerritService(String strHost, int port, Authentication auth) {
-        this.strHost = strHost;
-        this.port = port;
-        this.auth = auth;
+    public void initialize() throws RepositoryException {
+        installVerificationLabel();
+        grantDatabaseAccess();
+
+        GerritUserVO user = getGerritSystemUser();
+
+        if (user != null)
+            gc.setUserEmail(user.getEmail());
+
+        isInitialized = true;
     }
 
     public void testGerritConnection() throws RepositoryException {
@@ -86,7 +97,8 @@ public class GerritService {
 
         try {
             sshConnection =
-                SshConnectionFactory.getConnection(strHost, port, auth);
+                SshConnectionFactory.getConnection(gc.getHost(), gc.getPort(),
+                    gc.getAuth());
         } catch (IOException e) {
             throw new RepositoryException(
                 "Failed to establish connection to Gerrit!");
@@ -155,6 +167,186 @@ public class GerritService {
         }
     }
 
+    private void grantDatabaseAccess() throws RepositoryException {
+        final String targetRevision = "refs/meta/config";
+        String filePath =
+            gc.getWorkingDirectoryPath() + File.separator + "MetaConfig";
+        String projectConfig = filePath + File.separator + "project.config";
+        String url =
+            String.format("ssh://%s@%s:%d/%s", gc.getUsername(), gc.getHost(),
+                gc.getPort(), "All-Projects.git");
+
+        boolean accessDBFound = false;
+
+        Scanner scanner = null;
+        JGitRepository jgitRepo = new JGitRepository();
+
+        if (dbAccessGranted)
+            return;
+
+        synchronized (GerritService.class) {
+            try {
+                jgitRepo.setAccessData(gc);
+
+                jgitRepo.open(filePath, true);
+
+                jgitRepo.openSSHTransport(url);
+
+                jgitRepo.fetch(targetRevision);
+
+                jgitRepo.checkout(targetRevision);
+
+                StringBuilder content = new StringBuilder();
+                File fConfig = new File(projectConfig);
+                scanner = new Scanner(fConfig);
+
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    if (line.contains("accessDatabase = group Administrators")) {
+                        accessDBFound = true;
+                        break;
+                    }
+
+                    content.append(line).append("\n");
+
+                    if (line.contains("[capability]")) {
+                        content
+                            .append("\taccessDatabase = group Administrators\n");
+                    }
+                }
+
+                scanner.close();
+
+                if (accessDBFound) {
+                    dbAccessGranted = true;
+                    return;
+                }
+
+                File fConfig2 = new File(projectConfig);
+
+                FileUtils.writeStringToFile(fConfig2, content.toString());
+
+                jgitRepo.add("project.config");
+
+                PushResult r =
+                    jgitRepo.commitPush("Grant Database Access.",
+                        targetRevision);
+
+                if (r.getMessages().contains("ERROR")) {
+                    throw new RepositoryException(r.getMessages());
+                }
+
+                dbAccessGranted = true;
+            } catch (org.eclipse.jgit.errors.TransportException e) {
+                throw new RepositoryException(e);
+            } catch (FileNotFoundException e) {
+                throw new RepositoryException(
+                    "Could not locate the project.config! Your checkout must have failed.");
+            } catch (IOException e) {
+                throw new RepositoryException(e);
+            } finally {
+                jgitRepo.close();
+                if (scanner != null)
+                    scanner.close();
+            }
+        }
+    }
+
+    private void installVerificationLabel() throws RepositoryException {
+        final String targetRevision = "refs/meta/config";
+        String filePath =
+            gc.getWorkingDirectoryPath() + File.separator + "MetaConfig";
+        String projectConfig = filePath + File.separator + "project.config";
+        String url =
+            String.format("ssh://%s@%s:%d/%s", gc.getUsername(), gc.getHost(),
+                gc.getPort(), "All-Projects.git");
+
+        boolean verifiedSectionFound = false;
+
+        Scanner scanner = null;
+        JGitRepository jgitRepo = new JGitRepository();
+
+        if (verifiedLabelAdded)
+            return;
+
+        synchronized (GerritService.class) {
+            try {
+                jgitRepo.setAccessData(gc);
+
+                jgitRepo.open(filePath, true);
+
+                jgitRepo.openSSHTransport(url);
+
+                jgitRepo.fetch(targetRevision);
+
+                jgitRepo.checkout(targetRevision);
+
+                StringBuilder content = new StringBuilder();
+                File fConfig = new File(projectConfig);
+                scanner = new Scanner(fConfig);
+
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    if (line.contains("[label \"Verified\"]")) {
+                        verifiedSectionFound = true;
+                        break;
+                    }
+
+                    content.append(line).append("\n");
+
+                    if (line.contains("[access \"refs/heads/*\"]")) {
+                        content
+                            .append("\tlabel-Verified = -1..+1 group Administrators\n");
+                    }
+                }
+
+                scanner.close();
+
+                if (verifiedSectionFound) {
+                    verifiedLabelAdded = true;
+                    return;
+                }
+
+                content.append("[label \"Verified\"]\n");
+                content.append("\tfunction = MaxWithBlock\n");
+                content.append("\tvalue = -1 Fails\n");
+                content.append("\tvalue =  0 No score\n");
+                content.append("\tvalue = +1 Verified\n");
+
+                File fConfig2 = new File(projectConfig);
+
+                FileUtils.writeStringToFile(fConfig2, content.toString());
+
+                jgitRepo.add("project.config");
+
+                PushResult r =
+                    jgitRepo.commitPush("Enabled verification label.",
+                        targetRevision);
+
+                if (r.getMessages().contains("ERROR")) {
+                    throw new RepositoryException(r.getMessages());
+                }
+
+                verifiedLabelAdded = true;
+            } catch (org.eclipse.jgit.errors.TransportException e) {
+                throw new RepositoryException(e);
+            } catch (FileNotFoundException e) {
+                throw new RepositoryException(
+                    "Could not locate the project.config! Your checkout must have failed.");
+            } catch (IOException e) {
+                throw new RepositoryException(e);
+            } finally {
+                jgitRepo.close();
+                if (scanner != null)
+                    scanner.close();
+            }
+        }
+    }
+
+    public boolean isInitialized() {
+        return isInitialized;
+    }
+
     public boolean verifyChange(Boolean pass, Integer changeNumber,
                                 Integer patchNumber, String message) {
         String command = "";
@@ -183,37 +375,37 @@ public class GerritService {
 
                     @Override
                     public File getGerritAuthKeyFile() {
-                        return auth.getPrivateKeyFile();
+                        return gc.getAuth().getPrivateKeyFile();
                     }
 
                     @Override
                     public String getGerritAuthKeyFilePassword() {
-                        return auth.getPrivateKeyFilePassword();
+                        return gc.getAuth().getPrivateKeyFilePassword();
                     }
 
                     @Override
                     public Authentication getGerritAuthentication() {
-                        return auth;
+                        return gc.getAuth();
                     }
 
                     @Override
                     public String getGerritHostName() {
-                        return strHost;
+                        return gc.getHost();
                     }
 
                     @Override
                     public int getGerritSshPort() {
-                        return port;
+                        return gc.getPort();
                     }
 
                     @Override
                     public String getGerritUserName() {
-                        return auth.getUsername();
+                        return gc.getUsername();
                     }
 
                     @Override
                     public String getGerritEMail() {
-                        return userEmail;
+                        return gc.getUserEmail();
                     }
 
                     @Override
@@ -239,8 +431,9 @@ public class GerritService {
                         List<TimeSpan> exceptionTimes =
                             new LinkedList<TimeSpan>();
                         int[] daysAsInt = new int[] {};
-
-                        daysAsInt = Ints.toArray(days);
+                        daysAsInt =
+                            ArrayUtils.toPrimitive(days
+                                .toArray(new Integer[days.size()]));
 
                         return new WatchTimeExceptionData(daysAsInt,
                             exceptionTimes);
@@ -248,7 +441,7 @@ public class GerritService {
 
                     @Override
                     public String getGerritProxy() {
-                        return strProxy;
+                        return gc.getProxy();
                     }
                 });
         }
@@ -258,29 +451,45 @@ public class GerritService {
 
     private GerritSQLHandler getGerritQueryHandler() {
         if (gQueryHandler == null) {
-            gQueryHandler = new GerritSQLHandler(strHost, port, strProxy, auth);
-
-            requestExtendedInfo();
+            gQueryHandler =
+                new GerritSQLHandler(gc.getHost(), gc.getPort(), gc.getProxy(),
+                    gc.getAuth());
         }
 
         return gQueryHandler;
     }
 
-    protected void requestExtendedInfo() {
-        Thread asyncCommand = new Thread(new Runnable() {
+    public List<String> getProjects() throws RepositoryException {
+        List<String> listProjects = new ArrayList<String>();
+        String projects =
+            getGerritCmdProcessor().sendCommandStr("gerrit ls-projects");
 
-            @Override
-            public void run() {
-                try {
-                    GerritUserVO user = getGerritSystemUser();
+        BufferedReader bufReader =
+            new BufferedReader(new StringReader(projects));
 
-                    userEmail = user.getEmail();
-                } catch (RepositoryException e) {
-                    log.info(e.getMessage());
-                }
+        String line = null;
+
+        try {
+            while ((line = bufReader.readLine()) != null) {
+                listProjects.add(line);
             }
-        });
-        asyncCommand.start();
+        } catch (IOException e) {
+            throw new RepositoryException("Failed to list remote projects!");
+        }
+
+        return listProjects;
+    }
+
+    public Boolean isGerritProject(String project) throws RepositoryException {
+        List<String> projects = getProjects();
+
+        for (String p : projects) {
+            if (p.contains(project)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public String getGerritVersion() {
@@ -290,27 +499,80 @@ public class GerritService {
         return version;
     }
 
-    public GerritUserVO getGerritSystemUser() throws RepositoryException {
+    /**
+     * Must have "Access Database" granted under Global Capabilities in Gerrit
+     * 
+     * @param userName
+     * @return
+     * @throws RepositoryException
+     */
+    public GerritUserVO
+                    getUserVOByName(String userName) throws RepositoryException {
+        GerritUserVO gerritUserVO = null;
 
-        if (gerritSystemUser == null) {
-            List<JSONObject> jsonObjects =
-                runGerritSQL("select * from accounts");
+        List<JSONObject> jsonObjects =
+            runGerritSQL("select * from account_external_ids");
 
-            for (JSONObject j : jsonObjects) {
-                if (j.containsKey("type") && j.getString("type").equals("row")) {
-                    JSONObject userInfo = j.getJSONObject("columns");
-                    return transformUserJSONObject(userInfo);
+        for (JSONObject j : jsonObjects) {
+            if (j.containsKey("type") && j.getString("type").equals("row")) {
+                JSONObject extInfo = j.getJSONObject("columns");
+                GerritExtIDVO extVO = transformExtIDObject(extInfo);
+
+                if (extVO.getExternalId().equals(
+                    GerritExtIDVO.JSON_KEY_USERNAME + gc.getUsername())) {
+                    gerritUserVO = new GerritUserVO();
+
+                    gerritUserVO.setId(extVO.getAccountId());
+                    gerritUserVO.setUserName(gc.getUsername());
+                    break;
                 }
+            }
+        }
+
+        jsonObjects = runGerritSQL("select * from accounts");
+
+        for (JSONObject j : jsonObjects) {
+            if (j.containsKey("type") && j.getString("type").equals("row")) {
+                JSONObject userInfo = j.getJSONObject("columns");
+                GerritUserVO userVO = transformUserJSONObject(userInfo);
+
+                if (userVO.getId().equals(gerritUserVO.getId())) {
+                    gerritUserVO.fill(userVO);
+                    break;
+                }
+            }
+        }
+
+        return gerritUserVO;
+    }
+
+    /**
+     * Must have "Access Database" granted under Global Capabilities in Gerrit
+     * 
+     * @return
+     * @throws RepositoryException
+     */
+    public GerritUserVO getGerritSystemUser() throws RepositoryException {
+        synchronized (GerritService.class) {
+            if (gerritSystemUser == null) {
+                gerritSystemUser = getUserVOByName(gc.getUsername());
             }
         }
 
         return gerritSystemUser;
     }
 
-    public String getGerritSystemUserEmail() {
-        return userEmail;
+    public String getGerritSystemUserEmail() throws RepositoryException {
+        return getGerritSystemUser().getEmail();
     }
 
+    /**
+     * Must have "Access Database" granted under Global Capabilities in Gerrit
+     * 
+     * @param query
+     * @return
+     * @throws RepositoryException
+     */
     public List<JSONObject>
                     runGerritSQL(String query) throws RepositoryException {
         List<JSONObject> jsonObjects = null;
@@ -330,7 +592,7 @@ public class GerritService {
         if (jsonObjects == null || jsonObjects.isEmpty()) {
             throw new RepositoryException(String.format(
                 "ALERT: %s does not have \"Access Database\" capability.",
-                auth.getUsername()));
+                gc.getUsername()));
         }
 
         JSONObject setInfo = jsonObjects.get(jsonObjects.size() - 1);
@@ -550,6 +812,29 @@ public class GerritService {
         return results;
     }
 
+    private GerritExtIDVO
+                    transformExtIDObject(JSONObject j) throws RepositoryException {
+        if (j == null) {
+            throw new RepositoryException("No data to parse!");
+        }
+
+        log.debug(String.format("transformExtIDObject(j=%s)", j));
+
+        GerritExtIDVO ext = new GerritExtIDVO();
+
+        ext.setAccountId(j.getString(GerritExtIDVO.JSON_KEY_ACCT_ID));
+
+        if (j.containsKey(GerritExtIDVO.JSON_KEY_EMAIL))
+            ext.setEmail(j.getString(GerritExtIDVO.JSON_KEY_EMAIL));
+
+        if (j.containsKey(GerritExtIDVO.JSON_KEY_PASSWD))
+            ext.setPassword(j.getString(GerritExtIDVO.JSON_KEY_PASSWD));
+
+        ext.setExternalId(j.getString(GerritExtIDVO.JSON_KEY_EXT_ID));
+
+        return ext;
+    }
+
     private GerritUserVO
                     transformUserJSONObject(JSONObject j) throws RepositoryException {
         if (j == null) {
@@ -561,7 +846,6 @@ public class GerritService {
         GerritUserVO user = new GerritUserVO();
 
         user.setId(j.getString(GerritUserVO.JSON_KEY_ACCT_ID));
-        user.setUserName(j.getString(GerritUserVO.JSON_KEY_ACCT_ID));
         user.setEmail(j.getString(GerritUserVO.JSON_KEY_EMAIL));
 
         String test = j.getString(GerritUserVO.JSON_KEY_INACTIVE);
@@ -714,7 +998,8 @@ public class GerritService {
                 }
 
                 if (isCurrent) {
-                    if (apprv.getType().equals("VRIF")) {
+                    if (apprv.getType().equals("VRIF")
+                        || apprv.getType().equals("Verified")) {
                         info.setVerificationScore(info.getVerificationScore()
                             + apprv.getValue());
                     } else if (apprv.getType().equals("CRVW")) {

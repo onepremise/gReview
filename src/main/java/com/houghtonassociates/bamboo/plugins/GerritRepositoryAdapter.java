@@ -16,15 +16,13 @@
 package com.houghtonassociates.bamboo.plugins;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
@@ -33,34 +31,13 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.log4j.Logger;
-import org.eclipse.jgit.api.CheckoutCommand;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.CheckoutConflictException;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRefNameException;
-import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
-import org.eclipse.jgit.api.errors.RefNotFoundException;
-import org.eclipse.jgit.errors.NotSupportedException;
-import org.eclipse.jgit.lib.NullProgressMonitor;
-import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.JschConfigSessionFactory;
-import org.eclipse.jgit.transport.OpenSshConfig;
-import org.eclipse.jgit.transport.OpenSshConfig.Host;
-import org.eclipse.jgit.transport.PushResult;
-import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.RemoteRefUpdate;
-import org.eclipse.jgit.transport.SshSessionFactory;
-import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.Transport;
-import org.eclipse.jgit.util.FS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.atlassian.bamboo.author.AuthorCachingFacade;
 import com.atlassian.bamboo.bandana.BambooBandanaContext;
+import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.build.BuildLoggerManager;
 import com.atlassian.bamboo.build.fileserver.BuildDirectoryManager;
 import com.atlassian.bamboo.build.logger.BuildLogger;
@@ -71,16 +48,11 @@ import com.atlassian.bamboo.commit.CommitFileImpl;
 import com.atlassian.bamboo.commit.CommitImpl;
 import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.branch.VcsBranch;
-import com.atlassian.bamboo.plugins.git.GitRepository;
-import com.atlassian.bamboo.plugins.git.GitRepositoryAccessData;
+import com.atlassian.bamboo.plan.branch.VcsBranchImpl;
 import com.atlassian.bamboo.repository.AbstractStandaloneRepository;
 import com.atlassian.bamboo.repository.AdvancedConfigurationAwareRepository;
 import com.atlassian.bamboo.repository.BranchDetectionCapableRepository;
 import com.atlassian.bamboo.repository.BranchMergingAwareRepository;
-import com.atlassian.bamboo.repository.CacheDescription;
-import com.atlassian.bamboo.repository.CacheHandler;
-import com.atlassian.bamboo.repository.CacheId;
-import com.atlassian.bamboo.repository.CachingAwareRepository;
 import com.atlassian.bamboo.repository.CustomVariableProviderRepository;
 import com.atlassian.bamboo.repository.PushCapableRepository;
 import com.atlassian.bamboo.repository.Repository;
@@ -88,7 +60,9 @@ import com.atlassian.bamboo.repository.RepositoryException;
 import com.atlassian.bamboo.security.EncryptionService;
 import com.atlassian.bamboo.ssh.SshProxyService;
 import com.atlassian.bamboo.template.TemplateRenderer;
+import com.atlassian.bamboo.utils.SystemProperty;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
+import com.atlassian.bamboo.utils.error.SimpleErrorCollection;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bamboo.v2.build.BuildRepositoryChanges;
 import com.atlassian.bamboo.v2.build.BuildRepositoryChangesImpl;
@@ -106,17 +80,13 @@ import com.atlassian.plugin.ModuleDescriptor;
 import com.atlassian.sal.api.message.I18nResolver;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
+import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.PatchSet;
+import com.houghtonassociates.bamboo.plugins.dao.GerritConfig;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
-import com.houghtonassociates.bamboo.plugins.dao.GitRepoFactory;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.opensymphony.xwork.TextProvider;
-import com.opensymphony.xwork.ValidationAware;
+import com.houghtonassociates.bamboo.plugins.dao.jgit.JGitRepository;
+import com.opensymphony.xwork2.TextProvider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig2;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 
 /**
@@ -126,17 +96,28 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     implements AdvancedConfigurationAwareRepository, PushCapableRepository,
     BranchMergingAwareRepository, BranchDetectionCapableRepository,
     GerritConnectionConfig2, CustomVariableProviderRepository,
-    CustomSourceDirectoryAwareRepository, RequirementsAwareRepository,
-    CachingAwareRepository, CacheHandler {
+    CustomSourceDirectoryAwareRepository, RequirementsAwareRepository {
 
     private static final long serialVersionUID = -3518800283574344591L;
 
-    private static final String REPOSITORY_GERRIT_STORAGE = "repositories";
+    private static final String REPOSITORY_URL = "repositoryUrl";
+    private static final String REPOSITORY_BRANCH = "branch";
+    private static final String REPOSITORY_USERNAME = "username";
 
+    @Deprecated
     private static final String REPOSITORY_GERRIT_PLAN_KEY = "planKey";
+    @Deprecated
     private static final String REPOSITORY_GERRIT_REPO_ID = "repositoryId";
+    @Deprecated
     private static final String REPOSITORY_GERRIT_REPO_DISP_NAME =
         "repositoryName";
+
+    private static final String REPOSITORY_GERRIT_PROJECT_KEY = "projectKey";
+    private static final String REPOSITORY_GERRIT_PROJECT_NAME = "projectName";
+    private static final String REPOSITORY_GERRIT_CHAIN_KEY = "chainKey";
+    private static final String REPOSITORY_GERRIT_CHAIN_NAME = "chainName";
+    private static final String REPOSITORY_GERRIT_CHAIN_DESC =
+        "chainDescription";
 
     private static final String REPOSITORY_GERRIT_REPOSITORY_HOSTNAME =
         "repository.gerrit.hostname";
@@ -148,10 +129,17 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         "repository.gerrit.username";
     private static final String REPOSITORY_GERRIT_EMAIL =
         "repository.gerrit.email";
+    private static final String SHARED_CREDENTIALS = "SHARED_CREDENTIALS";
+    private static final String REPOSITORY_GIT_SHAREDCREDENTIALS_ID =
+        "repository.gerrit.sharedCrendentials";
+    private static final String REPOSITORY_GIT_AUTHENTICATION_TYPE =
+        "repository.gerrit.authenticationType";
     private static final String REPOSITORY_GERRIT_SSH_KEY =
         "repository.gerrit.ssh.key";
     private static final String REPOSITORY_GERRIT_SSH_KEY_FILE =
         "repository.gerrit.ssh.keyfile";
+    private static final String REPOSITORY_GERRIT_CONFIG_DIR =
+        "repository.gerrit.config.dir";
     private static final String REPOSITORY_GERRIT_SSH_PASSPHRASE =
         "repository.gerrit.ssh.passphrase";
     private static final String TEMPORARY_GERRIT_SSH_PASSPHRASE =
@@ -175,41 +163,58 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     private static final String GIT_COMMIT_ACTION = "/COMMIT_MSG";
 
+    protected static boolean USE_SHALLOW_CLONES = new SystemProperty(false,
+        "atlassian.bamboo.git.useShallowClones",
+        "ATLASSIAN_BAMBOO_GIT_USE_SHALLOW_CLONES").getValue(true);
+
+    private static final String REPOSITORY_GERRIT_BRANCH =
+        "repository.gerrit.branch";
+    private static final String REPOSITORY_GERRIT_CHANGE_ID =
+        "repository.gerrit.change.id";
+    private static final String REPOSITORY_GERRIT_CHANGE_NUMBER =
+        "repository.gerrit.change.number";
+    private static final String REPOSITORY_GERRIT_REVISION_NUMBER =
+        "repository.gerrit.revision.number";
+
     private static final Logger log = Logger
         .getLogger(GerritRepositoryAdapter.class);
 
-    private String hostname;
+    private static final VcsBranch DEFAULT_BRANCH = new VcsBranchImpl(
+        "All branches");
+
+    private String hostname = "";
     private int port = 29418;
-    private String project;
-    private String username;
-    private String userEmail;
-    private String sshKey;
-    private String relativeSSHKeyFilePath;
+    private String project = "";
+    private String username = "";
+    private String userEmail = "";
+    private String sshKey = "";
+    private String relativeConfigPath = "";
+    private String absConfigPath = "";
+    private String relativeSSHKeyFilePath = "";
     private File sshKeyFile = null;
-    private String sshPassphrase;
-    private boolean useShallowClones;
-    private boolean useSubmodules;
-    private boolean verboseLogs;
-    private int commandTimeout;
+    private String sshPassphrase = "";
+    private boolean useShallowClones = false;
+    private boolean useSubmodules = false;
+    private boolean verboseLogs = false;
+    private int commandTimeout = 0;
+    private VcsBranch vcsBranch;
 
     private GerritService gerritDAO = null;
 
-    private BandanaManager bandanaManager = null;
+    private static final BandanaManager bandanaManager =
+        new DefaultBandanaManager(new MemoryBandanaPersister());
     private I18nResolver i18nResolver;
     private CapabilityContext capabilityContext;
     private SshProxyService sshProxyService;
     private EncryptionService encryptionService;
 
-    private GitRepository gitRepository = new GitRepository();
+    private GerritConfig gc = new GerritConfig();
 
-    private static boolean verifiedLabelAdded = false;
+    private GerritChangeVO lastGerritChange = null;
 
     @Override
     public void init(ModuleDescriptor moduleDescriptor) {
         super.init(moduleDescriptor);
-
-        bandanaManager =
-            new DefaultBandanaManager(new MemoryBandanaPersister());
 
         log.debug("Initialized repository adapter.");
     }
@@ -221,6 +226,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     @Override
     public void
                     prepareConfigObject(@NotNull BuildConfiguration buildConfiguration) {
+        super.prepareConfigObject(buildConfiguration);
+
         log.debug("Preparing repository adapter...");
 
         String strHostName =
@@ -250,7 +257,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             buildConfiguration.setProperty(REPOSITORY_GERRIT_SSH_PASSPHRASE,
                 encryptionService.encrypt(strPhrase));
         }
-        String key = "";
+
+        String decryptedKey = "";
         if (buildConfiguration.getBoolean(TEMPORARY_GERRIT_SSH_KEY_CHANGE)) {
             final Object o =
                 buildConfiguration
@@ -259,7 +267,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 File f = (File) o;
 
                 try {
-                    key = FileUtils.readFileToString(f);
+                    decryptedKey = FileUtils.readFileToString(f);
                 } catch (IOException e) {
                     log.error(
                         textProvider
@@ -269,20 +277,25 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 }
 
                 buildConfiguration.setProperty(REPOSITORY_GERRIT_SSH_KEY,
-                    encryptionService.encrypt(key));
+                    encryptionService.encrypt(decryptedKey));
             } else {
                 buildConfiguration.clearProperty(REPOSITORY_GERRIT_SSH_KEY);
             }
-        } else if (key.isEmpty()) {
-            key =
+        } else {
+            decryptedKey =
                 encryptionService.decrypt(buildConfiguration.getString(
                     REPOSITORY_GERRIT_SSH_KEY, ""));
         }
 
-        relativeSSHKeyFilePath =
-            getRelativeRepoPath(buildConfiguration).replace("\\", "/");
+        relativeConfigPath =
+            this.getRelativeConfigDirectory(buildConfiguration);
 
-        File f = prepareSSHKeyFile(relativeSSHKeyFilePath, key);
+        buildConfiguration.setProperty(REPOSITORY_GERRIT_CONFIG_DIR,
+            relativeConfigPath);
+
+        relativeSSHKeyFilePath = getRelativeRepoPath(buildConfiguration);
+
+        File f = prepareSSHKeyFile(relativeSSHKeyFilePath, decryptedKey);
 
         if (f != null) {
             buildConfiguration.setProperty(REPOSITORY_GERRIT_SSH_KEY_FILE,
@@ -299,27 +312,65 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return parentDirectory;
     }
 
-    private String getRelativeRepoPath(BuildConfiguration buildConfiguration) {
+    private String getRelativePath(BuildConfiguration buildConfiguration) {
         String planKey =
             buildConfiguration.getString(REPOSITORY_GERRIT_PLAN_KEY);
-        String repoDisplayName =
-            buildConfiguration.getString(REPOSITORY_GERRIT_REPO_DISP_NAME);
 
-        String workingDirectory = this.getShortKey();
+        String projectKey =
+            buildConfiguration.getString(REPOSITORY_GERRIT_PROJECT_KEY);
+        String projectName =
+            buildConfiguration.getString(REPOSITORY_GERRIT_PROJECT_NAME);
+
+        String chainKey =
+            buildConfiguration.getString(REPOSITORY_GERRIT_CHAIN_KEY);
+        String chainName =
+            buildConfiguration.getString(REPOSITORY_GERRIT_CHAIN_NAME);
+
+        String projectChainKey = projectKey + "-" + chainKey;
+
+        String workingDirectory = GerritService.SYSTEM_DIRECTORY;
 
         if (planKey != null) {
             workingDirectory = workingDirectory + File.separator + planKey;
+        } else {
+            workingDirectory =
+                workingDirectory + File.separator + projectChainKey;
         }
+        return workingDirectory;
+    }
+
+    private String getRelativeRepoPath(BuildConfiguration buildConfiguration) {
+        String workingDirectory = getRelativePath(buildConfiguration);
 
         workingDirectory =
-            workingDirectory + File.separator + REPOSITORY_GERRIT_STORAGE;
+            workingDirectory + File.separator + "GerritSSHKey.txt";
 
-        if (repoDisplayName != null) {
-            workingDirectory =
-                workingDirectory + File.separator + repoDisplayName;
-        }
+        return workingDirectory.replace("\\", "/");
+    }
 
-        return workingDirectory + File.separator + "GerritSSHKey.txt";
+    private String
+                    getRelativeConfigDirectory(BuildConfiguration buildConfiguration) {
+        String workingDirectory = getRelativePath(buildConfiguration);
+
+        workingDirectory =
+            workingDirectory + File.separator + GerritService.CONFIG_DIRECTORY;
+
+        return workingDirectory.replace("\\", "/");
+    }
+
+    public synchronized File prepareConfigDir(String strRelativePath) {
+        String filePath =
+            getBaseBuildWorkingDirectory() + File.separator + strRelativePath;
+
+        File f = new File(filePath);
+
+        f.setReadable(true, true);
+        f.setWritable(true, true);
+        f.setExecutable(false, false);
+
+        f.mkdir();
+
+        return f;
     }
 
     public synchronized File prepareSSHKeyFile(String strRelativePath,
@@ -401,7 +452,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             if (o == null) {
                 errorCollection
                     .addError(
-                        REPOSITORY_GERRIT_SSH_KEY,
+                        REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
                         textProvider
                             .getText("repository.gerrit.messages.error.ssh.key.missing"));
                 error = true;
@@ -412,8 +463,11 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             encryptionService.decrypt(buildConfiguration.getString(
                 REPOSITORY_GERRIT_SSH_KEY, ""));
         if (!StringUtils.isNotBlank(key)) {
-            errorCollection.addError(REPOSITORY_GERRIT_SSH_KEY, textProvider
-                .getText("repository.gerrit.messages.error.ssh.key.missing"));
+            errorCollection
+                .addError(
+                    REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
+                    textProvider
+                        .getText("repository.gerrit.messages.error.ssh.key.missing"));
             error = true;
         }
 
@@ -444,8 +498,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         }
 
         try {
-            testGerritConnection(keyFilePath, key, hostame,
-                Integer.valueOf(strPort), username, strProject, strPhrase);
+            ErrorCollection e2 =
+                testGerritConnection(keyFilePath, key, hostame,
+                    Integer.valueOf(strPort), username, strProject, strPhrase);
+            errorCollection.addErrorCollection(e2);
         } catch (RepositoryException e) {
             errorCollection.addError(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
                 e.getMessage());
@@ -470,6 +526,13 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         port = config.getInt(REPOSITORY_GERRIT_REPOSITORY_PORT, 29418);
         project = config.getString(REPOSITORY_GERRIT_PROJECT);
 
+        String strBranch = config.getString(REPOSITORY_GERRIT_BRANCH, "");
+        if (StringUtils.isEmpty(strBranch)) {
+            vcsBranch = DEFAULT_BRANCH;
+        } else {
+            vcsBranch = new VcsBranchImpl(strBranch);
+        }
+
         useShallowClones =
             config.getBoolean(REPOSITORY_GERRIT_USE_SHALLOW_CLONES);
         useSubmodules = config.getBoolean(REPOSITORY_GERRIT_USE_SUBMODULES);
@@ -481,6 +544,11 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         String gitRepoUrl =
             "ssh://" + username + "@" + hostname + ":" + port + "/" + project;
 
+        relativeConfigPath =
+            config.getString(REPOSITORY_GERRIT_CONFIG_DIR).replace("\\", "/");
+
+        absConfigPath = prepareConfigDir(relativeConfigPath).getAbsolutePath();
+
         relativeSSHKeyFilePath =
             config.getString(REPOSITORY_GERRIT_SSH_KEY_FILE).replace("\\", "/");
 
@@ -488,11 +556,26 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         sshKeyFile = prepareSSHKeyFile(relativeSSHKeyFilePath, decryptedKey);
 
-        GitRepoFactory.configureSSHGitRepository(gitRepository, gitRepoUrl,
-            username, "", GitRepoFactory.MASTER_BRANCH, sshKeyFile,
-            sshPassphrase, useShallowClones, useSubmodules, commandTimeout,
-            verboseLogs, textProvider, i18nResolver, capabilityContext,
-            sshProxyService, encryptionService);
+        gc.setHost(hostname);
+        gc.setPort(port);
+        gc.setRepositoryUrl(gitRepoUrl);
+        gc.setWorkingDirectory(absConfigPath);
+        gc.setSshKeyFile(sshKeyFile);
+        gc.setSshKey(decryptedKey);
+        gc.setSshPassphrase(sshPassphrase);
+        gc.setUsername(username);
+        gc.setUserEmail(userEmail);
+        gc.setUseShallowClones(useShallowClones);
+        gc.setUseSubmodules(useSubmodules);
+        gc.setVerboseLogs(verboseLogs);
+        gc.setCommandTimeout(commandTimeout);
+        gc.setBranch(DEFAULT_BRANCH);
+
+        try {
+            initializeGerritService();
+        } catch (RepositoryException e) {
+            log.error(e.getMessage());
+        }
     }
 
     @Override
@@ -507,6 +590,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         configuration.setProperty(REPOSITORY_GERRIT_SSH_KEY, sshKey);
         configuration.setProperty(REPOSITORY_GERRIT_SSH_PASSPHRASE,
             encryptionService.encrypt(sshPassphrase));
+        configuration.setProperty(REPOSITORY_GERRIT_CONFIG_DIR,
+            relativeConfigPath);
         configuration.setProperty(REPOSITORY_GERRIT_SSH_KEY_FILE,
             relativeSSHKeyFilePath);
         configuration.setProperty(REPOSITORY_GERRIT_REPOSITORY_PORT, port);
@@ -522,35 +607,40 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return configuration;
     }
 
+    private void initializeGerritService() throws RepositoryException {
+        getGerritDAO().initialize();
+
+        String strVersion = getGerritDAO().getGerritVersion();
+
+        log.info(String.format("Gerrit Version: %s", strVersion));
+
+        userEmail = getGerritDAO().getGerritSystemUserEmail();
+    }
+
     @Override
     public void
                     setBuildDirectoryManager(BuildDirectoryManager buildDirectoryManager) {
         super.setBuildDirectoryManager(buildDirectoryManager);
-        gitRepository.setBuildDirectoryManager(buildDirectoryManager);
     }
 
     @Override
     public void setBuildLoggerManager(BuildLoggerManager buildLoggerManager) {
         super.setBuildLoggerManager(buildLoggerManager);
-        gitRepository.setBuildLoggerManager(buildLoggerManager);
     }
 
     @Override
     public void
                     setCustomVariableContext(CustomVariableContext customVariableContext) {
         super.setCustomVariableContext(customVariableContext);
-        gitRepository.setCustomVariableContext(customVariableContext);
     }
 
     public void setCapabilityContext(final CapabilityContext capabilityContext) {
         this.capabilityContext = capabilityContext;
-        gitRepository.setCapabilityContext(capabilityContext);
     }
 
     @Override
     public void setTemplateRenderer(TemplateRenderer templateRenderer) {
         super.setTemplateRenderer(templateRenderer);
-        gitRepository.setTemplateRenderer(templateRenderer);
     }
 
     @Override
@@ -560,22 +650,16 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     public void setSshProxyService(SshProxyService sshProxyService) {
         this.sshProxyService = sshProxyService;
-        gitRepository.setSshProxyService(sshProxyService);
     }
 
-    public Authentication createGerritCredentials(File sshKeyFile,
-                                                  String strUsername,
-                                                  String phrase) {
-        return new Authentication(sshKeyFile, strUsername, phrase);
-    }
+    public ErrorCollection
+                    testGerritConnection(String sshRelKeyFile, String key,
+                                         String strHost, int port,
+                                         String strUsername, String strProject,
+                                         String phrase) throws RepositoryException {
+        ErrorCollection errorCollection = new SimpleErrorCollection();
 
-    public void testGerritConnection(String sshKeyFile, String key,
-                                     String strHost, int port,
-                                     String strUsername, String strProject,
-                                     String phrase) throws RepositoryException {
-        SshConnection sshConnection = null;
-
-        File f = prepareSSHKeyFile(sshKeyFile, key);
+        File f = prepareSSHKeyFile(sshRelKeyFile, key);
 
         if (!f.isFile()) {
             throw new RepositoryException(
@@ -583,42 +667,45 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     .getText("repository.gerrit.messages.error.ssh.key.missing"));
         }
 
-        Authentication auth = new Authentication(f, strUsername, phrase);
+        String gitRepoUrl =
+            "ssh://" + username + "@" + strHost + ":" + port + "/" + strProject;
+
+        gc.setHost(strHost);
+        gc.setPort(port);
+        gc.setRepositoryUrl(gitRepoUrl);
+        gc.setSshKeyFile(f);
+        gc.setSshKey(key);
+        gc.setSshPassphrase(phrase);
+        gc.setUsername(strUsername);
+
+        GerritService gerrit = new GerritService(gc);
 
         try {
-            sshConnection =
-                SshConnectionFactory.getConnection(strHost, port, auth);
-        } catch (IOException e) {
-            throw new RepositoryException(
-                textProvider
-                    .getText("repository.gerrit.messages.error.connection"));
+            gerrit.testGerritConnection();
+
+            if (!gerrit.isGerritProject(strProject))
+                errorCollection.addError(REPOSITORY_GERRIT_PROJECT,
+                    "Project doesn't exist!");
+        } catch (Exception e) {
+            errorCollection.addError(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
+                e.getMessage());
         }
 
-        if (!sshConnection.isConnected()) {
-            throw new RepositoryException(
-                textProvider
-                    .getText("repository.gerrit.messages.error.connection"));
-        } else {
-            sshConnection.disconnect();
-        }
+        return errorCollection;
     }
 
     public GerritService getGerritDAO() {
         if (gerritDAO == null) {
             log.info("SSH-KEY-FILE=" + sshKeyFile);
 
-            Authentication auth =
-                createGerritCredentials(sshKeyFile, username, sshPassphrase);
-            gerritDAO = new GerritService(hostname, port, auth);
-
-            String strVersion = gerritDAO.getGerritVersion();
-
-            log.info(String.format("Gerrit Version: %s", strVersion));
-
-            userEmail = gerritDAO.getGerritSystemUserEmail();
+            gerritDAO = new GerritService(gc);
         }
 
         return gerritDAO;
+    }
+
+    public GerritConfig getGerritConfig() {
+        return gc;
     }
 
     protected class GerritBandanaContext implements BambooBandanaContext {
@@ -652,171 +739,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return buildLoggerManager;
     }
 
-    public void installVerifyLabel(String planKey) throws RepositoryException {
-        final String targetRevision = "refs/meta/config";
-        String filePath =
-            getBaseBuildWorkingDirectory() + File.separator + "gerrit"
-                + File.separator + "repositories" + File.separator
-                + "MetaConfig";
-        String projectConfig = filePath + File.separator + "project.config";
-        String url =
-            String.format("ssh://%s@%s:%d/%s", username, this.getHostname(),
-                this.getPort(), "All-Projects.git");
-
-        boolean verifiedSectionFound = false;
-
-        Scanner scanner = null;
-        FileRepository repository = null;
-        Transport transport = null;
-
-        if (verifiedLabelAdded)
-            return;
-
-        synchronized (GerritRepositoryAdapter.class) {
-            try {
-
-                final GitRepositoryAccessData.Builder accessbuilder =
-                    GitRepoFactory.createSubstitutedAccessDataBuilder(
-                        encryptionService, gitRepository);
-
-                final GitRepositoryAccessData data = accessbuilder.build();
-
-                File f = new File(filePath, ".git");
-
-                if (f.exists()) {
-                    FileUtils.deleteDirectory(f.getParentFile());
-                }
-
-                FileRepositoryBuilder builder = new FileRepositoryBuilder();
-
-                repository =
-                    builder.setGitDir(f).readEnvironment().findGitDir().setup()
-                        .build();
-                repository.create();
-
-                SshSessionFactory factory = new JschConfigSessionFactory() {
-
-                    public void configure(Host hc, Session session) {
-                        session.setConfig("StrictHostKeyChecking", "no");
-                    }
-
-                    @Override
-                    protected JSch
-                                    getJSch(final OpenSshConfig.Host hc, FS fs) throws JSchException {
-                        JSch jsch = super.getJSch(hc, fs);
-                        jsch.removeAllIdentity();
-                        if (StringUtils.isNotEmpty(data.getSshKey())) {
-                            jsch.addIdentity("identityName", data.getSshKey()
-                                .getBytes(), null, data.getSshPassphrase()
-                                .getBytes());
-                        }
-                        return jsch;
-                    }
-                };
-
-                Git git = new Git(repository);
-
-                ProgressMonitor monitor = NullProgressMonitor.INSTANCE;
-
-                Git.init().call();
-
-                transport = Transport.open(git.getRepository(), url);
-
-                ((SshTransport) transport).setSshSessionFactory(factory);
-
-                RefSpec refSpec =
-                    new RefSpec().setForceUpdate(true).setSourceDestination(
-                        targetRevision, targetRevision);
-
-                transport.fetch(monitor, Arrays.asList(refSpec));
-                CheckoutCommand co = git.checkout();
-                co.setName(targetRevision);
-                co.call();
-
-                StringBuilder content = new StringBuilder();
-                File fConfig = new File(projectConfig);
-                scanner = new Scanner(fConfig);
-
-                while (scanner.hasNextLine()) {
-                    String line = scanner.nextLine();
-                    if (line.contains("[label \"Verified\"]")) {
-                        verifiedSectionFound = true;
-                        break;
-                    }
-
-                    content.append(line).append("\n");
-
-                    if (line.contains("[access \"refs/heads/*\"]")) {
-                        content
-                            .append("\tlabel-Verified = -1..+1 group Administrators\n");
-                    }
-                }
-
-                scanner.close();
-
-                if (verifiedSectionFound)
-                    return;
-
-                content.append("[label \"Verified\"]\n");
-                content.append("\tfunction = MaxWithBlock\n");
-                content.append("\tvalue = -1 Fails\n");
-                content.append("\tvalue =  0 No score\n");
-                content.append("\tvalue = +1 Verified\n");
-
-                File fConfig2 = new File(projectConfig);
-
-                FileUtils.writeStringToFile(fConfig2, content.toString());
-
-                git.add().addFilepattern("project.config").call();
-                RevCommit revCommit =
-                    git.commit().setMessage("Enabled verification label.")
-                        .call();
-
-                RemoteRefUpdate rru =
-                    new RemoteRefUpdate(git.getRepository(), revCommit.name(),
-                        targetRevision, true, null, null);
-                List<RemoteRefUpdate> list = new ArrayList<RemoteRefUpdate>();
-                list.add(rru);
-
-                PushResult r = transport.push(monitor, list);
-
-                if (r.getMessages().contains("ERROR")) {
-                    throw new RepositoryException(r.getMessages());
-                }
-
-                verifiedLabelAdded = true;
-            } catch (org.eclipse.jgit.errors.TransportException e) {
-                throw new RepositoryException(e);
-            } catch (URISyntaxException e) {
-                throw new RepositoryException(e);
-            } catch (NotSupportedException e) {
-                throw new RepositoryException(e);
-            } catch (RefAlreadyExistsException e) {
-                throw new RepositoryException(e);
-            } catch (RefNotFoundException e) {
-                throw new RepositoryException(e);
-            } catch (InvalidRefNameException e) {
-                throw new RepositoryException(e);
-            } catch (CheckoutConflictException e) {
-                throw new RepositoryException(e);
-            } catch (GitAPIException e) {
-                throw new RepositoryException(e);
-            } catch (FileNotFoundException e) {
-                throw new RepositoryException(
-                    "Could not locate the project.config! Your checkout must have failed.");
-            } catch (IOException e) {
-                throw new RepositoryException(e);
-            } finally {
-                if (scanner != null)
-                    scanner.close();
-                if (transport != null)
-                    transport.close();
-                if (repository != null)
-                    repository.close();
-            }
-        }
-    }
-
     @Override
     public BuildRepositoryChanges
                     collectChangesSinceLastBuild(String planKey,
@@ -825,8 +747,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         final BuildLogger buildLogger =
             buildLoggerManager.getBuildLogger(PlanKeys.getPlanKey(planKey));
         List<Commit> commits = new ArrayList<Commit>();
-
-        installVerifyLabel(planKey);
 
         GerritChangeVO change = getGerritDAO().getLastUnverifiedChange(project);
 
@@ -846,71 +766,75 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             throw new RepositoryException(
                 textProvider
                     .getText("processor.gerrit.messages.build.error.nochanges"));
-        } else if (change == null) {
-            buildLogger.addBuildLogEntry(textProvider
-                .getText("processor.gerrit.messages.build.verified.None"));
-            GitRepoFactory.configureBranchMaster(gitRepository);
-            return gitRepository.collectChangesSinceLastBuild(planKey,
-                lastVcsRevisionKey);
         } else if (lastVcsRevisionKey == null) {
             buildLogger.addBuildLogEntry(textProvider.getText(
                 "repository.gerrit.messages.ccRepositoryNeverChecked",
                 Arrays.asList(change.getLastRevision())));
         } else if (change.getLastRevision().equals(lastVcsRevisionKey)) {
-            return new BuildRepositoryChangesImpl(change.getLastRevision());
-        } else {
-            Object lastDate =
-                bandanaManager.getValue(new GerritBandanaContext(),
-                    GerritChangeVO.JSON_KEY_ID);
-
-            if ((lastDate != null) && lastDate.equals(change.getLastUpdate())) {
+            // Time is unreliable as comments change the last update field.
+            // We need to track by last patchset revision
+            Object lastRevForChange =
+                bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT,
+                    change.getId());
+            if ((lastRevForChange != null)
+                && lastRevForChange.equals(change.getLastRevision()))
                 return new BuildRepositoryChangesImpl(change.getLastRevision());
-            }
         }
 
-        CommitImpl commit = new CommitImpl();
-
-        commit.setComment(change.getSubject());
-        commit.setAuthor(new AuthorCachingFacade(change.getCurrentPatchSet()
-            .getAuthorName()));
-        commit.setDate(change.getLastUpdate());
-        commit.setChangeSetId(change.getLastRevision());
-        commit.setCreationDate(change.getCreatedOn());
-        commit.setLastModificationDate(change.getLastUpdate());
-
-        Set<FileSet> fileSets = change.getCurrentPatchSet().getFileSets();
-
-        for (FileSet fileSet : fileSets) {
-            if (!fileSet.getFile().equals(GIT_COMMIT_ACTION)) {
-                CommitFile file =
-                    new CommitFileImpl(change.getLastRevision(),
-                        fileSet.getFile());
-                commit.addFile(file);
-            }
-        }
-
-        commits.add(commit);
+        commits.add(convertChangeToCommit(change, true));
 
         BuildRepositoryChanges buildChanges =
             new BuildRepositoryChangesImpl(change.getLastRevision(), commits);
 
-        bandanaManager.setValue(new GerritBandanaContext(),
-            GerritChangeVO.JSON_KEY_ID, change.getLastUpdate());
+        bandanaManager.setValue(PlanAwareBandanaContext.GLOBAL_CONTEXT,
+            change.getId(), change.getLastRevision());
 
         return buildChanges;
     }
 
+    protected CommitImpl convertChangeToCommit(GerritChangeVO change,
+                                               boolean useLast) {
+        CommitImpl commit = new CommitImpl();
+
+        PatchSet patch;
+
+        if (useLast)
+            patch = change.getCurrentPatchSet();
+        else
+            patch = change.getPatchSets().iterator().next();
+
+        commit.setComment(change.getSubject());
+        commit.setAuthor(new AuthorCachingFacade(patch.getAuthorName()));
+        commit.setDate(change.getCreatedOn());
+        commit.setChangeSetId(patch.getRevision());
+        commit.setCreationDate(change.getCreatedOn());
+        commit.setLastModificationDate(change.getLastUpdate());
+
+        Set<FileSet> fileSets = patch.getFileSets();
+
+        for (FileSet fileSet : fileSets) {
+            if (!fileSet.getFile().equals(GIT_COMMIT_ACTION)) {
+                CommitFile file =
+                    new CommitFileImpl(patch.getRevision(), fileSet.getFile());
+                commit.addFile(file);
+            }
+        }
+
+        return commit;
+    }
+
     @Override
-    public boolean isRepositoryDifferent(Repository repository) {
+    public boolean isRepositoryDifferent(@NotNull Repository repository) {
         if (repository instanceof GerritRepositoryAdapter) {
-            GerritRepositoryAdapter gerrit =
+            GerritRepositoryAdapter gitRepo =
                 (GerritRepositoryAdapter) repository;
             return !new EqualsBuilder()
-                .append(this.hostname, gerrit.getHostname())
-                .append(this.project, gerrit.getProject())
-                .append(this.username, gerrit.getUsername()).isEquals();
+                .append(gc.getRepositoryUrl(), gitRepo.gc.getRepositoryUrl())
+                .append(gc.getBranch(), gitRepo.gc.getBranch())
+                .append(gc.getUsername(), gitRepo.gc.getUsername())
+                .append(gc.getSshKey(), gitRepo.gc.getSshKey()).isEquals();
         } else {
-            return false;
+            return true;
         }
     }
 
@@ -955,19 +879,28 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return project;
     }
 
+    // @NotNull
+    // @Override
+    // public Iterable<Long> getSharedCredentialIds() {
+    // final Long sharedCredentialsId = accessData.getSharedCredentialsId();
+    // return sharedCredentialsId != null ? ImmutableList
+    // .of(sharedCredentialsId) : Collections.<Long> emptyList();
+    // }
+    //
+    // public void
+    // setCredentialsAccessor(final CredentialsAccessor credentialsAccessor) {
+    // this.credentialsAccessor = credentialsAccessor;
+    // }
+
     @Override
     @NotNull
     public VcsBranch getVcsBranch() {
-        return gitRepository.getVcsBranch();
+        return vcsBranch;
     }
 
     @Override
     public void setVcsBranch(@NotNull final VcsBranch vcsBranch) {
-        gitRepository.setVcsBranch(vcsBranch);
-    }
-
-    public File getCacheDirectory(GitRepositoryAccessData accessData) {
-        return gitRepository.getCacheDirectory(accessData);
+        this.vcsBranch = vcsBranch;
     }
 
     private boolean isOnLocalAgent() {
@@ -991,6 +924,12 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                                        String vcsRevisionKey,
                                        File sourceDirectory, int depth) throws RepositoryException {
 
+        final boolean doShallowFetch =
+            USE_SHALLOW_CLONES && gc.isUseShallowClones() && depth == 1
+                && !isOnLocalAgent();
+
+        lastGerritChange = null;
+
         GerritChangeVO change =
             this.getGerritDAO().getChangeByRevision(vcsRevisionKey);
 
@@ -1002,23 +941,34 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             throw new RepositoryException(
                 textProvider
                     .getText("repository.gerrit.messages.error.retrieve"));
-        } else if (!isOnLocalAgent()) {
-            vcsRevisionKey = change.getCurrentPatchSet().getRef();
         }
 
-        GitRepoFactory.configureBranch(gitRepository, change
-            .getCurrentPatchSet().getRef());
+        lastGerritChange = change;
 
-        log.debug(String.format("getVcsBranch()=%s", gitRepository
-            .getVcsBranch().getName()));
+        vcsRevisionKey = change.getCurrentPatchSet().getRef();
 
-        return gitRepository.retrieveSourceCode(buildContext, vcsRevisionKey,
-            sourceDirectory, depth);
+        log.debug(String.format("getVcsBranch()=%s", getVcsBranch().getName()));
+
+        JGitRepository jgitRepo = new JGitRepository();
+
+        jgitRepo.setAccessData(gc);
+
+        jgitRepo.open(sourceDirectory);
+
+        jgitRepo.openSSHTransport();
+
+        jgitRepo.fetch(vcsRevisionKey);
+
+        jgitRepo.checkout(vcsRevisionKey);
+
+        jgitRepo.close();
+
+        return change.getLastRevision();
     }
 
     @Override
     public boolean isMergingSupported() {
-        return gitRepository.isMergingSupported();
+        return true;
     }
 
     @Override
@@ -1026,7 +976,19 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     mergeWorkspaceWith(@NotNull final BuildContext buildContext,
                                        @NotNull final File file,
                                        @NotNull final String s) throws RepositoryException {
-        return gitRepository.mergeWorkspaceWith(buildContext, file, s);
+        JGitRepository jgitRepo = new JGitRepository();
+
+        jgitRepo.setAccessData(gc);
+
+        jgitRepo.open(file);
+
+        jgitRepo.openSSHTransport();
+
+        jgitRepo.fetch(s);
+
+        jgitRepo.merge(s);
+
+        return false;
     }
 
     @Override
@@ -1061,19 +1023,16 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     @Override
     public int getWatchdogTimeoutSeconds() {
-        // TODO Auto-generated method stub
         return 0;
     }
 
     @Override
     public WatchTimeExceptionData getExceptionData() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public String getGerritProxy() {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -1088,87 +1047,105 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     }
 
     @Override
-    public String getBranchIntegrationEditHtml() {
-        return gitRepository.getBranchIntegrationEditHtml();
-    }
-
-    @Override
     public void
                     pushRevision(@NotNull final File file,
                                  @Nullable final String s) throws RepositoryException {
-        gitRepository.pushRevision(file, s);
+        JGitRepository jgitRepo = new JGitRepository();
+
+        jgitRepo.setAccessData(gc);
+
+        jgitRepo.open(file, true);
+
+        jgitRepo.openSSHTransport();
+
+        jgitRepo.push(file, s);
     }
 
     @NotNull
     @Override
     public String
                     commit(@NotNull final File file, @NotNull final String s) throws RepositoryException {
-        return commit(file, s);
+        JGitRepository jgitRepo = new JGitRepository();
+
+        jgitRepo.setAccessData(gc);
+
+        jgitRepo.open(file, true);
+
+        jgitRepo.openSSHTransport();
+
+        jgitRepo.add(".");
+
+        RevCommit c = jgitRepo.commit(s);
+
+        return c.name();
     }
 
     public void setEncryptionService(EncryptionService encryptionService) {
         this.encryptionService = encryptionService;
-        gitRepository.setEncryptionService(encryptionService);
     }
 
     public void setI18nResolver(I18nResolver i18nResolver) {
         this.i18nResolver = i18nResolver;
-        gitRepository.setI18nResolver(i18nResolver);
     }
 
     @Override
+    @NotNull
     public Map<String, String> getCustomVariables() {
-        return gitRepository.getCustomVariables();
+
+        Map<String, String> ret = new HashMap<String, String>();
+        if (lastGerritChange != null) {
+            ret.put(REPOSITORY_GERRIT_BRANCH, lastGerritChange.getBranch());
+            ret.put(REPOSITORY_GERRIT_CHANGE_ID, lastGerritChange.getId());
+            ret.put(REPOSITORY_GERRIT_CHANGE_NUMBER,
+                String.valueOf(lastGerritChange.getNumber()));
+            ret.put(REPOSITORY_GERRIT_REVISION_NUMBER,
+                lastGerritChange.getLastRevision());
+        }
+        return ret;
+    }
+
+    @NotNull
+    @Override
+    public Map<String, String> getPlanRepositoryVariables() {
+        Map<String, String> variables = new HashMap<String, String>();
+        variables.put(REPOSITORY_URL, gc.getRepositoryUrl());
+        variables.put(REPOSITORY_BRANCH, gc.getBranch().getName());
+        variables.put(REPOSITORY_USERNAME, gc.getUsername());
+        return variables;
     }
 
     @Override
     public Set<Requirement> getRequirements() {
-        return gitRepository.getRequirements();
+        return new HashSet<Requirement>();
     }
 
     @Override
     public List<VcsBranch>
                     getOpenBranches(String context) throws RepositoryException {
-        return gitRepository.getOpenBranches();
+        // TBD - Pull Request by slawekjaranowski
+        return null;
     }
 
     @Override
     public CommitContext getLastCommit() throws RepositoryException {
-        return gitRepository.getLastCommit();
+        CommitImpl commit = new CommitImpl();
+
+        if (lastGerritChange != null) {
+            commit = convertChangeToCommit(lastGerritChange, true);
+        }
+
+        return commit;
     }
 
     @Override
     public CommitContext getFirstCommit() throws RepositoryException {
-        return gitRepository.getFirstCommit();
+        CommitImpl commit = new CommitImpl();
+
+        if (lastGerritChange != null) {
+            commit = convertChangeToCommit(lastGerritChange, false);
+        }
+
+        return commit;
     }
 
-    @Override
-    public CacheId getCacheId(CachableOperation cachableOperation) {
-        return gitRepository.getCacheId(cachableOperation);
-    }
-
-    @Override
-    public boolean isCachingSupportedFor(CachableOperation cachableOperation) {
-        return gitRepository.isCachingSupportedFor(cachableOperation);
-    }
-
-    @Override
-    public String getHandlerDescription() {
-        return gitRepository.getHandlerDescription();
-    }
-
-    @Override
-    public Collection<CacheDescription> getCacheDescriptions() {
-        return gitRepository.getCacheDescriptions();
-    }
-
-    @Override
-    public void deleteCaches(Collection<String> keys, ValidationAware feedback) {
-        gitRepository.deleteCaches(keys, feedback);
-    }
-
-    @Override
-    public void deleteUnusedCaches(ValidationAware feedback) {
-        gitRepository.deleteUnusedCaches(feedback);
-    }
 }

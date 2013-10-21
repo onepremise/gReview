@@ -41,7 +41,7 @@ import com.atlassian.spring.container.LazyComponentReference;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
-import com.opensymphony.xwork.TextProvider;
+import com.opensymphony.xwork2.TextProvider;
 
 /**
  * Post processor which updates Gerrit after build completes
@@ -202,16 +202,13 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
             buildContext.getBuildChanges()
                 .getPreviousVcsRevisionKey(rd.getId());
 
-        final GerritService service =
-            new GerritService(gra.getHostname(), gra.getPort(),
-                gra.getGerritAuthentication());
+        final GerritService service = gra.getGerritDAO();
 
         logger.debug(String.format(
             "revNumber=%s, vcsRevision=%s, prevVcsRevision=%s", revNumber,
             vcsRevision, prevVcsRevision));
 
-        final GerritChangeVO change =
-            service.getChangeByRevision(prevVcsRevision);
+        final GerritChangeVO change = service.getChangeByRevision(vcsRevision);
 
         if (change == null) {
             logger.error(textProvider

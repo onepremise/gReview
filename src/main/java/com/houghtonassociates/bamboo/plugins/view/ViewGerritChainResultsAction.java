@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 
 import com.atlassian.bamboo.plan.PlanHelper;
 import com.atlassian.bamboo.repository.Repository;
+import com.atlassian.bamboo.repository.RepositoryException;
 import com.atlassian.bamboo.resultsummary.vcs.RepositoryChangeset;
 import com.atlassian.bamboo.ww2.actions.chains.ViewChainResult;
 import com.atlassian.bamboo.ww2.aware.permissions.PlanReadSecurityAware;
@@ -62,15 +63,13 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
         return repository;
     }
 
-    public GerritService getGerritService() {
+    public GerritService getGerritService() throws RepositoryException {
         if (gerritService == null) {
             Repository repo = PlanHelper.getDefaultRepository(this.getPlan());
 
             if (repo instanceof GerritRepositoryAdapter) {
                 GerritRepositoryAdapter gra = getRepository();
-                gerritService =
-                    new GerritService(gra.getHostname(), gra.getPort(),
-                        gra.getGerritAuthentication());
+                gerritService = gra.getGerritDAO();
             }
         }
 

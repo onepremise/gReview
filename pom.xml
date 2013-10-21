@@ -18,19 +18,47 @@
 	<packaging>atlassian-plugin</packaging>
 
 	<properties>
-		<bamboo.version>4.4.5</bamboo.version>
+        <!--<bamboo.version>4.2.1</bamboo.version>-->
+        <!--<bamboo.version>4.2.2</bamboo.version>-->
+        <!--<bamboo.version>4.3.0</bamboo.version>-->
+        <!--<bamboo.version>4.3.2</bamboo.version>-->
+        <!--<bamboo.version>4.3.3</bamboo.version>-->
+        <!--<bamboo.version>4.4.0</bamboo.version>-->
+        <!--<bamboo.version>4.4.1</bamboo.version>-->
+        <!--<bamboo.version>4.4.2</bamboo.version>-->
+        <!--<bamboo.version>4.4.3</bamboo.version>-->
+        <!--<bamboo.version>4.4.4</bamboo.version>-->
+		<!--<bamboo.version>4.4.5</bamboo.version>-->
+        <!--<bamboo.version>4.4.8</bamboo.version>-->		
+        <!--<bamboo.version>5.0.0</bamboo.version>-->
+        <!--<bamboo.version>5.0.1</bamboo.version>-->
+        <bamboo.version>5.1.1</bamboo.version>
+
 		<bamboo.data.version>3.2.2</bamboo.data.version>
 		<!--<amps.version>4.2.1</amps.version>-->
 		<amps.version>4.2.4</amps.version>
 		<slf4j.version>1.6.4</slf4j.version>
-		<bamboo.git.version>2.5.2</bamboo.git.version>
+        <jgit.version>3.1.0.201309270735-rc1</jgit.version>
 	</properties>
 
 	<repositories>
+        <repository>
+            <id>jenkins-releases</id>
+            <url>http://repo.jenkins-ci.org/public</url>
+        </repository>
+        <repository>
+            <id>jgit-repository</id>
+            <url>https://repo.eclipse.org/content/groups/releases/</url>
+        </repository>
+        <repository>
+            <id>repo1.maven.org</id>
+            <url>http://repo1.maven.org/maven2/org/apache/commons/commons-lang3</url>
+        </repository>
 		<repository>
 			<id>jfrog-libs-releases</id>
 			<url>http://repo.jfrog.org/artifactory/libs-releases</url>
 		</repository>
+
 		<repository>
 			<id>jfrog-plugins-releases-local</id>
 			<url>http://repo.jfrog.org/artifactory/plugins-releases-local</url>
@@ -38,6 +66,14 @@
 	</repositories>
 
 	<pluginRepositories>
+        <pluginRepository>
+            <id>jenkins-releases</id>
+            <url>http://repo.jenkins-ci.org/public</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>jgit-repository</id>
+            <url>https://repo.eclipse.org/content/groups/releases</url>
+        </pluginRepository>
 		<pluginRepository>
 			<id>jfrog-libs-releases</id>
 			<url>http://repo.jfrog.org/artifactory/libs-releases</url>
@@ -71,9 +107,9 @@
 		</dependency>
 		
 	    <dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>2.5</version>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.1</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -121,13 +157,6 @@
 		</dependency>
 		
 		<dependency>
-			<groupId>com.atlassian.bamboo.plugins</groupId>
-			<artifactId>atlassian-bamboo-plugin-git</artifactId>
-			<version>2.5.8</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
 			<groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
 			<artifactId>gerrit-events</artifactId>
 			<version>1.5.2</version>
@@ -139,20 +168,12 @@
 			<version>4.6</version>
 			<scope>test</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>org.eclipse.jgit</groupId>
-			<artifactId>org.eclipse.jgit</artifactId>
-			<version>2.1.0.201209190230-r</version>
-			<exclusions>
-				<exclusion>
-					<groupId>com.jcraft</groupId>
-					<artifactId>jsch</artifactId>
-				</exclusion>
-			</exclusions>
-			<scope>system</scope>
-			<systemPath>${basedir}/libs/org.eclipse.jgit-2.1.0.201209190230-r.jar</systemPath>
-		</dependency>
+		
+        <dependency>
+           <groupId>org.eclipse.jgit</groupId>
+           <artifactId>org.eclipse.jgit</artifactId>
+           <version>${jgit.version}</version>
+        </dependency>
 	</dependencies>
 
 	<build>

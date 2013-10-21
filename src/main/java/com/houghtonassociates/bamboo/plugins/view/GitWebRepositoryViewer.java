@@ -40,7 +40,6 @@ import com.atlassian.bamboo.webrepository.CommitUrlProvider;
 import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
 import com.atlassian.util.concurrent.NotNull;
 import com.atlassian.util.concurrent.Nullable;
-import com.google.common.collect.Maps;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 
@@ -90,7 +89,7 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
     private boolean gerritOnline = true;
 
     // For speeding up consecutive searches in a session
-    private Map<String, String> changeIDtoRev = Maps.newHashMap();
+    private Map<String, String> changeIDtoRev = new HashMap<String, String>();
 
     @Override
     public void populateFromParams(@NotNull ActionParametersMap params) {
@@ -264,7 +263,6 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
         return result.toString();
     }
 
-    @Override
     public String
                     getHtmlForCommitsFull(ResultsSummary resultsSummary,
                                           RepositoryChangeset repositoryChangeset,
@@ -279,7 +277,6 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
         return templateRenderer.render(FULL_COMMIT_VIEW_TEMPLATE, context);
     }
 
-    @Override
     public String
                     getHtmlForCommitsSummary(ResultsSummary resultsSummary,
                                              RepositoryChangeset repositoryChangeset,
@@ -299,7 +296,6 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
         return result;
     }
 
-    @Override
     public String
                     getHtmlForCommitsSummary(ResultsSummary resultsSummary,
                                              RepositoryChangeset repositoryChangeset,
@@ -326,7 +322,7 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
     public Map<Commit, String>
                     getWebRepositoryUrlForCommits(Collection<Commit> commits,
                                                   RepositoryData repositoryData) {
-        Map<Commit, String> commitsToUrls = Maps.newHashMap();
+        Map<Commit, String> commitsToUrls = new HashMap<Commit, String>();
 
         if (webRepositoryUrl == null) {
             logger
@@ -364,7 +360,7 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
     public Map<String, String>
                     getWebRepositoryUrlForRevisions(Collection<String> revisions,
                                                     RepositoryData repositoryData) {
-        Map<String, String> commitsToUrls = Maps.newHashMap();
+        Map<String, String> commitsToUrls = new HashMap<String, String>();
 
         if (webRepositoryUrl == null) {
             logger
