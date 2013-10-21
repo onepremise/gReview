@@ -22,7 +22,6 @@
       	    <Import-Package>
       	    com.houghtonassociates.bamboo.*,
       	    com.sonyericsson.hudson.plugins.gerrit.*;version="1.5.2",
-      	    com.atlassian.bamboo.plugins.git.*;resolution:=optional;version="2.5.8",
       	    com.atlassian.bamboo.ww2.*;resolution:=optional,
       	    com.atlassian.bamboo.agent.*;resolution:=optional,
       	    com.atlassian.bamboo.applinks.*;resolution:=optional,
@@ -62,9 +61,11 @@
             com.atlassian.spring.container.*;resolution:=optional,
             com.atlassian.util.concurrent.*;resolution:=optional,
             org.apache.log4j;resolution:=optional,
-            org.apache.commons.*;resolution:=optional,
+            org.apache.commons.*;resolution:=optional;version="3.1",
+            org.eclipse.jgit.*;version="3.1.0",
             org.slf4j.*;resolution:=optional,
-            javax.crypto.*;resolution:=optional
+            javax.crypto.*;resolution:=optional,
+            javax.net.ssl.*;resolution:=optional,
       	    </Import-Package>
     	</bundle-instructions>
     </plugin-info>

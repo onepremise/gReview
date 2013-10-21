@@ -21,12 +21,33 @@ public class GerritUserVO {
     public static final String JSON_KEY_EMAIL = "preferred_email";
     public static final String JSON_KEY_REG_DATE = "registered_on";
 
-    private String id;
-    private String userName;
-    private String fullName;
-    private String email;
-    private boolean active;
-    private Date registrationDate;
+    private String id = "";
+    private String userName = "";
+    private String fullName = "";
+    private String email = "";
+    private boolean active = true;
+    private Date registrationDate = null;
+
+    public GerritUserVO fill(GerritUserVO user) {
+        if (this.id.isEmpty())
+            this.id = user.id;
+
+        if (this.userName.isEmpty())
+            this.userName = user.userName;
+
+        if (this.fullName.isEmpty())
+            this.fullName = user.fullName;
+
+        if (this.email.isEmpty())
+            this.email = user.email;
+
+        this.active = user.active;
+
+        if (this.registrationDate == null)
+            this.registrationDate = user.registrationDate;
+
+        return this;
+    }
 
     public String getId() {
         return id;

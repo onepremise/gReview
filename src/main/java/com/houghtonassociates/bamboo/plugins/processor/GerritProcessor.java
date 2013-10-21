@@ -202,16 +202,13 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
             buildContext.getBuildChanges()
                 .getPreviousVcsRevisionKey(rd.getId());
 
-        final GerritService service =
-            new GerritService(gra.getHostname(), gra.getPort(),
-                gra.getGerritAuthentication());
+        final GerritService service = gra.getGerritDAO();
 
         logger.debug(String.format(
             "revNumber=%s, vcsRevision=%s, prevVcsRevision=%s", revNumber,
             vcsRevision, prevVcsRevision));
 
-        final GerritChangeVO change =
-            service.getChangeByRevision(prevVcsRevision);
+        final GerritChangeVO change = service.getChangeByRevision(vcsRevision);
 
         if (change == null) {
             logger.error(textProvider
