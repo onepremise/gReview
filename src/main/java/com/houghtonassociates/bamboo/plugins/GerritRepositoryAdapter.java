@@ -696,7 +696,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     public GerritService getGerritDAO() {
         if (gerritDAO == null) {
-            log.info("SSH-KEY-FILE=" + sshKeyFile);
+            log.debug("SSH-KEY-FILE=" + sshKeyFile);
 
             gerritDAO = new GerritService(gc);
         }
@@ -1105,7 +1105,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     }
 
     @NotNull
-    @Override
     public Map<String, String> getPlanRepositoryVariables() {
         Map<String, String> variables = new HashMap<String, String>();
         variables.put(REPOSITORY_URL, gc.getRepositoryUrl());

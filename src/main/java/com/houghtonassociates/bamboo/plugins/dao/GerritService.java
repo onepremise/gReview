@@ -84,10 +84,12 @@ public class GerritService {
         installVerificationLabel();
         grantDatabaseAccess();
 
-        GerritUserVO user = getGerritSystemUser();
+        if ((gc.getUserEmail() == null) || gc.getUserEmail().isEmpty()) {
+            GerritUserVO user = getGerritSystemUser();
 
-        if (user != null)
-            gc.setUserEmail(user.getEmail());
+            if (user != null)
+                gc.setUserEmail(user.getEmail());
+        }
 
         isInitialized = true;
     }
