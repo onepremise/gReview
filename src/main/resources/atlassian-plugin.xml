@@ -60,6 +60,7 @@
             com.atlassian.sal.*;resolution:=optional,
             com.atlassian.spring.container.*;resolution:=optional,
             com.atlassian.util.concurrent.*;resolution:=optional,
+            com.opensymphony.util.*;resolution:=optional,
             org.apache.log4j;resolution:=optional,
             org.apache.commons.beanutils.*;resolution:=optional,
             org.apache.commons.collections.*;resolution:=optional,
