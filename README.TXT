@@ -193,6 +193,12 @@ Bug Fixes and Enhancements
 
  * Issue #1: Checkout Fails When Bamboo Configured with Native Git
  * Issue #2: Add Git Submodules Capability
+ 
+Development Branches
+====================
+
+* 4.2.1-5.0.1: Use this branch for updates to the cooresponding releases
+* master: Master supports ongoing development for 5.1.1 +
 
 How to build the Bamboo Gerrit Plugin
 =====================================
@@ -232,3 +238,4 @@ Jason Huntley
 <a href="http://stackexchange.com/users/1254855">
 <img src="http://stackexchange.com/users/flair/1254855.png" width="208" height="58" alt="profile for Jason Huntley on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Jason Huntley on Stack Exchange, a network of free, community-driven Q&amp;A sites">
 </a>
+
