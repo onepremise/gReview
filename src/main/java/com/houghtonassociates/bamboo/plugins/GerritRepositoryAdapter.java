@@ -544,13 +544,27 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         String gitRepoUrl =
             "ssh://" + username + "@" + hostname + ":" + port + "/" + project;
 
-        relativeConfigPath =
-            config.getString(REPOSITORY_GERRIT_CONFIG_DIR).replace("\\", "/");
+        String tmpCP = config.getString(REPOSITORY_GERRIT_CONFIG_DIR);
+
+        if (tmpCP == null || tmpCP.isEmpty()) {
+            tmpCP =
+                GerritService.SYSTEM_DIRECTORY + File.separator
+                    + GerritService.CONFIG_DIRECTORY;
+        }
+
+        relativeConfigPath = tmpCP.replace("\\", "/");
 
         absConfigPath = prepareConfigDir(relativeConfigPath).getAbsolutePath();
 
-        relativeSSHKeyFilePath =
-            config.getString(REPOSITORY_GERRIT_SSH_KEY_FILE).replace("\\", "/");
+        String tmpSSHKFP = config.getString(REPOSITORY_GERRIT_SSH_KEY_FILE);
+
+        if (tmpSSHKFP == null || tmpSSHKFP.isEmpty()) {
+            tmpSSHKFP =
+                GerritService.SYSTEM_DIRECTORY + File.separator
+                    + GerritService.CONFIG_DIRECTORY;
+        }
+
+        relativeSSHKeyFilePath = tmpSSHKFP.replace("\\", "/");
 
         String decryptedKey = encryptionService.decrypt(sshKey);
 
