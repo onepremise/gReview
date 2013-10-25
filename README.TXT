@@ -16,13 +16,13 @@ Features
  * Change dependencies are resolved naturally through Gerrit PatchSets.
  * Change comments automatically updated with build results.
  * Gerrit Change Display Tab available in Build Summary.
+ * Git submodule support
  * [All the Features Provided By Bamboo](http://www.atlassian.com/software/bamboo/features/)
 
 Requirements
 ============
 
  * [Bamboo 4.2+](http://www.atlassian.com/software/bamboo/download)
- * [Native Git 1.8.0+](http://git-scm.com/downloads)
  * [Gerrit Code Review (2.4+)](http://code.google.com/p/gerrit/downloads/list)
 
 Install
@@ -32,11 +32,6 @@ Bamboo
 ------
 
 The Bamboo install guide can be found [here](https://confluence.atlassian.com/display/BAMBOO/Bamboo+installation+guide).
-
-Native Git
-----------
-
-Native Git can be downloaded from the git website [here](http://git-scm.com/downloads).
 
 Gerrit
 ------
@@ -52,17 +47,6 @@ This plugin can be installed via the Universal Plugin Manager in Bamboo.
 
 Usage
 =======
-
-Enable Native Git
------------------
-
- * Login as admin.
- * Goto the Administration console by selecting "Administration" link at top.
- * Click on "Executables" link on the left under "Build Resources".
- * Click on "add an executable as a server capability".
- * Select "Git" as "Capability Type".
- * Provide path to "git.exe".
- * Click on "Add".
 
 Setup Gerrit
 ------------
@@ -96,7 +80,7 @@ Adding Gitweb
  * Select an existing Gerrit Repository or add one.
  * Drop down 'Advanced Options' and select the GitWeb repository.
  * [Provide your details and save](https://lh5.googleusercontent.com/-wd7iOs6EmhQ/UCKvWNPlPJI/AAAAAAAAAPY/9LkFAJtksFI/s917/source-repositories2.JPG)
- 
+
 Troubleshooting
 ===============
 
@@ -146,18 +130,30 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 
 Bug Fixes and Enhancements
 ==========================
+1.3.0 Updates
+-------------
+
+* Removed Native Git dependency, replaced by latest jGit
+* Removed bamboo-git plugin dependency
+* Added submodule support
+* Resolved dependency loading issues with OSGI
+* Resolved path parsing issues with remote and local agent on Linux
+* Extended Support for 4.2.1 - 5.1.1
+* Issue #23 Changes discovering problem
+* Issue #27 Bamboo 4.3 support
+
 1.2.9 Updates
 -------------
 
  * Issue #21 Gerrit Chain Results screen shows changes from other repositories
  * Issue #20 Edit Gerrit Repository' screen force to re-enter passphrase for private key
  * Issue #19 NPE on Bamboo agent after job is dispatched by gReview
-
+ 
 1.2.8 Updates
 -------------
 
  * Issue #16 4.2.X Support.
- 
+
 1.2.3 Updates
 -------------
 
@@ -232,4 +228,7 @@ Jason Huntley
 
 * jhuntley@houghtonassociates.com
 * onepremise@gmail.com
-* http://stackoverflow.com/users/1214542/jason-huntley
+
+<a href="http://stackexchange.com/users/1254855">
+<img src="http://stackexchange.com/users/flair/1254855.png" width="208" height="58" alt="profile for Jason Huntley on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Jason Huntley on Stack Exchange, a network of free, community-driven Q&amp;A sites">
+</a>
