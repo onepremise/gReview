@@ -45,6 +45,9 @@ gReview
 
 This plugin can be installed via the Universal Plugin Manager in Bamboo.
 
+Note: Resave your repository settings in your projects, which use Gerrit, 
+      to store your settings with the most recent format and save mechanisms.
+
 Usage
 =======
 
