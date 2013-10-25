@@ -16,13 +16,13 @@ Features
  * Change dependencies are resolved naturally through Gerrit PatchSets.
  * Change comments automatically updated with build results.
  * Gerrit Change Display Tab available in Build Summary.
+ * Git submodule support
  * [All the Features Provided By Bamboo](http://www.atlassian.com/software/bamboo/features/)
 
 Requirements
 ============
 
  * [Bamboo 4.2+](http://www.atlassian.com/software/bamboo/download)
- * [Native Git 1.8.0+](http://git-scm.com/downloads)
  * [Gerrit Code Review (2.4+)](http://code.google.com/p/gerrit/downloads/list)
 
 Install
@@ -32,11 +32,6 @@ Bamboo
 ------
 
 The Bamboo install guide can be found [here](https://confluence.atlassian.com/display/BAMBOO/Bamboo+installation+guide).
-
-Native Git
-----------
-
-Native Git can be downloaded from the git website [here](http://git-scm.com/downloads).
 
 Gerrit
 ------
@@ -52,17 +47,6 @@ This plugin can be installed via the Universal Plugin Manager in Bamboo.
 
 Usage
 =======
-
-Enable Native Git
------------------
-
- * Login as admin.
- * Goto the Administration console by selecting "Administration" link at top.
- * Click on "Executables" link on the left under "Build Resources".
- * Click on "add an executable as a server capability".
- * Select "Git" as "Capability Type".
- * Provide path to "git.exe".
- * Click on "Add".
 
 Setup Gerrit
 ------------
@@ -146,6 +130,18 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 
 Bug Fixes and Enhancements
 ==========================
+1.3.0 Updates
+-------------
+
+* Removed Native Git dependency, replaced by latest jGit
+* Removed bamboo-git plugin dependency
+* Added submodule support
+* Resolved dependency loading issues with OSGI
+* Resolved path parsing issues with remote and local agent on Linux
+* Extended Support for 4.2.1 - 5.1.1
+* Issue #23 Changes discovering problem
+* Issue #27 Bamboo 4.3 support
+
 1.2.9 Updates
 -------------
 
@@ -197,6 +193,12 @@ Bug Fixes and Enhancements
 
  * Issue #1: Checkout Fails When Bamboo Configured with Native Git
  * Issue #2: Add Git Submodules Capability
+ 
+Development Branches
+====================
+
+* 4.2.1-5.0.1: Use this branch for updates to the cooresponding releases
+* master: Master supports ongoing development for 5.1.1 +
 
 How to build the Bamboo Gerrit Plugin
 =====================================
