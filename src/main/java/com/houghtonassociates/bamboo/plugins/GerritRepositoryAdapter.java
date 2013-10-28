@@ -818,7 +818,13 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             patch = change.getPatchSets().iterator().next();
 
         commit.setComment(change.getSubject());
-        commit.setAuthor(new AuthorCachingFacade(patch.getAuthorName()));
+
+        String author = patch.getAuthorName();
+
+        if (author == null || author.isEmpty())
+            author = change.getOwnerName();
+
+        commit.setAuthor(new AuthorCachingFacade(author));
         commit.setDate(change.getCreatedOn());
         commit.setChangeSetId(patch.getRevision());
         commit.setCreationDate(change.getCreatedOn());

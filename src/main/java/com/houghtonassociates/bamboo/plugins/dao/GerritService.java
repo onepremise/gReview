@@ -957,7 +957,7 @@ public class GerritService {
                     .getString(GerritChangeVO.JSON_KEY_NAME));
             }
         } catch (JSONException e) {
-            log.info(String.format("Author not supported in release %s: %s",
+            log.error(String.format("Author not supported in release %s: %s",
                 getGerritVersion(), e.getMessage()));
         }
 
