@@ -72,6 +72,7 @@ public class GerritService {
 
     // private int watchdogTimeoutMinutes;
     // private WatchTimeExceptionData watchTimeExceptionData;
+    private static boolean authorSupported = true;
     private static boolean dbAccessGranted = false;
     private static boolean verifiedLabelAdded = false;
     private boolean isInitialized = false;
@@ -684,7 +685,7 @@ public class GerritService {
             Date dt = change.getLastUpdate();
 
             if (dt.getTime() > lastDt.getTime()
-                && change.getVerificationScore() < 1) {
+                && change.getVerificationScore() == 0) {
                 lastDt = change.getLastUpdate();
                 selectedChange = change;
             }
@@ -728,7 +729,7 @@ public class GerritService {
             Date dt = change.getLastUpdate();
 
             if (dt.getTime() > lastDt.getTime()
-                && change.getVerificationScore() < 1) {
+                && change.getVerificationScore() == 0) {
                 lastDt = change.getLastUpdate();
                 selectedChange = change;
             }
@@ -946,19 +947,23 @@ public class GerritService {
             .getString(GerritChangeVO.JSON_KEY_EMAIL));
 
         try {
-            JSONObject author =
-                p.getJSONObject(GerritChangeVO.JSON_KEY_PATCH_SET_AUTHOR);
-            if (author != null) {
-                patch.setAuthorEmail(author
-                    .getString(GerritChangeVO.JSON_KEY_EMAIL));
-                patch.setAuthorUserName(author
-                    .getString(GerritChangeVO.JSON_KEY_USERNAME));
-                patch.setAuthorName(author
-                    .getString(GerritChangeVO.JSON_KEY_NAME));
+            if (authorSupported) {
+                JSONObject author =
+                    p.getJSONObject(GerritChangeVO.JSON_KEY_PATCH_SET_AUTHOR);
+                if (author != null) {
+                    patch.setAuthorEmail(author
+                        .getString(GerritChangeVO.JSON_KEY_EMAIL));
+                    patch.setAuthorUserName(author
+                        .getString(GerritChangeVO.JSON_KEY_USERNAME));
+                    patch.setAuthorName(author
+                        .getString(GerritChangeVO.JSON_KEY_NAME));
+                }
             }
         } catch (JSONException e) {
+            authorSupported = false;
             log.error(String.format("Author not supported in release %s: %s",
                 getGerritVersion(), e.getMessage()));
+            log.error("Disabling author lookup.");
         }
 
         Integer patchSetCreatedOn =
