@@ -18,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.CheckoutCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.MergeCommand;
 import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.SubmoduleInitCommand;
@@ -51,6 +52,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.submodule.SubmoduleWalk;
+import org.eclipse.jgit.transport.FetchConnection;
 import org.eclipse.jgit.transport.FetchResult;
 import org.eclipse.jgit.transport.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig;
@@ -287,6 +289,70 @@ public class JGitRepository {
         } catch (TransportException e) {
             throw new RepositoryException(e);
         }
+    }
+
+    public List<Ref> lsLocalBranches(ListMode type) throws RepositoryException {
+        List<Ref> call = new ArrayList<Ref>();
+
+        try {
+            call = new Git(repository).branchList().setListMode(type).call();
+        } catch (GitAPIException e) {
+            throw new RepositoryException(e);
+        }
+
+        return call;
+    }
+
+    public Collection<Ref> lsRemoteBranches() throws RepositoryException {
+        Collection<Ref> call = new ArrayList<Ref>();
+
+        FetchConnection c;
+
+        try {
+            c = transport.openFetch();
+
+            for (final Ref r : c.getRefs()) {
+                final String n = r.getName();
+
+                if (!n.startsWith(Constants.R_HEADS))
+                    continue;
+
+                call.add(r);
+            }
+
+        } catch (NotSupportedException e) {
+            throw new RepositoryException(e);
+        } catch (TransportException e) {
+            throw new RepositoryException(e);
+        }
+
+        return call;
+    }
+
+    public Collection<Ref> lsRemoteTags() throws RepositoryException {
+        Collection<Ref> call = new ArrayList<Ref>();
+
+        FetchConnection c;
+
+        try {
+            c = transport.openFetch();
+
+            for (final Ref r : c.getRefs()) {
+                final String n = r.getName();
+
+                if (!n.startsWith(Constants.R_TAGS))
+                    continue;
+
+                call.add(r);
+            }
+
+        } catch (NotSupportedException e) {
+            throw new RepositoryException(e);
+        } catch (TransportException e) {
+            throw new RepositoryException(e);
+        }
+
+        return call;
     }
 
     public FetchResult fetch(String targetRevision) throws RepositoryException {
