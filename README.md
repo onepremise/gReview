@@ -84,6 +84,21 @@ Adding Gitweb
  * Drop down 'Advanced Options' and select the GitWeb repository.
  * [Provide your details and save](https://lh5.googleusercontent.com/-wd7iOs6EmhQ/UCKvWNPlPJI/AAAAAAAAAPY/9LkFAJtksFI/s917/source-repositories2.JPG)
 
+Creating A Branch (Gerrit)
+--------------------------
+ * Login to Gerrit.
+ * Select Projects->List->'YourProject'
+ * Enter your new branch below beside "Branch Name"
+ 
+
+Creating A Branch (Git)
+-----------------------
+
+ * git checkout master
+ * git push origin HEAD:new-branch
+ * git checkout new-branch
+ * git push origin HEAD:refs/for/new-branch
+
 Troubleshooting
 ===============
 
