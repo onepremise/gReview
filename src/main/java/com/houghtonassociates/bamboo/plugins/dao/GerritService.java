@@ -23,6 +23,7 @@ import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.TreeSet;
 
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
@@ -657,41 +659,31 @@ public class GerritService {
         log.debug("getLastChange()...");
 
         Set<GerritChangeVO> changes = getGerritChangeInfo();
-        GerritChangeVO selectedChange = null;
 
-        Date lastDt = new Date(0);
+        TreeSet<GerritChangeVO> treeSet =
+            new TreeSet<GerritChangeVO>(new SortByLastUpdate());
+        treeSet.addAll(changes);
 
-        for (GerritChangeVO change : changes) {
-            Date dt = change.getLastUpdate();
+        if (treeSet.size() > 0)
+            return treeSet.first();
 
-            if (dt.getTime() > lastDt.getTime()) {
-                lastDt = change.getLastUpdate();
-                selectedChange = change;
-            }
-        }
-
-        return selectedChange;
+        return null;
     }
 
     public GerritChangeVO getLastUnverifiedChange() throws RepositoryException {
         log.debug("getLastUnverifiedChange()...");
 
         Set<GerritChangeVO> changes = getGerritChangeInfo();
-        GerritChangeVO selectedChange = null;
 
-        Date lastDt = new Date(0);
+        TreeSet<GerritChangeVO> treeSet =
+            new TreeSet<GerritChangeVO>(new SortByUnVerifiedLastUpdate());
+        treeSet.addAll(changes);
 
-        for (GerritChangeVO change : changes) {
-            Date dt = change.getLastUpdate();
+        if ((treeSet.size() > 0)
+            && (treeSet.first().getVerificationScore() == 0))
+            return treeSet.first();
 
-            if (dt.getTime() > lastDt.getTime()
-                && change.getVerificationScore() == 0) {
-                lastDt = change.getLastUpdate();
-                selectedChange = change;
-            }
-        }
-
-        return selectedChange;
+        return null;
     }
 
     public GerritChangeVO
@@ -699,20 +691,15 @@ public class GerritService {
         log.debug(String.format("getLastChange(project=%s)...", project));
 
         Set<GerritChangeVO> changes = getGerritChangeInfo(project);
-        GerritChangeVO selectedChange = null;
 
-        Date lastDt = new Date(0);
+        TreeSet<GerritChangeVO> treeSet =
+            new TreeSet<GerritChangeVO>(new SortByLastUpdate());
+        treeSet.addAll(changes);
 
-        for (GerritChangeVO change : changes) {
-            Date dt = change.getLastUpdate();
+        if (treeSet.size() > 0)
+            return treeSet.first();
 
-            if (dt.getTime() > lastDt.getTime()) {
-                lastDt = change.getLastUpdate();
-                selectedChange = change;
-            }
-        }
-
-        return selectedChange;
+        return null;
     }
 
     public GerritChangeVO
@@ -721,21 +708,50 @@ public class GerritService {
             project));
 
         Set<GerritChangeVO> changes = getGerritChangeInfo(project);
-        GerritChangeVO selectedChange = null;
 
-        Date lastDt = new Date(0);
+        TreeSet<GerritChangeVO> treeSet =
+            new TreeSet<GerritChangeVO>(new SortByUnVerifiedLastUpdate());
+        treeSet.addAll(changes);
 
-        for (GerritChangeVO change : changes) {
-            Date dt = change.getLastUpdate();
+        if ((treeSet.size() > 0)
+            && (treeSet.first().getVerificationScore() == 0))
+            return treeSet.first();
 
-            if (dt.getTime() > lastDt.getTime()
-                && change.getVerificationScore() == 0) {
-                lastDt = change.getLastUpdate();
-                selectedChange = change;
-            }
-        }
+        return null;
+    }
 
-        return selectedChange;
+    public GerritChangeVO
+                    getLastChange(String project, String branch) throws RepositoryException {
+        log.debug(String.format("getLastChange(project=%s)...", project));
+
+        Set<GerritChangeVO> changes = getGerritChangeInfo(project, branch);
+
+        TreeSet<GerritChangeVO> treeSet =
+            new TreeSet<GerritChangeVO>(new SortByLastUpdate());
+        treeSet.addAll(changes);
+
+        if (treeSet.size() > 0)
+            return treeSet.first();
+
+        return null;
+    }
+
+    public GerritChangeVO
+                    getLastUnverifiedChange(String project, String branch) throws RepositoryException {
+        log.debug(String.format("getLastUnverifiedChange(project=%s)...",
+            project));
+
+        Set<GerritChangeVO> changes = getGerritChangeInfo(project, branch);
+
+        TreeSet<GerritChangeVO> treeSet =
+            new TreeSet<GerritChangeVO>(new SortByUnVerifiedLastUpdate());
+        treeSet.addAll(changes);
+
+        if ((treeSet.size() > 0)
+            && (treeSet.first().getVerificationScore() == 0))
+            return treeSet.first();
+
+        return null;
     }
 
     public GerritChangeVO
@@ -813,6 +829,69 @@ public class GerritService {
         }
 
         return results;
+    }
+
+    public Set<GerritChangeVO>
+                    getGerritChangeInfo(String project, String branch) throws RepositoryException {
+        String strQuery =
+            String.format("is:open project:%s branch:%s", project, branch);
+
+        log.debug(String.format(
+            "getGerritChangeInfo(project=%s, branch:%s)...", project, branch));
+
+        List<JSONObject> jsonObjects = runGerritQuery(strQuery);
+        Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);
+
+        if (jsonObjects == null) {
+            return results;
+        }
+
+        log.info("Query result count: " + jsonObjects.size());
+
+        for (JSONObject j : jsonObjects) {
+            if (j.containsKey(GerritChangeVO.JSON_KEY_PROJECT)) {
+                GerritChangeVO info = transformChangeJSONObject(j);
+                results.add(info);
+            }
+        }
+
+        return results;
+    }
+
+    private class SortByUnVerifiedLastUpdate extends SortByLastUpdate {
+
+        public int compare(GerritChangeVO c1, GerritChangeVO c2) {
+            boolean verified1 = (c1.getVerificationScore() != 0);
+            boolean verified2 = (c2.getVerificationScore() != 0);
+
+            if (verified1 && verified2) {
+                return super.compare(c1, c2);
+            } else if (verified1 && !verified2) {
+                return 1;
+            } else if (!verified1 && verified2) {
+                return -1;
+            } else if (!verified1 && !verified2) {
+                return super.compare(c1, c2);
+            }
+
+            return 0;
+        }
+    }
+
+    private class SortByLastUpdate implements Comparator<GerritChangeVO> {
+
+        public int compare(GerritChangeVO c1, GerritChangeVO c2) {
+            Date dt1 = c1.getLastUpdate();
+            Date dt2 = c2.getLastUpdate();
+
+            if (dt1.getTime() < dt2.getTime())
+                return 1;
+
+            if (dt1.getTime() > dt2.getTime())
+                return -1;
+
+            return 0;
+        }
     }
 
     private GerritExtIDVO
