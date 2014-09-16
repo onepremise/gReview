@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.houghtonassociates.bamboo.plugins</groupId>
 	<artifactId>gReview</artifactId>
-	<version>1.3.3.3</version>
+	<version>1.4.0.1</version>
 
 	<organization>
 		<name>Houghton Associates</name>
@@ -35,15 +35,33 @@
         <bamboo.version>5.1.0</bamboo.version>
         <!--<bamboo.version>5.1.1</bamboo.version>-->
         <!--<bamboo.version>5.2</bamboo.version>-->
+        <!--<bamboo.version>5.2.1</bamboo.version>-->
+        <!--<bamboo.version>5.2.2</bamboo.version>-->
+        <!--<bamboo.version>5.3</bamboo.version>-->
+        <!--<bamboo.version>5.4</bamboo.version>-->
+        <!--<bamboo.version>5.4.1</bamboo.version>-->
+        <!--<bamboo.version>5.4.2</bamboo.version>-->
+        <!--<bamboo.version>5.4.3</bamboo.version>-->
+        <!--<bamboo.version>5.5.0</bamboo.version>-->
+        <!--<bamboo.version>5.5.1</bamboo.version>-->
+        <!--<bamboo.version>5.6.0</bamboo.version>-->
 
 		<bamboo.data.version>3.2.2</bamboo.data.version>
 		<!--<amps.version>4.2.1</amps.version>-->
-		<amps.version>4.2.4</amps.version>
+		<amps.version>5.0.3</amps.version>
 		<slf4j.version>1.6.4</slf4j.version>
-        <jgit.version>3.1.0.201309270735-rc1</jgit.version>
+        <jgit.version>3.4.0.201406041058-rc3</jgit.version>
 	</properties>
 
 	<repositories>
+		<repository>
+            <id>central.maven.org</id>
+            <url>http://central.maven.org/maven2</url>
+        </repository>
+	    <repository>
+            <id>repo1.maven.org</id>
+            <url>http://repo1.maven.org/maven2</url>
+        </repository>
         <repository>
             <id>jenkins-releases</id>
             <url>http://repo.jenkins-ci.org/public</url>
@@ -52,37 +70,20 @@
             <id>jgit-repository</id>
             <url>https://repo.eclipse.org/content/groups/releases/</url>
         </repository>
-        <repository>
-            <id>repo1.maven.org</id>
-            <url>http://repo1.maven.org/maven2/org/apache/commons/commons-lang3</url>
-        </repository>
 		<repository>
 			<id>jfrog-libs-releases</id>
 			<url>http://repo.jfrog.org/artifactory/libs-releases</url>
-		</repository>
-
-		<repository>
-			<id>jfrog-plugins-releases-local</id>
-			<url>http://repo.jfrog.org/artifactory/plugins-releases-local</url>
 		</repository>
 	</repositories>
 
 	<pluginRepositories>
-        <pluginRepository>
-            <id>jenkins-releases</id>
-            <url>http://repo.jenkins-ci.org/public</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>jgit-repository</id>
-            <url>https://repo.eclipse.org/content/groups/releases</url>
+	    <pluginRepository>
+            <id>repo1.maven.org</id>
+            <url>http://repo1.maven.org/maven2</url>
         </pluginRepository>
 		<pluginRepository>
 			<id>jfrog-libs-releases</id>
 			<url>http://repo.jfrog.org/artifactory/libs-releases</url>
-		</pluginRepository>
-		<pluginRepository>
-			<id>jfrog-plugins-releases-local</id>
-			<url>http://repo.jfrog.org/artifactory/plugins-releases-local</url>
 		</pluginRepository>
 	</pluginRepositories>
 
@@ -162,7 +163,23 @@
 			<version>${bamboo.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jzlib</artifactId>
+            <version>1.1.3</version>
+        </dependency> 
+        <dependency>      
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.1.51</version>
+        </dependency>
+		<dependency>
+			<groupId>net.sf.json-lib</groupId>
+			<artifactId>json-lib</artifactId>
+			<version>2.4</version>
+			<classifier>jdk15</classifier>
+		</dependency>
+				
 		<dependency>
 			<groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
 			<artifactId>gerrit-events</artifactId>
