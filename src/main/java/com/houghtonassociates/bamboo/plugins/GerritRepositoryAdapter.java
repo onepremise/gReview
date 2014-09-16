@@ -19,8 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +33,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.log4j.Logger;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +42,7 @@ import com.atlassian.bamboo.author.AuthorCachingFacade;
 import com.atlassian.bamboo.bandana.BambooBandanaContext;
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.build.BuildLoggerManager;
+import com.atlassian.bamboo.build.Job;
 import com.atlassian.bamboo.build.fileserver.BuildDirectoryManager;
 import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.commit.Commit;
@@ -46,13 +50,20 @@ import com.atlassian.bamboo.commit.CommitContext;
 import com.atlassian.bamboo.commit.CommitFile;
 import com.atlassian.bamboo.commit.CommitFileImpl;
 import com.atlassian.bamboo.commit.CommitImpl;
+import com.atlassian.bamboo.plan.Plan;
+import com.atlassian.bamboo.plan.PlanKey;
 import com.atlassian.bamboo.plan.PlanKeys;
+import com.atlassian.bamboo.plan.PlanManager;
+import com.atlassian.bamboo.plan.TopLevelPlan;
+import com.atlassian.bamboo.plan.branch.ChainBranch;
 import com.atlassian.bamboo.plan.branch.VcsBranch;
 import com.atlassian.bamboo.plan.branch.VcsBranchImpl;
+import com.atlassian.bamboo.project.Project;
 import com.atlassian.bamboo.repository.AbstractStandaloneRepository;
 import com.atlassian.bamboo.repository.AdvancedConfigurationAwareRepository;
 import com.atlassian.bamboo.repository.BranchDetectionCapableRepository;
 import com.atlassian.bamboo.repository.BranchMergingAwareRepository;
+import com.atlassian.bamboo.repository.BranchingAwareRepository;
 import com.atlassian.bamboo.repository.CustomVariableProviderRepository;
 import com.atlassian.bamboo.repository.PushCapableRepository;
 import com.atlassian.bamboo.repository.Repository;
@@ -71,7 +82,9 @@ import com.atlassian.bamboo.v2.build.agent.capability.Requirement;
 import com.atlassian.bamboo.v2.build.agent.remote.RemoteBuildDirectoryManager;
 import com.atlassian.bamboo.v2.build.repository.CustomSourceDirectoryAwareRepository;
 import com.atlassian.bamboo.v2.build.repository.RequirementsAwareRepository;
+import com.atlassian.bamboo.v2.build.trigger.ManualBuildTriggerReason;
 import com.atlassian.bamboo.variable.CustomVariableContext;
+import com.atlassian.bamboo.variable.VariableDefinitionManager;
 import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.bandana.DefaultBandanaManager;
@@ -94,9 +107,10 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExc
  */
 public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     implements AdvancedConfigurationAwareRepository, PushCapableRepository,
-    BranchMergingAwareRepository, BranchDetectionCapableRepository,
-    GerritConnectionConfig2, CustomVariableProviderRepository,
-    CustomSourceDirectoryAwareRepository, RequirementsAwareRepository {
+    BranchingAwareRepository, BranchMergingAwareRepository,
+    BranchDetectionCapableRepository, GerritConnectionConfig2,
+    CustomVariableProviderRepository, CustomSourceDirectoryAwareRepository,
+    RequirementsAwareRepository {
 
     private static final long serialVersionUID = -3518800283574344591L;
 
@@ -106,11 +120,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     @Deprecated
     private static final String REPOSITORY_GERRIT_PLAN_KEY = "planKey";
-    @Deprecated
-    private static final String REPOSITORY_GERRIT_REPO_ID = "repositoryId";
-    @Deprecated
-    private static final String REPOSITORY_GERRIT_REPO_DISP_NAME =
-        "repositoryName";
 
     private static final String REPOSITORY_GERRIT_PROJECT_KEY = "projectKey";
     private static final String REPOSITORY_GERRIT_PROJECT_NAME = "projectName";
@@ -203,6 +212,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     private static final BandanaManager bandanaManager =
         new DefaultBandanaManager(new MemoryBandanaPersister());
+
+    private PlanManager planManager = null;
+    private VariableDefinitionManager variableDefinitionManager = null;
+
     private I18nResolver i18nResolver;
     private CapabilityContext capabilityContext;
     private SshProxyService sshProxyService;
@@ -217,6 +230,19 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         super.init(moduleDescriptor);
 
         log.debug("Initialized repository adapter.");
+    }
+
+    public void setPlanManager(PlanManager planManager) {
+        this.planManager = planManager;
+    }
+
+    public VariableDefinitionManager getVariableDefinitionManager() {
+        return variableDefinitionManager;
+    }
+
+    public void
+                    setVariableDefinitionManager(VariableDefinitionManager variableDefinitionManager) {
+        this.variableDefinitionManager = variableDefinitionManager;
     }
 
     public BandanaManager getBandanaManager() {
@@ -757,9 +783,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     public BuildRepositoryChanges
                     collectChangesSinceLastBuild(String planKey,
                                                  String lastVcsRevisionKey) throws RepositoryException {
-
         final BuildLogger buildLogger =
-            buildLoggerManager.getBuildLogger(PlanKeys.getPlanKey(planKey));
+            buildLoggerManager.getLogger(PlanKeys.getPlanKey(planKey));
         List<Commit> commits = new ArrayList<Commit>();
 
         GerritChangeVO change = getGerritDAO().getLastUnverifiedChange(project);
@@ -927,12 +952,52 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return !(buildDirectoryManager instanceof RemoteBuildDirectoryManager);
     }
 
+    /**
+     * Check to see if build context was initiated from a plan branch.
+     * Update branch setting to reflect current branch plan is pulling
+     * from.
+     * 
+     * @param buildContext
+     * @return
+     */
+    private boolean updateBranch(BuildContext buildContext) {
+        vcsBranch = DEFAULT_BRANCH;
+
+        Plan pl = planManager.getPlanById(buildContext.getPlanId());
+        Project pr = pl.getProject();
+
+        List<ChainBranch> cBranches =
+            planManager.getAllPlansByProject(pr, ChainBranch.class);
+
+        for (ChainBranch cb : cBranches) {
+            if (buildContext.getParentBuildContext().getPlanId() == cb.getId()) {
+                pl =
+                    planManager.getPlanById(buildContext
+                        .getParentBuildContext().getPlanId());
+
+                vcsBranch = new VcsBranchImpl(pl.getBuildName());
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @Override
     @NotNull
     public String
                     retrieveSourceCode(@NotNull BuildContext buildContext,
                                        String vcsRevisionKey,
                                        File sourceDirectory) throws RepositoryException {
+        // Long repositoryId =
+        // buildContext.getRelevantRepositoryIds().iterator().next();
+
+        // PlanVcsRevisionData planVcsRevisionData =
+        // buildContext.getBuildChanges().getVcsRevisionData(repositoryId);
+
+        // planVcsRevisionData.getOverriddenBranch();
+
         return retrieveSourceCode(buildContext, vcsRevisionKey,
             sourceDirectory, 1);
     }
@@ -953,15 +1018,26 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         GerritChangeVO change =
             this.getGerritDAO().getChangeByRevision(vcsRevisionKey);
 
-        log.debug(String.format("Retrieving Source for Change: %s, %s, %s",
-            change.getBranch(), change.getId(), change.getCurrentPatchSet()
-                .getRef()));
+        if (updateBranch(buildContext)
+            && (buildContext.getTriggerReason() instanceof ManualBuildTriggerReason)) {
+            String currentBranch = this.getVcsBranch().getName();
+            if ((change == null)
+                || !change.getBranch().equals(this.getVcsBranch().getName())) {
+                change =
+                    getGerritDAO().getLastUnverifiedChange(getProject(),
+                        currentBranch);
+            }
+        }
 
         if (change == null) {
             throw new RepositoryException(
                 textProvider
                     .getText("repository.gerrit.messages.error.retrieve"));
         }
+
+        log.debug(String.format("Retrieving Source for Change: %s, %s, %s",
+            change.getBranch(), change.getId(), change.getCurrentPatchSet()
+                .getRef()));
 
         lastGerritChange = change;
 
@@ -1141,8 +1217,57 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     @Override
     public List<VcsBranch>
                     getOpenBranches(String context) throws RepositoryException {
-        // TBD - Pull Request by slawekjaranowski
-        return null;
+        List<VcsBranch> vcsBranches = new ArrayList<VcsBranch>();
+        Collection<TopLevelPlan> plans = null;
+        PlanKey planKey = null;
+
+        Map<Project, Collection<TopLevelPlan>> projectBuilds =
+            planManager.getProjectPlanMap(TopLevelPlan.class, false);
+
+        Iterator<Project> it = projectBuilds.keySet().iterator();
+
+        while (it.hasNext()) {
+            Project p = it.next();
+
+            if (p.getName().equals(this.getProject())) {
+                plans = projectBuilds.get(p);
+
+                for (TopLevelPlan pl : plans) {
+                    List<Job> jobs = pl.getAllJobs();
+                    for (Job j : jobs) {
+                        planKey = j.getPlanKey();
+                        break;
+                    }
+
+                    if (planKey != null)
+                        break;
+                }
+
+                break;
+            }
+        }
+
+        if (planKey != null) {
+            JGitRepository jgitRepo = new JGitRepository();
+
+            jgitRepo.setAccessData(gc);
+
+            // PlanHelper.
+
+            jgitRepo.open(this.getSourceCodeDirectory(planKey));
+
+            jgitRepo.openSSHTransport();
+
+            Collection<Ref> branches = jgitRepo.lsRemoteBranches();
+
+            for (Ref b : branches) {
+                vcsBranches.add(new VcsBranchImpl(b.getName()));
+            }
+
+            jgitRepo.close();
+        }
+
+        return vcsBranches;
     }
 
     @Override
@@ -1167,4 +1292,10 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return commit;
     }
 
+    @Override
+    public void
+                    createBranch(long repositoryId, String branchName,
+                                 BuildContext buildContext) throws RepositoryException {
+        System.out.println("BRANCH NAME: " + branchName);
+    }
 }
