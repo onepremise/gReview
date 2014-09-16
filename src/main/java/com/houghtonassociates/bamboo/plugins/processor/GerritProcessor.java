@@ -26,7 +26,7 @@ import com.atlassian.bamboo.build.CustomBuildProcessor;
 import com.atlassian.bamboo.build.fileserver.BuildDirectoryManager;
 import com.atlassian.bamboo.builder.BuildState;
 import com.atlassian.bamboo.configuration.AdministrationConfiguration;
-import com.atlassian.bamboo.configuration.AdministrationConfigurationManager;
+import com.atlassian.bamboo.configuration.AdministrationConfigurationAccessor;
 import com.atlassian.bamboo.plan.Plan;
 import com.atlassian.bamboo.repository.RepositoryDefinition;
 import com.atlassian.bamboo.repository.RepositoryException;
@@ -54,7 +54,7 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
     // dependencies
     private TextProvider textProvider = null;
     private BuildDirectoryManager buildDirectoryManager = null;
-    private AdministrationConfigurationManager administrationConfigurationManager;
+    private AdministrationConfigurationAccessor administrationConfigurationAccess;
 
     private Map<String, String> customConfiguration = null;
     private static final String GERRIT_RUN = "custom.gerrit.run";
@@ -102,9 +102,8 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
     }
 
     public void
-                    setAdministrationConfigurationManager(AdministrationConfigurationManager administrationConfigurationManager) {
-        this.administrationConfigurationManager =
-            administrationConfigurationManager;
+                    setAdministrationConfigurationAccessor(AdministrationConfigurationAccessor administrationConfigAccessor) {
+        this.administrationConfigurationAccess = administrationConfigAccessor;
     }
 
     @Override
@@ -135,7 +134,7 @@ public class GerritProcessor extends BaseConfigurableBuildPlugin implements
 
     private String buildStatusString(CurrentBuildResult results) {
         AdministrationConfiguration config =
-            administrationConfigurationManager.getAdministrationConfiguration();
+            administrationConfigurationAccess.getAdministrationConfiguration();
 
         String resultsUrl =
             config.getBaseUrl() + "/browse/"
