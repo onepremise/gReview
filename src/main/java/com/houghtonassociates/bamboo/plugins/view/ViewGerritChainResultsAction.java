@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 import com.atlassian.bamboo.plan.PlanHelper;
 import com.atlassian.bamboo.repository.Repository;
 import com.atlassian.bamboo.repository.RepositoryException;
+import com.atlassian.bamboo.resultsummary.ResultsSummary;
 import com.atlassian.bamboo.resultsummary.vcs.RepositoryChangeset;
 import com.atlassian.bamboo.ww2.actions.chains.ViewChainResult;
 import com.atlassian.bamboo.ww2.aware.permissions.PlanReadSecurityAware;
@@ -39,7 +40,6 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
     private static final long serialVersionUID = 1L;
     private GerritChangeVO changeVO = null;
     private GerritService gerritService = null;
-    private GerritRepositoryAdapter repository = null;
     private static final Logger log = Logger
         .getLogger(ViewGerritChainResultsAction.class);
     private static final String GERRIT_REPOSITORY_PLUGIN_KEY =
@@ -52,12 +52,13 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
     }
 
     public GerritRepositoryAdapter getRepository() {
-        if (repository == null) {
-            Repository repo = PlanHelper.getDefaultRepository(this.getPlan());
+        GerritRepositoryAdapter repository = null;
 
-            if (repo instanceof GerritRepositoryAdapter) {
-                repository = (GerritRepositoryAdapter) repo;
-            }
+        Repository repo =
+            PlanHelper.getDefaultRepository(this.getImmutablePlan());
+
+        if (repo instanceof GerritRepositoryAdapter) {
+            repository = (GerritRepositoryAdapter) repo;
         }
 
         return repository;
@@ -65,7 +66,8 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
 
     public GerritService getGerritService() throws RepositoryException {
         if (gerritService == null) {
-            Repository repo = PlanHelper.getDefaultRepository(this.getPlan());
+            Repository repo =
+                PlanHelper.getDefaultRepository(this.getImmutablePlan());
 
             if (repo instanceof GerritRepositoryAdapter) {
                 GerritRepositoryAdapter gra = getRepository();
@@ -110,8 +112,10 @@ public class ViewGerritChainResultsAction extends ViewChainResult implements
     }
 
     public String getRevision() {
+        ResultsSummary rs = this.getResultsSummary();
         final List<RepositoryChangeset> changesets =
-            this.getResultsSummary().getRepositoryChangesets();
+            rs.getRepositoryChangesets();
+        // this.getChainResult().getRepositoryChangesets();
         for (RepositoryChangeset changeset : changesets) {
             if (changeset.getRepositoryData().getPluginKey()
                 .equals(GERRIT_REPOSITORY_PLUGIN_KEY))

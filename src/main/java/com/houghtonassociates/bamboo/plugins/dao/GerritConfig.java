@@ -2,8 +2,6 @@ package com.houghtonassociates.bamboo.plugins.dao;
 
 import java.io.File;
 
-import com.atlassian.bamboo.plan.branch.VcsBranch;
-import com.atlassian.bamboo.plan.branch.VcsBranchImpl;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 
 public class GerritConfig {
@@ -12,7 +10,6 @@ public class GerritConfig {
     private String host = "";
     private int port = 29418;
     private String proxy = "";
-    private VcsBranch branch;
     private String username = "";
     private String password = "";
     private String userEmail = "";
@@ -55,19 +52,6 @@ public class GerritConfig {
 
     public void setProxy(String proxy) {
         this.proxy = proxy;
-    }
-
-    public VcsBranch getBranch() {
-        return branch;
-    }
-
-    public void setBranch(VcsBranch branch) {
-        this.branch = branch;
-    }
-
-    public void setBranch(String branch) {
-        this.branch = new VcsBranchImpl(branch);
-        ;
     }
 
     public String getUsername() {

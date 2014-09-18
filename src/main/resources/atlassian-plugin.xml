@@ -57,6 +57,7 @@
             com.atlassian.bamboo.bandana.*;resolution:=optional,
             com.atlassian.bamboo.collections.*;resolution:=optional,
             com.atlassian.bamboo.resultsummary.vcs.*;resolution:=optional,
+            com.atlassian.bamboo.webwork.util.*;resolution:=optional,
             com.atlassian.bamboo.utils.*;resolution:=optional,
             com.atlassian.bandana.impl.*;resolution:=optional,
             com.atlassian.applinks.api.*;resolution:=optional,
@@ -93,7 +94,9 @@
 	<component-import key="branchIntegrationHelper" interface="com.atlassian.bamboo.plan.branch.BranchIntegrationHelper" />
     <component-import key="encryptionService" interface="com.atlassian.bamboo.security.EncryptionService" />
     <component-import key="repositoryDefinitionManager" interface="com.atlassian.bamboo.repository.RepositoryDefinitionManager" />
-
+    <component-import key="decoratingAggregatedChainErrorAccessor" interface="com.atlassian.bamboo.logger.ErrorAccessor" />
+    <component-import key="projectManager" interface="com.atlassian.bamboo.project.ProjectManager"/>
+    
     <repository key="gerrit" name="Gerrit Repository"
                      class="com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter">
       <description>A Gerrit Interface Repository</description>
