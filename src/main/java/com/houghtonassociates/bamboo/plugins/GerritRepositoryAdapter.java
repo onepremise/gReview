@@ -132,8 +132,14 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         "repository.gerrit.port";
     private static final String REPOSITORY_GERRIT_PROJECT =
         "repository.gerrit.project";
+
     private static final String REPOSITORY_GERRIT_BRANCH =
         "repository.gerrit.branch";
+    private static final String REPOSITORY_GERRIT_DEFAULT_BRANCH =
+        "repository.gerrit.default.branch";
+    private static final String REPOSITORY_GERRIT_CUSTOM_BRANCH =
+        "repository.gerrit.custom.branch";
+
     private static final String REPOSITORY_GERRIT_USERNAME =
         "repository.gerrit.username";
     private static final String REPOSITORY_GERRIT_EMAIL =
@@ -186,8 +192,11 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private static final Logger log = Logger
         .getLogger(GerritRepositoryAdapter.class);
 
-    private static final VcsBranch DEFAULT_BRANCH = new VcsBranchImpl(
+    private static final VcsBranch ALL_BRANCH = new VcsBranchImpl(
         "All branches");
+
+    private static final VcsBranch MASTER_BRANCH = new VcsBranchImpl("master");
+    private static final String CUSTOM_BRANCH_SET = "Custom";
 
     private String hostname = "";
     private int port = 29418;
@@ -204,7 +213,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     private boolean useSubmodules = false;
     private boolean verboseLogs = false;
     private int commandTimeout = 0;
-    private VcsBranch vcsBranch = DEFAULT_BRANCH;
+    private VcsBranch vcsBranch = MASTER_BRANCH;
 
     private GerritService gerritDAO = null;
 
@@ -324,6 +333,29 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         if (f != null) {
             buildConfiguration.setProperty(REPOSITORY_GERRIT_SSH_KEY_FILE,
                 relativeSSHKeyFilePath);
+        }
+
+        String strDefBranch =
+            buildConfiguration.getString(REPOSITORY_GERRIT_DEFAULT_BRANCH, "");
+        String strCustBranch =
+            buildConfiguration.getString(REPOSITORY_GERRIT_CUSTOM_BRANCH, "");
+
+        if (strDefBranch.equals(MASTER_BRANCH.getName())
+            || strDefBranch.equals(ALL_BRANCH.getName())) {
+            buildConfiguration.setProperty(REPOSITORY_GERRIT_DEFAULT_BRANCH,
+                strDefBranch);
+            buildConfiguration.setProperty(REPOSITORY_GERRIT_CUSTOM_BRANCH,
+                strDefBranch);
+
+            buildConfiguration.setProperty(REPOSITORY_GERRIT_BRANCH,
+                strDefBranch);
+        } else {
+            buildConfiguration.setProperty(REPOSITORY_GERRIT_DEFAULT_BRANCH,
+                CUSTOM_BRANCH_SET);
+            buildConfiguration.setProperty(REPOSITORY_GERRIT_CUSTOM_BRANCH,
+                strCustBranch);
+            buildConfiguration.setProperty(REPOSITORY_GERRIT_BRANCH,
+                strCustBranch);
         }
     }
 
@@ -550,11 +582,16 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         port = config.getInt(REPOSITORY_GERRIT_REPOSITORY_PORT, 29418);
         project = config.getString(REPOSITORY_GERRIT_PROJECT);
 
-        String strBranch = config.getString(REPOSITORY_GERRIT_BRANCH, "");
-        if (StringUtils.isEmpty(strBranch)) {
-            vcsBranch = DEFAULT_BRANCH;
+        String strDefBranch =
+            config.getString(REPOSITORY_GERRIT_DEFAULT_BRANCH, "");
+        String strCustBranch =
+            config.getString(REPOSITORY_GERRIT_CUSTOM_BRANCH, "");
+
+        if (strDefBranch.equals(MASTER_BRANCH.getName())
+            || strDefBranch.equals(ALL_BRANCH.getName())) {
+            vcsBranch = new VcsBranchImpl(strDefBranch);
         } else {
-            vcsBranch = new VcsBranchImpl(strBranch);
+            vcsBranch = new VcsBranchImpl(strCustBranch);
         }
 
         useShallowClones =
@@ -624,8 +661,22 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         configuration.setProperty(REPOSITORY_GERRIT_USERNAME, username);
         configuration.setProperty(REPOSITORY_GERRIT_EMAIL, userEmail);
         configuration.setProperty(REPOSITORY_GERRIT_PROJECT, project);
+
+        if (!vcsBranch.equals(MASTER_BRANCH) && !vcsBranch.equals(ALL_BRANCH)) {
+            configuration.setProperty(REPOSITORY_GERRIT_DEFAULT_BRANCH,
+                CUSTOM_BRANCH_SET);
+            configuration.setProperty(REPOSITORY_GERRIT_CUSTOM_BRANCH,
+                vcsBranch.getName());
+        } else {
+            String br = vcsBranch.getName();
+
+            configuration.setProperty(REPOSITORY_GERRIT_DEFAULT_BRANCH, br);
+            configuration.setProperty(REPOSITORY_GERRIT_CUSTOM_BRANCH, br);
+        }
+
         configuration
             .setProperty(REPOSITORY_GERRIT_BRANCH, vcsBranch.getName());
+
         configuration.setProperty(REPOSITORY_GERRIT_SSH_KEY, sshKey);
         configuration.setProperty(REPOSITORY_GERRIT_SSH_PASSPHRASE,
             encryptionService.encrypt(sshPassphrase));
@@ -787,7 +838,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         List<Commit> commits = new ArrayList<Commit>();
         GerritChangeVO change = null;
 
-        if (this.getVcsBranch().equals(DEFAULT_BRANCH)) {
+        if (this.getVcsBranch().equals(ALL_BRANCH)) {
             change = getGerritDAO().getLastUnverifiedChange(project);
             if (change == null) {
                 change = getGerritDAO().getLastChange(project);
