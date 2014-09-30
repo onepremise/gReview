@@ -58,6 +58,25 @@ Setup Gerrit
  * Select 'Configure Plan' under 'Actions' in the dropdown menu on the right.
  * Select the 'Source Repositoryies' Tab.
  * [Select 'Add Repository'.](https://plus.google.com/u/0/photos/111679711947778743513/albums/5751797380554349169/5754399119605434834)
+ 
+Optional Gerrit Branch Configuration
+------------------------------------
+
+By default, gReview is configured to draw down changes from Gerrit using the 
+master branch. If you choose, you may overide this setting and configure to
+poll all branches or a specific custom branch. However, keep in mind, this
+setting may be redundant if you use Bamboo's branching features. If you
+choose to overide the default branch, you will find the settings available
+here:
+
+ * Login as admin.
+ * Select 'Configure Plan' under 'Actions' in the dropdown menu on the right.
+ * Select the 'Source Repositoryies' Tab.
+ * Select the repository you intend to configure.
+ * If the repository is 'linked', follow the link to your repository.
+ * Goto 'Advanced options'
+ * Under 'Default Branch', select master, 'All branches', or specify your custom branch.
+ * Save
 
 Enable Gerrit Verification
 --------------------------
@@ -83,6 +102,22 @@ Adding Gitweb
  * Select an existing Gerrit Repository or add one.
  * Drop down 'Advanced Options' and select the GitWeb repository.
  * [Provide your details and save](https://lh5.googleusercontent.com/-wd7iOs6EmhQ/UCKvWNPlPJI/AAAAAAAAAPY/9LkFAJtksFI/s917/source-repositories2.JPG)
+
+Creating A Branch (Gerrit UI)
+-----------------------------
+ * Login to Gerrit.
+ * Select Projects->List->'YourProject'
+ * Enter your new branch below beside "Branch Name"
+ * Provide the initial revision
+ * Hit 'Create Branch'
+
+Creating A Branch (Git Console)
+-------------------------------
+
+ * git checkout master
+ * git push origin HEAD:new-branch
+ * git checkout new-branch
+ * git push origin HEAD:refs/for/new-branch
 
 Troubleshooting
 ===============
@@ -133,6 +168,17 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 
 Bug Fixes and Enhancements
 ==========================
+
+1.4.0 Updates
+-------------
+
+* Added capability for retrieving local and remote branches.
+* Added functionality to support getOpenBranches. 
+* Resolved dependency loading issues with OSGI for 5.2-5.6
+* Provided mechanism to change default branch to pull changes from
+* How to restrict bamboo to poll the changes only on a particular branch #26
+* gReview probelm - bamboo is checking out master branch #30
+
 1.3.0 Updates
 -------------
 
@@ -241,3 +287,4 @@ Jason Huntley
 <a href="http://stackexchange.com/users/1254855">
 <img src="http://stackexchange.com/users/flair/1254855.png" width="208" height="58" alt="profile for Jason Huntley on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Jason Huntley on Stack Exchange, a network of free, community-driven Q&amp;A sites">
 </a>
+
