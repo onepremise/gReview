@@ -697,10 +697,12 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         try {
             initializeGerritService();
-            if (isRemoteTriggeringReop()) {
-                getGerritDAO().addListener(this);
-            } else {
-                getGerritDAO().removeListener(this);
+            if (this.isOnLocalAgent()) {
+                if (isRemoteTriggeringReop()) {
+                    getGerritDAO().addListener(this);
+                } else {
+                    getGerritDAO().removeListener(this);
+                }
             }
         } catch (RepositoryException e) {
             log.error(e.getMessage());
