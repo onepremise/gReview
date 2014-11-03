@@ -32,6 +32,7 @@ import java.util.Locale;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
@@ -48,6 +49,7 @@ import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.PatchSet;
 import com.houghtonassociates.bamboo.plugins.dao.jgit.JGitRepository;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig2;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
@@ -79,6 +81,10 @@ public class GerritService {
     private static boolean verifiedLabelAdded = false;
     private boolean isInitialized = false;
 
+    private static GerritMonitor monitor = null;
+
+    private String version = null;
+
     public GerritService(GerritConfig gc) {
         this.gc = gc;
     }
@@ -94,7 +100,37 @@ public class GerritService {
                 gc.setUserEmail(user.getEmail());
         }
 
+        if (monitor == null) {
+            monitor = new GerritMonitor();
+            monitor.initialize(this);
+        }
+
         isInitialized = true;
+    }
+
+    public GerritConfig getConfig() {
+        return gc;
+    }
+
+    public Provider getProvider() {
+        Provider p = new Provider();
+
+        p.setHost(gc.getHost());
+        p.setName(gc.getUsername());
+        p.setPort(Integer.toString(gc.getPort()));
+        p.setProto("ssh");
+        p.setUrl(gc.getRepositoryUrl());
+        p.setVersion(this.getGerritVersion());
+
+        return p;
+    }
+
+    public void addListener(GerritProcessListener l) {
+        monitor.addGerritListener(l);
+    }
+
+    public void removeListener(GerritProcessListener l) {
+        monitor.removeGerritListener(l);
     }
 
     public void testGerritConnection() throws RepositoryException {
@@ -116,49 +152,6 @@ public class GerritService {
             sshConnection.disconnect();
         }
     }
-
-    /*
-     * public GerritHandler manageGerritHandler(String sshKey, String strHost,
-     * int port, String strUsername, String phrase, boolean test,
-     * boolean reset)
-     * throws RepositoryException {
-     * this.updateCredentials(sshKey, strHost, strUsername, phrase);
-     * 
-     * if (test)
-     * testGerritConnection(strHost, port);
-     * 
-     * if (gHandler==null) {
-     * synchronized (GerritRepositoryAdapter.class) {
-     * gHandler=new GerritHandler(strHost, port, authentication,
-     * NUM_WORKER_THREADS);
-     * gHandler.addListener(this);
-     * gHandler.addListener(new ConnectionListener() {
-     * 
-     * @Override
-     * public void connectionDown() {
-     * log.error("Gerrit connection down.");
-     * gHandler.shutdown(false);
-     * }
-     * 
-     * @Override
-     * public void connectionEstablished() {
-     * log.info("Gerrit connection established!");
-     * }
-     * });
-     * }
-     * }
-     * 
-     * if (reset) {
-     * if (gHandler.isAlive()) {
-     * gHandler.shutdown(true);
-     * }
-     * 
-     * gHandler.start();
-     * }
-     * 
-     * return gHandler;
-     * }
-     */
 
     private class GerritCmdProcessor extends AbstractSendCommandJob {
 
@@ -454,7 +447,7 @@ public class GerritService {
         return cmdProcessor;
     }
 
-    private GerritSQLHandler getGerritQueryHandler() {
+    private synchronized GerritSQLHandler getGerritQueryHandler() {
         if (gQueryHandler == null) {
             gQueryHandler =
                 new GerritSQLHandler(gc.getHost(), gc.getPort(), gc.getProxy(),
@@ -498,8 +491,8 @@ public class GerritService {
     }
 
     public String getGerritVersion() {
-        String version =
-            getGerritCmdProcessor().sendCommandStr("gerrit version");
+        if (version == null)
+            version = getGerritCmdProcessor().sendCommandStr("gerrit version");
 
         return version;
     }
@@ -686,6 +679,28 @@ public class GerritService {
         return null;
     }
 
+    public Set<GerritChangeVO>
+                    getLastUnverifiedChanges() throws RepositoryException {
+        log.debug("getLastUnverifiedChange()...");
+
+        Set<GerritChangeVO> changes = getGerritChangeInfo();
+
+        ConcurrentSkipListSet<GerritChangeVO> filtedChanges =
+            new ConcurrentSkipListSet<GerritChangeVO>(
+                new SortByUnVerifiedLastUpdate());
+        filtedChanges.addAll(changes);
+
+        if ((filtedChanges.size() > 0)) {
+            for (GerritChangeVO c : filtedChanges) {
+                if (c.getVerificationScore() > 0) {
+                    filtedChanges.remove(c);
+                }
+            }
+        }
+
+        return filtedChanges;
+    }
+
     public GerritChangeVO
                     getLastChange(String project) throws RepositoryException {
         log.debug(String.format("getLastChange(project=%s)...", project));
@@ -831,6 +846,15 @@ public class GerritService {
         return results;
     }
 
+    /**
+     * Retrieve recent open changes from Gerrit for a specific project and
+     * branch.
+     * 
+     * @param project
+     * @param branch
+     * @return
+     * @throws RepositoryException
+     */
     public Set<GerritChangeVO>
                     getGerritChangeInfo(String project, String branch) throws RepositoryException {
         String strQuery =
@@ -838,6 +862,11 @@ public class GerritService {
 
         log.debug(String.format(
             "getGerritChangeInfo(project=%s, branch:%s)...", project, branch));
+
+        if (branch == null || branch.isEmpty()) {
+            throw new RepositoryException(
+                "Invalid branch setting. Please provide a valid branch configuration setting!");
+        }
 
         List<JSONObject> jsonObjects = runGerritQuery(strQuery);
         Set<GerritChangeVO> results = new HashSet<GerritChangeVO>(0);

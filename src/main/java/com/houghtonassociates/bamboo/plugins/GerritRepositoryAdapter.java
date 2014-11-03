@@ -17,6 +17,7 @@ package com.houghtonassociates.bamboo.plugins;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,36 +42,45 @@ import org.jetbrains.annotations.Nullable;
 import com.atlassian.bamboo.author.AuthorCachingFacade;
 import com.atlassian.bamboo.bandana.BambooBandanaContext;
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
+import com.atlassian.bamboo.build.BuildDefinition;
 import com.atlassian.bamboo.build.BuildLoggerManager;
-import com.atlassian.bamboo.build.Job;
 import com.atlassian.bamboo.build.fileserver.BuildDirectoryManager;
 import com.atlassian.bamboo.build.logger.BuildLogger;
+import com.atlassian.bamboo.build.strategy.BuildStrategy;
+import com.atlassian.bamboo.build.strategy.TriggeredBuildStrategy;
+import com.atlassian.bamboo.chains.Chain;
 import com.atlassian.bamboo.commit.Commit;
 import com.atlassian.bamboo.commit.CommitContext;
 import com.atlassian.bamboo.commit.CommitFile;
 import com.atlassian.bamboo.commit.CommitFileImpl;
 import com.atlassian.bamboo.commit.CommitImpl;
-import com.atlassian.bamboo.plan.Plan;
+import com.atlassian.bamboo.plan.PlanExecutionManager;
 import com.atlassian.bamboo.plan.PlanKey;
 import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.PlanManager;
 import com.atlassian.bamboo.plan.TopLevelPlan;
 import com.atlassian.bamboo.plan.branch.ChainBranch;
+import com.atlassian.bamboo.plan.branch.ChainBranchManager;
 import com.atlassian.bamboo.plan.branch.VcsBranch;
 import com.atlassian.bamboo.plan.branch.VcsBranchImpl;
+import com.atlassian.bamboo.plan.cache.ImmutableChain;
 import com.atlassian.bamboo.project.Project;
 import com.atlassian.bamboo.repository.AbstractStandaloneRepository;
 import com.atlassian.bamboo.repository.AdvancedConfigurationAwareRepository;
-import com.atlassian.bamboo.repository.BranchDetectionCapableRepository;
+import com.atlassian.bamboo.repository.BranchInformationProvider;
 import com.atlassian.bamboo.repository.BranchMergingAwareRepository;
 import com.atlassian.bamboo.repository.BranchingAwareRepository;
 import com.atlassian.bamboo.repository.CustomVariableProviderRepository;
 import com.atlassian.bamboo.repository.PushCapableRepository;
 import com.atlassian.bamboo.repository.Repository;
+import com.atlassian.bamboo.repository.RepositoryDataEntity;
+import com.atlassian.bamboo.repository.RepositoryDefinition;
+import com.atlassian.bamboo.repository.RepositoryDefinitionManager;
 import com.atlassian.bamboo.repository.RepositoryException;
 import com.atlassian.bamboo.security.EncryptionService;
 import com.atlassian.bamboo.ssh.SshProxyService;
 import com.atlassian.bamboo.template.TemplateRenderer;
+import com.atlassian.bamboo.util.Narrow;
 import com.atlassian.bamboo.utils.SystemProperty;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
 import com.atlassian.bamboo.utils.error.SimpleErrorCollection;
@@ -82,22 +92,29 @@ import com.atlassian.bamboo.v2.build.agent.capability.Requirement;
 import com.atlassian.bamboo.v2.build.agent.remote.RemoteBuildDirectoryManager;
 import com.atlassian.bamboo.v2.build.repository.CustomSourceDirectoryAwareRepository;
 import com.atlassian.bamboo.v2.build.repository.RequirementsAwareRepository;
+import com.atlassian.bamboo.v2.events.ChangeDetectionRequiredEvent;
+import com.atlassian.bamboo.v2.ww2.build.TriggerRemoteBuild;
 import com.atlassian.bamboo.variable.CustomVariableContext;
 import com.atlassian.bamboo.variable.VariableDefinitionManager;
 import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.bandana.DefaultBandanaManager;
 import com.atlassian.bandana.impl.MemoryBandanaPersister;
+import com.atlassian.event.api.EventPublisher;
 import com.atlassian.plugin.ModuleDescriptor;
 import com.atlassian.sal.api.message.I18nResolver;
+import com.google.common.collect.ImmutableList;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.PatchSet;
 import com.houghtonassociates.bamboo.plugins.dao.GerritConfig;
+import com.houghtonassociates.bamboo.plugins.dao.GerritProcessListener;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
 import com.houghtonassociates.bamboo.plugins.dao.jgit.JGitRepository;
 import com.opensymphony.xwork2.TextProvider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig2;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 
@@ -107,9 +124,9 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExc
 public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     implements AdvancedConfigurationAwareRepository, PushCapableRepository,
     BranchingAwareRepository, BranchMergingAwareRepository,
-    BranchDetectionCapableRepository, GerritConnectionConfig2,
+    BranchInformationProvider, GerritConnectionConfig2,
     CustomVariableProviderRepository, CustomSourceDirectoryAwareRepository,
-    RequirementsAwareRepository {
+    RequirementsAwareRepository, GerritProcessListener {
 
     private static final long serialVersionUID = -3518800283574344591L;
 
@@ -221,7 +238,12 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         new DefaultBandanaManager(new MemoryBandanaPersister());
 
     private PlanManager planManager = null;
+    private PlanExecutionManager planExeManager = null;
+    private ChainBranchManager chainBranchManager = null;
+    private RepositoryDefinitionManager repositoryDefinitionManager = null;
     private VariableDefinitionManager variableDefinitionManager = null;
+
+    private EventPublisher eventPublisher = null;
 
     private I18nResolver i18nResolver;
     private CapabilityContext capabilityContext;
@@ -237,19 +259,45 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         super.init(moduleDescriptor);
 
         log.debug("Initialized repository adapter.");
+
     }
 
     public void setPlanManager(PlanManager planManager) {
         this.planManager = planManager;
     }
 
+    public void setPlanExeManager(PlanExecutionManager planExeManager) {
+        this.planExeManager = planExeManager;
+    }
+
+    public ChainBranchManager getChainBranchManager() {
+        return chainBranchManager;
+    }
+
+    public void setChainBranchManager(ChainBranchManager chainBranchManager) {
+        this.chainBranchManager = chainBranchManager;
+    }
+
     public VariableDefinitionManager getVariableDefinitionManager() {
         return variableDefinitionManager;
+    }
+
+    public RepositoryDefinitionManager getRepositoryDefinitionManager() {
+        return repositoryDefinitionManager;
+    }
+
+    public void
+                    setRepositoryDefinitionManager(RepositoryDefinitionManager repositoryDefinitionManager) {
+        this.repositoryDefinitionManager = repositoryDefinitionManager;
     }
 
     public void
                     setVariableDefinitionManager(VariableDefinitionManager variableDefinitionManager) {
         this.variableDefinitionManager = variableDefinitionManager;
+    }
+
+    public void setEventPublisher(EventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 
     public BandanaManager getBandanaManager() {
@@ -261,7 +309,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     prepareConfigObject(@NotNull BuildConfiguration buildConfiguration) {
         super.prepareConfigObject(buildConfiguration);
 
-        log.debug("Preparing repository adapter...");
+        log.debug("Preparing gerrit repository adapter...");
 
         String strHostName =
             buildConfiguration.getString(REPOSITORY_GERRIT_REPOSITORY_HOSTNAME,
@@ -369,20 +417,22 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     }
 
     private String getRelativePath(BuildConfiguration buildConfiguration) {
+        String projectChainKey = "linked";
+
         String planKey =
             buildConfiguration.getString(REPOSITORY_GERRIT_PLAN_KEY);
-
         String projectKey =
             buildConfiguration.getString(REPOSITORY_GERRIT_PROJECT_KEY);
-        String projectName =
-            buildConfiguration.getString(REPOSITORY_GERRIT_PROJECT_NAME);
-
         String chainKey =
             buildConfiguration.getString(REPOSITORY_GERRIT_CHAIN_KEY);
-        String chainName =
-            buildConfiguration.getString(REPOSITORY_GERRIT_CHAIN_NAME);
+        String strProject =
+            buildConfiguration.getString(REPOSITORY_GERRIT_PROJECT, "").trim();
 
-        String projectChainKey = projectKey + "-" + chainKey;
+        if ((projectKey != null) && (chainKey != null))
+            projectChainKey = projectKey + "-" + chainKey;
+
+        if (strProject != null)
+            projectChainKey = projectChainKey + File.separator + strProject;
 
         String workingDirectory = GerritService.SYSTEM_DIRECTORY;
 
@@ -647,6 +697,11 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         try {
             initializeGerritService();
+            if (isRemoteTriggeringReop()) {
+                getGerritDAO().addListener(this);
+            } else {
+                getGerritDAO().removeListener(this);
+            }
         } catch (RepositoryException e) {
             log.error(e.getMessage());
         }
@@ -854,31 +909,34 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             }
         }
 
-        log.debug(String.format("collectChangesSinceLastBuild: %s, %s, %s",
-            change.getBranch(), change.getId(), change.getCurrentPatchSet()
-                .getRef()));
-
-        buildLogger.addBuildLogEntry(textProvider
-            .getText("repository.gerrit.messages.ccRecover.completed"));
-
         if ((change == null)
             && ((lastVcsRevisionKey == null) || lastVcsRevisionKey.isEmpty())) {
             throw new RepositoryException(
                 textProvider
                     .getText("processor.gerrit.messages.build.error.nochanges"));
-        } else if (lastVcsRevisionKey == null) {
-            buildLogger.addBuildLogEntry(textProvider.getText(
-                "repository.gerrit.messages.ccRepositoryNeverChecked",
-                Arrays.asList(change.getLastRevision())));
-        } else if (change.getLastRevision().equals(lastVcsRevisionKey)) {
-            // Time is unreliable as comments change the last update field.
-            // We need to track by last patchset revision
-            Object lastRevForChange =
-                bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT,
-                    change.getId());
-            if ((lastRevForChange != null)
-                && lastRevForChange.equals(change.getLastRevision()))
-                return new BuildRepositoryChangesImpl(change.getLastRevision());
+        } else {
+            log.debug(String.format("collectChangesSinceLastBuild: %s, %s, %s",
+                change.getBranch(), change.getId(), change.getCurrentPatchSet()
+                    .getRef()));
+
+            buildLogger.addBuildLogEntry(textProvider
+                .getText("repository.gerrit.messages.ccRecover.completed"));
+
+            if (lastVcsRevisionKey == null) {
+                buildLogger.addBuildLogEntry(textProvider.getText(
+                    "repository.gerrit.messages.ccRepositoryNeverChecked",
+                    Arrays.asList(change.getLastRevision())));
+            } else if (change.getLastRevision().equals(lastVcsRevisionKey)) {
+                // Time is unreliable as comments change the last update field.
+                // We need to track by last patchset revision
+                Object lastRevForChange =
+                    bandanaManager.getValue(
+                        PlanAwareBandanaContext.GLOBAL_CONTEXT, change.getId());
+                if ((lastRevForChange != null)
+                    && lastRevForChange.equals(change.getLastRevision()))
+                    return new BuildRepositoryChangesImpl(
+                        change.getLastRevision());
+            }
         }
 
         commits.add(convertChangeToCommit(change, true));
@@ -936,11 +994,21 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                 (GerritRepositoryAdapter) repository;
             return !new EqualsBuilder()
                 .append(gc.getRepositoryUrl(), gitRepo.gc.getRepositoryUrl())
+                .append(this.getProject(), gitRepo.getProject())
+                .append(this.getVcsBranch(), gitRepo.getVcsBranch())
                 .append(gc.getUsername(), gitRepo.gc.getUsername())
                 .append(gc.getSshKey(), gitRepo.gc.getSshKey()).isEquals();
         } else {
             return true;
         }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Repository)
+            return !isRepositoryDifferent((Repository) obj);
+
+        return false;
     }
 
     @Override
@@ -1010,38 +1078,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     private boolean isOnLocalAgent() {
         return !(buildDirectoryManager instanceof RemoteBuildDirectoryManager);
-    }
-
-    /**
-     * Check to see if build context was initiated from a plan branch.
-     * Update branch setting to reflect current branch plan is pulling
-     * from.
-     * 
-     * @param buildContext
-     * @return
-     */
-    private boolean updateBranch(BuildContext buildContext) {
-        // vcsBranch = DEFAULT_BRANCH;
-
-        Plan pl = planManager.getPlanById(buildContext.getPlanId());
-        Project pr = pl.getProject();
-
-        List<ChainBranch> cBranches =
-            planManager.getAllPlansByProject(pr, ChainBranch.class);
-
-        for (ChainBranch cb : cBranches) {
-            if (buildContext.getParentBuildContext().getPlanId() == cb.getId()) {
-                pl =
-                    planManager.getPlanById(buildContext
-                        .getParentBuildContext().getPlanId());
-
-                vcsBranch = new VcsBranchImpl(pl.getBuildName());
-
-                return true;
-            }
-        }
-
-        return false;
     }
 
     @Override
@@ -1257,34 +1293,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     public List<VcsBranch>
                     getOpenBranches(String context) throws RepositoryException {
         List<VcsBranch> vcsBranches = new ArrayList<VcsBranch>();
-        Collection<TopLevelPlan> plans = null;
-        PlanKey planKey = null;
-
-        Map<Project, Collection<TopLevelPlan>> projectBuilds =
-            planManager.getProjectPlanMap(TopLevelPlan.class, false);
-
-        Iterator<Project> it = projectBuilds.keySet().iterator();
-
-        while (it.hasNext()) {
-            Project p = it.next();
-
-            if (p.getName().equals(this.getProject())) {
-                plans = projectBuilds.get(p);
-
-                for (TopLevelPlan pl : plans) {
-                    List<Job> jobs = pl.getAllJobs();
-                    for (Job j : jobs) {
-                        planKey = j.getPlanKey();
-                        break;
-                    }
-
-                    if (planKey != null)
-                        break;
-                }
-
-                break;
-            }
-        }
+        PlanKey planKey = findFirstPlanKey(false);
 
         if (planKey != null) {
             JGitRepository jgitRepo = new JGitRepository();
@@ -1306,7 +1315,9 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     strBranch =
                         strBranch.substring(strBranch.lastIndexOf("/") + 1);
 
-                vcsBranches.add(new VcsBranchImpl(strBranch));
+                if (this.getVcsBranch() != null
+                    && !this.getVcsBranch().isEqualToBranchWith(strBranch))
+                    vcsBranches.add(new VcsBranchImpl(strBranch));
             }
 
             jgitRepo.close();
@@ -1342,5 +1353,224 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     createBranch(long repositoryId, String branchName,
                                  BuildContext buildContext) throws RepositoryException {
         System.out.println("BRANCH NAME: " + branchName);
+    }
+
+    @Override
+    public boolean usePollingForBranchDetection() {
+        return true;
+    }
+
+    private TriggerRemoteBuild createTriggerRemoteBuild(final String requestIp,
+                                                        final String allowedIp) {
+        return new TriggerRemoteBuild() {
+
+            @Override
+            protected List<String> getRequestIpAddresses() {
+                return ImmutableList.of(requestIp);
+            }
+
+            protected boolean
+                            ipMatchesHost(@NotNull final String testedIp,
+                                          @NotNull final String hostName) throws UnknownHostException {
+                return getHost().equals(hostName) && allowedIp.equals(testedIp);
+            }
+        };
+    }
+
+    /**
+     * Check to see if this repository belongs to a plan.
+     * 
+     * @param isRemoteTriggeredBy
+     * @return
+     */
+    private PlanKey findFirstPlanKey(boolean isRemoteTriggeredBy) {
+        Collection<TopLevelPlan> plans = null;
+        PlanKey planKey = null;
+        Map<Project, Collection<TopLevelPlan>> projectBuilds =
+            planManager.getProjectPlanMap(TopLevelPlan.class, false);
+
+        Iterator<Project> it = projectBuilds.keySet().iterator();
+
+        while (it.hasNext()) {
+            Project p = it.next();
+
+            plans = projectBuilds.get(p);
+
+            for (TopLevelPlan pl : plans) {
+                if (pl.isSuspendedFromBuilding())
+                    continue;
+
+                if (isRepoTriggerFor(pl, isRemoteTriggeredBy))
+                    return pl.getPlanKey();
+
+                int branchCount = chainBranchManager.getBranchCount(pl);
+
+                if (branchCount > 0) {
+                    List<ChainBranch> chains =
+                        chainBranchManager.getBranchesForChain(pl);
+
+                    for (ChainBranch c : chains) {
+                        if (isRepoTriggerFor(c, isRemoteTriggeredBy))
+                            return c.getPlanKey();
+                    }
+                }
+            }
+        }
+
+        return planKey;
+    }
+
+    /**
+     * Return the frist plan which uses this repository
+     * 
+     * @param isRemoteTriggeredBy
+     * @return
+     */
+    private ImmutableChain findFirstPlan(boolean isRemoteTriggeredBy) {
+        PlanKey planKey = findFirstPlanKey(isRemoteTriggeredBy);
+
+        if (planKey == null)
+            return null;
+
+        return planManager.getPlanByKey(planKey, Chain.class);
+    }
+
+    /**
+     * Determine if plan uses this repository
+     * 
+     * @param chain
+     * @param isRemoteTrigger
+     *            , dertmined if plan uses repository for remote use
+     * @return
+     */
+    private boolean isRepoTriggerFor(ImmutableChain chain,
+                                     boolean isRemoteTrigger) {
+        List<BuildStrategy> strats = chain.getTriggers();
+        List<RepositoryDefinition> cRepos =
+            new ArrayList<RepositoryDefinition>();
+
+        cRepos = chain.getEffectiveRepositoryDefinitions();
+
+        for (RepositoryDefinition rd : cRepos) {
+            if (rd.getName().equals(this.getName())
+                && rd.getPluginKey().equals(this.getKey())) {
+                HierarchicalConfiguration hconfig = rd.getConfiguration();
+                String strDefBranch =
+                    hconfig.getString(REPOSITORY_GERRIT_DEFAULT_BRANCH, "");
+                String strCustBranch =
+                    hconfig.getString(REPOSITORY_GERRIT_CUSTOM_BRANCH, "");
+
+                if (this.getVcsBranch().isEqualToBranchWith(strDefBranch)
+                    || this.getVcsBranch().isEqualToBranchWith(strCustBranch)) {
+
+                    if (isRemoteTrigger) {
+                        for (BuildStrategy s : strats) {
+                            if (s instanceof TriggeredBuildStrategy) {
+                                TriggeredBuildStrategy tbs =
+                                    Narrow.downTo(s,
+                                        TriggeredBuildStrategy.class);
+
+                                Set<Long> repos =
+                                    tbs.getTriggeringRepositories();
+
+                                if (repos.contains(rd.getId())) {
+                                    return true;
+                                } else {
+                                    for (Long rID : repos) {
+                                        RepositoryDataEntity rde =
+                                            repositoryDefinitionManager
+                                                .getRepositoryDataEntity(rID);
+                                        if (rde.getName()
+                                            .equals(this.getName())
+                                            && rde.getPluginKey().equals(
+                                                this.getKey())) {
+                                            return true;
+                                        }
+                                    }
+                                }
+                            } else {
+                                return false;
+                            }
+                        }
+                    } else {
+                        return true;
+                    }
+                }
+
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isRemoteTriggeringReop() {
+        ImmutableChain c = this.findFirstPlan(true);
+
+        return (c != null);
+    }
+
+    private void publishChangeDetectionEvent(ImmutableChain c,
+                                             GerritTriggeredEvent e) {
+        if (c != null) {
+            VcsBranch triggerBranch = this.getVcsBranch();
+
+            if (e instanceof PatchsetCreated) {
+                PatchsetCreated ps = (PatchsetCreated) e;
+                triggerBranch = new VcsBranchImpl(ps.getChange().getBranch());
+                project = ps.getChange().getProject();
+            }
+
+            BuildDefinition buildDefinition = c.getBuildDefinition();
+            for (BuildStrategy buildStrategy : buildDefinition
+                .getBuildStrategies()) {
+                TriggeredBuildStrategy tbs =
+                    Narrow.downTo(buildStrategy, TriggeredBuildStrategy.class);
+                if ((tbs != null) && this.getProject().equals(project)
+                    && this.getVcsBranch().equals(triggerBranch)) {
+                    eventPublisher.publish(new ChangeDetectionRequiredEvent(
+                        this, c.getKey(), tbs.getId(), tbs
+                            .getTriggeringRepositories(), tbs
+                            .getTriggerConditionsConfiguration()));
+                }
+            }
+        }
+    }
+
+    @Override
+    public void processGerritEvent(GerritTriggeredEvent e) {
+        log.debug("GerritRepository received event.");
+
+        Collection<TopLevelPlan> plans = null;
+        Map<Project, Collection<TopLevelPlan>> projectBuilds =
+            planManager.getProjectPlanMap(TopLevelPlan.class, false);
+
+        Iterator<Project> it = projectBuilds.keySet().iterator();
+
+        while (it.hasNext()) {
+            Project p = it.next();
+
+            plans = projectBuilds.get(p);
+
+            for (TopLevelPlan pl : plans) {
+                if (pl.isSuspendedFromBuilding())
+                    continue;
+
+                if (isRepoTriggerFor(pl, true)) {
+                    publishChangeDetectionEvent(pl, e);
+                }
+
+                int branchCount = chainBranchManager.getBranchCount(pl);
+                if (branchCount > 0) {
+                    List<ChainBranch> chains =
+                        chainBranchManager.getBranchesForChain(pl);
+
+                    for (ChainBranch c : chains) {
+                        if (isRepoTriggerFor(c, true)) {
+                            publishChangeDetectionEvent(c, e);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

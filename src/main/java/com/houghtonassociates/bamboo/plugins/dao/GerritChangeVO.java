@@ -19,6 +19,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
+
 public class GerritChangeVO {
 
     public static final String JSON_KEY_PROJECT = "project";
@@ -180,6 +183,20 @@ public class GerritChangeVO {
 
         public Set<FileSet> getFileSets() {
             return fileSets;
+        }
+
+        public com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet
+                        toPatchSet() {
+            com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet p =
+                new com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet();
+
+            p.setNumber(this.getNumber().toString());
+            p.setRef(this.getRef());
+            p.setRevision(this.getRevision());
+            p.setUploader(new Account(this.getAuthorName(), this
+                .getAuthorEmail()));
+
+            return p;
         }
 
         @Override
@@ -450,6 +467,20 @@ public class GerritChangeVO {
 
     public boolean isMerged() {
         return this.getStatus().equalsIgnoreCase(CHANGE_STATUS_MERGED);
+    }
+
+    Change toChange() {
+        Change c = new Change();
+
+        c.setBranch(this.getBranch());
+        c.setId(this.getId());
+        c.setNumber(this.getNumber().toString());
+        c.setOwner(new Account(this.getOwnerName(), this.getOwnerEmail()));
+        c.setProject(this.getProject());
+        c.setSubject(this.getSubject());
+        c.setUrl(this.getUrl());
+
+        return c;
     }
 
     @Override
