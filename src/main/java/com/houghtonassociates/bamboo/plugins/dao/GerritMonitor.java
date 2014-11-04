@@ -148,8 +148,8 @@ public class GerritMonitor {
             gerritListeners = new ArrayList<GerritProcessListener>();
 
         if (!gerritListeners.contains(l)) {
-            sendCurrentOpenChanges(l);
             gerritListeners.add(l);
+            sendCurrentOpenChanges(l);
         }
     }
 

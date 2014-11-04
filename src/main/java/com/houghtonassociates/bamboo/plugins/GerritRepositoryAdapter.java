@@ -17,7 +17,6 @@ package com.houghtonassociates.bamboo.plugins;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -67,7 +66,7 @@ import com.atlassian.bamboo.plan.cache.ImmutableChain;
 import com.atlassian.bamboo.project.Project;
 import com.atlassian.bamboo.repository.AbstractStandaloneRepository;
 import com.atlassian.bamboo.repository.AdvancedConfigurationAwareRepository;
-import com.atlassian.bamboo.repository.BranchInformationProvider;
+import com.atlassian.bamboo.repository.BranchDetectionCapableRepository;
 import com.atlassian.bamboo.repository.BranchMergingAwareRepository;
 import com.atlassian.bamboo.repository.BranchingAwareRepository;
 import com.atlassian.bamboo.repository.CustomVariableProviderRepository;
@@ -93,7 +92,6 @@ import com.atlassian.bamboo.v2.build.agent.remote.RemoteBuildDirectoryManager;
 import com.atlassian.bamboo.v2.build.repository.CustomSourceDirectoryAwareRepository;
 import com.atlassian.bamboo.v2.build.repository.RequirementsAwareRepository;
 import com.atlassian.bamboo.v2.events.ChangeDetectionRequiredEvent;
-import com.atlassian.bamboo.v2.ww2.build.TriggerRemoteBuild;
 import com.atlassian.bamboo.variable.CustomVariableContext;
 import com.atlassian.bamboo.variable.VariableDefinitionManager;
 import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
@@ -103,7 +101,6 @@ import com.atlassian.bandana.impl.MemoryBandanaPersister;
 import com.atlassian.event.api.EventPublisher;
 import com.atlassian.plugin.ModuleDescriptor;
 import com.atlassian.sal.api.message.I18nResolver;
-import com.google.common.collect.ImmutableList;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.PatchSet;
@@ -124,9 +121,9 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExc
 public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     implements AdvancedConfigurationAwareRepository, PushCapableRepository,
     BranchingAwareRepository, BranchMergingAwareRepository,
-    BranchInformationProvider, GerritConnectionConfig2,
-    CustomVariableProviderRepository, CustomSourceDirectoryAwareRepository,
-    RequirementsAwareRepository, GerritProcessListener {
+    GerritConnectionConfig2, CustomVariableProviderRepository,
+    CustomSourceDirectoryAwareRepository, RequirementsAwareRepository,
+    GerritProcessListener, BranchDetectionCapableRepository {
 
     private static final long serialVersionUID = -3518800283574344591L;
 
@@ -388,6 +385,14 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         String strCustBranch =
             buildConfiguration.getString(REPOSITORY_GERRIT_CUSTOM_BRANCH, "");
 
+        if (strDefBranch == null || strDefBranch.isEmpty())
+            strDefBranch = CUSTOM_BRANCH_SET;
+
+        if (strCustBranch == null || strCustBranch.isEmpty()) {
+            strDefBranch = MASTER_BRANCH.getName();
+            strCustBranch = MASTER_BRANCH.getName();
+        }
+
         if (strDefBranch.equals(MASTER_BRANCH.getName())
             || strDefBranch.equals(ALL_BRANCH.getName())) {
             buildConfiguration.setProperty(REPOSITORY_GERRIT_DEFAULT_BRANCH,
@@ -472,7 +477,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         f.setReadable(true, true);
         f.setWritable(true, true);
-        f.setExecutable(false, false);
+        f.setExecutable(true, true);
 
         f.mkdir();
 
@@ -1357,26 +1362,9 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         System.out.println("BRANCH NAME: " + branchName);
     }
 
-    @Override
+    // @Override
     public boolean usePollingForBranchDetection() {
         return true;
-    }
-
-    private TriggerRemoteBuild createTriggerRemoteBuild(final String requestIp,
-                                                        final String allowedIp) {
-        return new TriggerRemoteBuild() {
-
-            @Override
-            protected List<String> getRequestIpAddresses() {
-                return ImmutableList.of(requestIp);
-            }
-
-            protected boolean
-                            ipMatchesHost(@NotNull final String testedIp,
-                                          @NotNull final String hostName) throws UnknownHostException {
-                return getHost().equals(hostName) && allowedIp.equals(testedIp);
-            }
-        };
     }
 
     /**
@@ -1516,23 +1504,33 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         if (c != null) {
             VcsBranch triggerBranch = this.getVcsBranch();
 
+            System.out.println("");
             if (e instanceof PatchsetCreated) {
                 PatchsetCreated ps = (PatchsetCreated) e;
                 triggerBranch = new VcsBranchImpl(ps.getChange().getBranch());
                 project = ps.getChange().getProject();
+
+                log.debug("GerritRepository processing PatchsetCreated: "
+                    + ps.getChange().getUrl());
             }
 
             BuildDefinition buildDefinition = c.getBuildDefinition();
             for (BuildStrategy buildStrategy : buildDefinition
                 .getBuildStrategies()) {
+
                 TriggeredBuildStrategy tbs =
                     Narrow.downTo(buildStrategy, TriggeredBuildStrategy.class);
-                if ((tbs != null) && this.getProject().equals(project)
-                    && this.getVcsBranch().equals(triggerBranch)) {
-                    eventPublisher.publish(new ChangeDetectionRequiredEvent(
-                        this, c.getKey(), tbs.getId(), tbs
-                            .getTriggeringRepositories(), tbs
-                            .getTriggerConditionsConfiguration()));
+
+                if ((tbs != null) && this.getProject().equals(project)) {
+                    if (this.getVcsBranch().equals(triggerBranch)) {
+                        // ||
+                        // triggerBranch.isEqualToBranchWith(c.getBuildName()))
+                        eventPublisher
+                            .publish(new ChangeDetectionRequiredEvent(this, c
+                                .getKey(), tbs.getId(), tbs
+                                .getTriggeringRepositories(), tbs
+                                .getTriggerConditionsConfiguration()));
+                    }
                 }
             }
         }
@@ -1540,7 +1538,8 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
     @Override
     public void processGerritEvent(GerritTriggeredEvent e) {
-        log.debug("GerritRepository received event.");
+        log.debug("GerritRepository processing event: "
+            + e.getEventType().toString());
 
         Collection<TopLevelPlan> plans = null;
         Map<Project, Collection<TopLevelPlan>> projectBuilds =
