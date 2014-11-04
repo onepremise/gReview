@@ -416,6 +416,20 @@ public class JGitRepository {
         return res;
     }
 
+    public void createBranch(String branchName) throws RepositoryException {
+        try {
+            git.branchCreate().setName(branchName).call();
+        } catch (RefAlreadyExistsException e) {
+            throw new RepositoryException(e);
+        } catch (RefNotFoundException e) {
+            throw new RepositoryException(e);
+        } catch (InvalidRefNameException e) {
+            throw new RepositoryException(e);
+        } catch (GitAPIException e) {
+            throw new RepositoryException(e);
+        }
+    }
+
     private void checkout(FetchResult result) {
         boolean bare = false;
         Repository clonedRepo = git.getRepository();

@@ -66,7 +66,7 @@ import com.atlassian.bamboo.plan.cache.ImmutableChain;
 import com.atlassian.bamboo.project.Project;
 import com.atlassian.bamboo.repository.AbstractStandaloneRepository;
 import com.atlassian.bamboo.repository.AdvancedConfigurationAwareRepository;
-import com.atlassian.bamboo.repository.BranchDetectionCapableRepository;
+import com.atlassian.bamboo.repository.BranchInformationProvider;
 import com.atlassian.bamboo.repository.BranchMergingAwareRepository;
 import com.atlassian.bamboo.repository.BranchingAwareRepository;
 import com.atlassian.bamboo.repository.CustomVariableProviderRepository;
@@ -123,7 +123,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     BranchingAwareRepository, BranchMergingAwareRepository,
     GerritConnectionConfig2, CustomVariableProviderRepository,
     CustomSourceDirectoryAwareRepository, RequirementsAwareRepository,
-    GerritProcessListener, BranchDetectionCapableRepository {
+    GerritProcessListener, BranchInformationProvider {
 
     private static final long serialVersionUID = -3518800283574344591L;
 
@@ -1360,9 +1360,25 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     createBranch(long repositoryId, String branchName,
                                  BuildContext buildContext) throws RepositoryException {
         System.out.println("BRANCH NAME: " + branchName);
+
+        PlanKey planKey = PlanKeys.getPlanKey(buildContext.getPlanKey());
+
+        if (planKey != null) {
+            JGitRepository jgitRepo = new JGitRepository();
+
+            jgitRepo.setAccessData(gc);
+
+            jgitRepo.open(this.getSourceCodeDirectory(planKey));
+
+            jgitRepo.openSSHTransport();
+
+            jgitRepo.createBranch(branchName);
+
+            jgitRepo.close();
+        }
     }
 
-    // @Override
+    @Override
     public boolean usePollingForBranchDetection() {
         return true;
     }
