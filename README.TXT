@@ -17,6 +17,7 @@ Features
  * Change comments automatically updated with build results.
  * Gerrit Change Display Tab available in Build Summary.
  * Git submodule support
+ * Remote trigger builds from Gerrit.
  * [All the Features Provided By Bamboo](http://www.atlassian.com/software/bamboo/features/)
 
 Requirements
@@ -168,6 +169,13 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 
 Bug Fixes and Enhancements
 ==========================
+
+1.4.1.20 Updates
+----------------
+
+* Support for Bamboo 5.1.0 - 5.5.1
+* Resolved permissions on configuration directory for MetaConfig
+* Added Support for remote triggering builds from repository
 
 1.4.0 Updates
 -------------
