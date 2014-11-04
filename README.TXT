@@ -17,12 +17,13 @@ Features
  * Change comments automatically updated with build results.
  * Gerrit Change Display Tab available in Build Summary.
  * Git submodule support
+ * Remote trigger builds from Gerrit.
  * [All the Features Provided By Bamboo](http://www.atlassian.com/software/bamboo/features/)
 
 Requirements
 ============
 
- * [Bamboo 4.2+](http://www.atlassian.com/software/bamboo/download)
+ * [Bamboo 5.6+](http://www.atlassian.com/software/bamboo/download)
  * [Gerrit Code Review (2.4+)](http://code.google.com/p/gerrit/downloads/list)
 
 Install
@@ -169,15 +170,29 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 Bug Fixes and Enhancements
 ==========================
 
+1.4.2.1 Updates
+---------------
+
+* Support for Bamboo 5.6.0
+* Added capability for creating branches
+
+1.4.1.20 Updates
+----------------
+
+* Support for Bamboo 5.1.0 - 5.5.1
+* Resolved permissions on configuration directory for MetaConfig
+* Added Support for remote triggering builds from repository
+
 1.4.0 Updates
 -------------
 
+* Tested with Gerrit 2.9
 * Added capability for retrieving local and remote branches.
 * Added functionality to support getOpenBranches. 
 * Resolved dependency loading issues with OSGI for 5.2-5.6
 * Provided mechanism to change default branch to pull changes from
 * How to restrict bamboo to poll the changes only on a particular branch #26
-* gReview probelm - bamboo is checking out master branch #30
+* gReview problem - bamboo is checking out master branch #30
 
 1.3.0 Updates
 -------------
