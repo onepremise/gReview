@@ -18,6 +18,7 @@ Features
  * Gerrit Change Display Tab available in Build Summary.
  * Git submodule support.
  * Remote trigger builds from Gerrit.
+ * Branching support
  * [All the Features Provided By Bamboo](http://www.atlassian.com/software/bamboo/features/)
 
 Requirements
@@ -109,16 +110,33 @@ Creating A Branch (Gerrit UI)
  * Login to Gerrit.
  * Select Projects->List->'YourProject'
  * Enter your new branch below beside "Branch Name"
- * Provide the initial revision
+ * Provide the initial revision, leave as HEAD for branch off master
  * Hit 'Create Branch'
+ 
+Checkout Branch Made from Gerrit UI
+-----------------------------------
+
+ * git fetch origin
+ * git checkout new-branch
 
 Creating A Branch (Git Console)
 -------------------------------
 
+ * git checkout -b new-branch origin/master
  * git checkout master
  * git push origin HEAD:new-branch
  * git checkout new-branch
  * git push origin HEAD:refs/for/new-branch
+ 
+ Remote Trigger Builds
+ ---------------------
+ 
+  * Go under 'Plan Configuration'=>'Triggers'. 
+  * Select trigger which applies, usually the first trigger. 
+  * Switch the setting from existing 'Polling the repository for changes' to 'Repository triggers the build when changes are committed'.
+  * Make sure the checkbox is selected for the repository you're using in your plan. 
+  * If you enter an IP for security reasons, make sure it matches the hostname in your repo configuration. However, it should work fine if you leave empty.
+  * Hit 'Save'.
 
 Troubleshooting
 ===============
@@ -169,6 +187,11 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 
 Bug Fixes and Enhancements
 ==========================
+
+1.4.3.6 Updates
+---------------
+
+* Added capability for merging gerrit specific branches
 
 1.4.2.1 Updates
 ---------------

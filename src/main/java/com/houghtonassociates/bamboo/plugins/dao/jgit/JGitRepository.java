@@ -41,9 +41,11 @@ import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.errors.NotSupportedException;
 import org.eclipse.jgit.errors.TransportException;
+import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.NullProgressMonitor;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
@@ -291,6 +293,52 @@ public class JGitRepository {
         }
     }
 
+    public Ref
+                    getHeadRefForBranch(String branchName) throws RepositoryException {
+        Ref ref = null;
+        FetchConnection c;
+
+        try {
+            c = transport.openFetch();
+
+            ref = c.getRef(Constants.R_HEADS + branchName);
+
+        } catch (NotSupportedException e) {
+            throw new RepositoryException(e);
+        } catch (TransportException e) {
+            throw new RepositoryException(e);
+        }
+
+        return ref;
+    }
+
+    public RevCommit resolveRev(String rev) throws RepositoryException {
+        RevCommit c = null;
+        RevWalk rw = new RevWalk(git.getRepository());
+
+        try {
+            ObjectId obj = git.getRepository().resolve(rev);
+            c = rw.parseCommit(obj);
+        } catch (Exception e) {
+            throw new RepositoryException(e);
+        } finally {
+            rw.release();
+        }
+
+        return c;
+    }
+
+    public String
+                    getLatestRevisionForBranch(String branchName) throws RepositoryException {
+        String revision = null;
+        Ref ref = getHeadRefForBranch(branchName);
+
+        if (ref != null)
+            revision = ref.getObjectId().getName();
+
+        return revision;
+    }
+
     public List<Ref> lsLocalBranches(ListMode type) throws RepositoryException {
         List<Ref> call = new ArrayList<Ref>();
 
@@ -378,14 +426,42 @@ public class JGitRepository {
     }
 
     public MergeResult merge(String commit) throws RepositoryException {
-        Ref ref;
+        AnyObjectId id = null;
         try {
-            ref = git.getRepository().getRef(commit);
+            id = git.getRepository().resolve(commit);
         } catch (IOException e) {
             throw new RepositoryException(e);
         }
 
-        return merge(ref);
+        return merge(id);
+    }
+
+    public MergeResult merge(AnyObjectId commit) throws RepositoryException {
+        MergeCommand mgCmd = git.merge();
+
+        mgCmd.include(commit);
+
+        MergeResult res = null;
+
+        try {
+            res = mgCmd.call();
+        } catch (NoHeadException e) {
+            throw new RepositoryException(e);
+        } catch (ConcurrentRefUpdateException e) {
+            throw new RepositoryException(e);
+        } catch (CheckoutConflictException e) {
+            throw new RepositoryException(e);
+        } catch (InvalidMergeHeadsException e) {
+            throw new RepositoryException(e);
+        } catch (WrongRepositoryStateException e) {
+            throw new RepositoryException(e);
+        } catch (NoMessageException e) {
+            throw new RepositoryException(e);
+        } catch (GitAPIException e) {
+            throw new RepositoryException(e);
+        }
+
+        return res;
     }
 
     public MergeResult merge(Ref commit) throws RepositoryException {
