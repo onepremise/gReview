@@ -512,4 +512,34 @@ public class GitWebRepositoryViewer extends AbstractWebRepositoryViewer
                     setCustomVariableContext(final CustomVariableContext customVariableContext) {
         this.customVariableContext = customVariableContext;
     }
+
+    @Override
+    public String
+                    getHtmlForCommitsFull(@NotNull final ResultsSummary resultsSummary,
+                                          @NotNull final RepositoryChangeset repositoryChangeset,
+                                          @NotNull final RepositoryData repositoryData) {
+        final Map<String, Object> context = new HashMap<String, Object>();
+        context.put("buildResultsSummary", resultsSummary);
+        context.put("repositoryChangeset", repositoryChangeset);
+        context.put("repositoryData", repositoryData);
+        context.put("linkGenerator", this);
+
+        return templateRenderer.render(FULL_COMMIT_VIEW_TEMPLATE, context);
+    }
+
+    @Override
+    public String
+                    getHtmlForCommitsSummary(@NotNull final ResultsSummary resultsSummary,
+                                             @NotNull final RepositoryChangeset repositoryChangeset,
+                                             @NotNull final RepositoryData repositoryData,
+                                             final int maxChanges) {
+        final Map<String, Object> context = new HashMap<String, Object>();
+        context.put("buildResultsSummary", resultsSummary);
+        context.put("repositoryChangeset", repositoryChangeset);
+        context.put("repositoryData", repositoryData);
+        context.put("linkGenerator", this);
+        context.put("maxChanges", maxChanges);
+
+        return templateRenderer.render(SUMMARY_COMMIT_VIEW_TEMPLATE, context);
+    }
 }

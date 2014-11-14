@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.houghtonassociates.bamboo.plugins</groupId>
 	<artifactId>gReview</artifactId>
-	<version>1.4.3.6</version>
+	<version>1.4.3.8</version>
 
 	<organization>
 		<name>Houghton Associates</name>
@@ -44,7 +44,10 @@
         <!--<bamboo.version>5.4.3</bamboo.version>-->
         <!--<bamboo.version>5.5.0</bamboo.version>-->
         <!--<bamboo.version>5.5.1</bamboo.version>-->
-        <bamboo.version>5.6.0</bamboo.version>
+        <!--<bamboo.version>5.6.0</bamboo.version>-->
+        <!--<bamboo.version>5.6.1</bamboo.version>-->
+        <!--<bamboo.version>5.6.2</bamboo.version>-->
+        <bamboo.version>5.7.0</bamboo.version>
 
 		<bamboo.data.version>3.2.2</bamboo.data.version>
 		<!--<amps.version>4.2.1</amps.version>-->

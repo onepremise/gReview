@@ -137,7 +137,7 @@
 
     <webRepositoryViewer key="gitwebRepositoryViewer" name="GitWeb"
                        class="com.houghtonassociates.bamboo.plugins.view.GitWebRepositoryViewer">
-    <description>Renders Fisheye Links for commits.</description>
+    <description>Renders GitWeb Links for commits.</description>
     <resource type="freemarker" name="edit" location="editGitwebRepositoryViewer.ftl"/>
     <resource type="freemarker" name="view" location="viewGitwebRepositoryViewer.ftl"/>
   </webRepositoryViewer>
