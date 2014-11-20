@@ -970,41 +970,47 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         jgitRepo.openSSHTransport();
 
-        currentRevision =
-            jgitRepo.getLatestRevisionForBranch(this.getVcsBranch().getName());
+        try {
 
-        if (!currentRevision.equals(lastVcsRevisionKey)) {
-            String author = Author.UNKNOWN_AUTHOR;
-            RevCommit rev = jgitRepo.resolveRev(currentRevision);
+            currentRevision =
+                jgitRepo.getLatestRevisionForBranch(this.getVcsBranch()
+                    .getName());
 
-            if (rev != null) {
-                authorIdent = rev.getAuthorIdent();
+            if (!currentRevision.equals(lastVcsRevisionKey)) {
+                String author = Author.UNKNOWN_AUTHOR;
+                RevCommit rev = jgitRepo.resolveRev(currentRevision);
+
+                if (rev != null) {
+                    authorIdent = rev.getAuthorIdent();
+                }
+
+                if (author.isEmpty() && (authorIdent != null))
+                    author = authorIdent.getName();
+
+                Builder cc = CommitContextImpl.builder();
+
+                cc.author(author);
+                cc.comment(textProvider
+                    .getText("processor.gerrit.messages.build.error.nochanges"));
+
+                if (authorIdent != null)
+                    cc.date(authorIdent.getWhen());
+
+                cc.branch(this.getVcsBranch().getName());
+                cc.changesetId(lastVcsRevisionKey);
+
+                List<CommitContext> commitlist =
+                    Collections.singletonList((CommitContext) cc.build());
+
+                buildChanges =
+                    new BuildRepositoryChangesImpl(lastVcsRevisionKey,
+                        commitlist);
+            } else {
+                buildChanges =
+                    new BuildRepositoryChangesImpl(lastVcsRevisionKey);
             }
-
+        } finally {
             jgitRepo.close();
-
-            if (author.isEmpty() && (authorIdent != null))
-                author = authorIdent.getName();
-
-            Builder cc = CommitContextImpl.builder();
-
-            cc.author(author);
-            cc.comment(textProvider
-                .getText("processor.gerrit.messages.build.error.nochanges"));
-
-            if (authorIdent != null)
-                cc.date(authorIdent.getWhen());
-
-            cc.branch(this.getVcsBranch().getName());
-            cc.changesetId(lastVcsRevisionKey);
-
-            List<CommitContext> commitlist =
-                Collections.singletonList((CommitContext) cc.build());
-
-            buildChanges =
-                new BuildRepositoryChangesImpl(lastVcsRevisionKey, commitlist);
-        } else {
-            buildChanges = new BuildRepositoryChangesImpl(lastVcsRevisionKey);
         }
 
         return buildChanges;
@@ -1178,14 +1184,16 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         jgitRepo.openSSHTransport();
 
-        if (doShallowFetch)
-            jgitRepo.fetch(vcsRevisionKey, depth);
-        else
-            jgitRepo.fetch(vcsRevisionKey);
+        try {
+            if (doShallowFetch)
+                jgitRepo.fetch(vcsRevisionKey, depth);
+            else
+                jgitRepo.fetch(vcsRevisionKey);
 
-        jgitRepo.checkout(vcsRevisionKey);
-
-        jgitRepo.close();
+            jgitRepo.checkout(vcsRevisionKey);
+        } finally {
+            jgitRepo.close();
+        }
 
         return originalVcsRevisionKey;
     }
@@ -1208,17 +1216,20 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         jgitRepo.openSSHTransport();
 
-        jgitRepo.fetch("refs/heads/" + this.getVcsBranch().getName());
+        try {
+            jgitRepo.fetch("refs/heads/" + this.getVcsBranch().getName());
 
-        org.eclipse.jgit.api.MergeResult mr = jgitRepo.merge(s);
+            org.eclipse.jgit.api.MergeResult mr = jgitRepo.merge(s);
 
-        jgitRepo.close();
+            MergeStatus ms = mr.getMergeStatus();
 
-        MergeStatus ms = mr.getMergeStatus();
-
-        if (ms.isSuccessful()) {
-            return true;
+            if (ms.isSuccessful()) {
+                return true;
+            }
+        } finally {
+            jgitRepo.close();
         }
+
         return false;
     }
 
@@ -1289,7 +1300,11 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         jgitRepo.openSSHTransport();
 
-        jgitRepo.push(file, s);
+        try {
+            jgitRepo.push(file, s);
+        } finally {
+            jgitRepo.close();
+        }
     }
 
     @NotNull
@@ -1304,11 +1319,15 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         jgitRepo.openSSHTransport();
 
-        jgitRepo.add(".");
+        try {
+            jgitRepo.add(".");
 
-        RevCommit c = jgitRepo.commit(s);
+            RevCommit c = jgitRepo.commit(s);
 
-        return c.name();
+            return c.name();
+        } finally {
+            jgitRepo.close();
+        }
     }
 
     public void setEncryptionService(EncryptionService encryptionService) {
@@ -1354,27 +1373,27 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
             jgitRepo.setAccessData(gc);
 
-            // PlanHelper.
-
             jgitRepo.open(this.getSourceCodeDirectory(planKey));
 
             jgitRepo.openSSHTransport();
 
-            Collection<Ref> branches = jgitRepo.lsRemoteBranches();
+            try {
+                Collection<Ref> branches = jgitRepo.lsRemoteBranches();
 
-            for (Ref b : branches) {
-                String strBranch = b.getName();
+                for (Ref b : branches) {
+                    String strBranch = b.getName();
 
-                if (strBranch.contains("/"))
-                    strBranch =
-                        strBranch.substring(strBranch.lastIndexOf("/") + 1);
+                    if (strBranch.contains("/"))
+                        strBranch =
+                            strBranch.substring(strBranch.lastIndexOf("/") + 1);
 
-                if (this.getVcsBranch() != null
-                    && !this.getVcsBranch().isEqualToBranchWith(strBranch))
-                    vcsBranches.add(new VcsBranchImpl(strBranch));
+                    if (this.getVcsBranch() != null
+                        && !this.getVcsBranch().isEqualToBranchWith(strBranch))
+                        vcsBranches.add(new VcsBranchImpl(strBranch));
+                }
+            } finally {
+                jgitRepo.close();
             }
-
-            jgitRepo.close();
         }
 
         return vcsBranches;
@@ -1417,9 +1436,11 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
             jgitRepo.openSSHTransport();
 
-            jgitRepo.createBranch(branchName);
-
-            jgitRepo.close();
+            try {
+                jgitRepo.createBranch(branchName);
+            } finally {
+                jgitRepo.close();
+            }
         }
     }
 
