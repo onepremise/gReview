@@ -47,13 +47,25 @@
         <!--<bamboo.version>5.6.0</bamboo.version>-->
         <!--<bamboo.version>5.6.1</bamboo.version>-->
         <!--<bamboo.version>5.6.2</bamboo.version>-->
+        <!--<bamboo.version>5.7.0</bamboo.version>-->
+        
+        <!--<bamboo.version>5.7.1</bamboo.version>-->
+        <!--<bamboo.version>5.7.2</bamboo.version>-->
+        <!--<bamboo.version>5.8.0</bamboo.version>-->
+        <!--<bamboo.version>5.8.1</bamboo.version>-->
+        <!--<bamboo.version>5.8.2</bamboo.version>-->
+        <!--<bamboo.version>5.9.0</bamboo.version>-->
+        <!--<bamboo.version>5.9.1</bamboo.version>-->
+        <!--<bamboo.version>5.9.3</bamboo.version>-->
+        
         <bamboo.version>5.7.0</bamboo.version>
-
-		<bamboo.data.version>3.2.2</bamboo.data.version>
+		<bamboo.data.version>5.7.0</bamboo.data.version>
+		
 		<!--<amps.version>4.2.1</amps.version>-->
+		<!--<amps.version>6.2.1</amps.version>-->
 		<amps.version>5.0.3</amps.version>
 		<slf4j.version>1.6.4</slf4j.version>
-        <jgit.version>3.4.0.201406041058-rc3</jgit.version>
+        <jgit.version>3.5.3.201412180710-r</jgit.version>
 	</properties>
 
 	<repositories>
@@ -176,18 +188,24 @@
             <artifactId>jsch</artifactId>
             <version>0.1.51</version>
         </dependency>
-		<dependency>
-			<groupId>net.sf.json-lib</groupId>
-			<artifactId>json-lib</artifactId>
-			<version>2.4</version>
-			<classifier>jdk15</classifier>
-		</dependency>
-				
-		<dependency>
-			<groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
-			<artifactId>gerrit-events</artifactId>
-			<version>1.5.2</version>
-		</dependency>
+	<dependency>
+		<groupId>net.sf.json-lib</groupId>
+		<artifactId>json-lib</artifactId>
+		<version>2.4</version>
+		<classifier>jdk15</classifier>
+	</dependency>
+
+	<!-- <dependency> -->
+	<!-- <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId> -->
+	<!-- <artifactId>gerrit-events</artifactId> -->
+	<!-- <version>1.5.2</version> -->
+	<!-- </dependency> -->
+	<dependency>
+		<groupId>com.sonymobile.tools.gerrit</groupId>
+		<artifactId>gerrit-events</artifactId>
+		<version>2.0.1</version>
+	</dependency>
+
 		
 		<dependency>
 			<groupId>junit</groupId>

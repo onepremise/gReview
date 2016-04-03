@@ -6,7 +6,7 @@
  */
 package com.houghtonassociates.bamboo.plugins.dao;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 
 /**
  * @author jhuntley
@@ -14,5 +14,5 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTrig
  */
 public interface GerritProcessListener {
 
-    public void processGerritEvent(GerritTriggeredEvent e);
+    public void processGerritEvent(GerritEvent e);
 }

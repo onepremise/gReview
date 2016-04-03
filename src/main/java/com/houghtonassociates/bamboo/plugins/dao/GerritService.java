@@ -39,6 +39,7 @@ import net.sf.json.JSONObject;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.http.auth.Credentials;
 import org.apache.log4j.Logger;
 import org.eclipse.jgit.transport.PushResult;
 
@@ -47,21 +48,21 @@ import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.Approval;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.FileSet;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO.PatchSet;
 import com.houghtonassociates.bamboo.plugins.dao.jgit.JGitRepository;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig2;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshException;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
+import com.sonymobile.tools.gerrit.gerritevents.GerritConnectionConfig2;
+import com.sonymobile.tools.gerrit.gerritevents.GerritQueryException;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnection;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnectionFactory;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshException;
+import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
+import com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
 
-/**
- * Facade for witing with ssh, gerrit-events, parsing JSON results, and Gerrit
- * related data.
- */
+ /* 
+  * Facade for working with ssh, gerrit-events, parsing JSON results, and 
+  * Gerrit related data.
+  */
 public class GerritService {
 
     public static final String SYSTEM_DIRECTORY = "gerrit";
@@ -407,16 +408,6 @@ public class GerritService {
                     }
 
                     @Override
-                    public int getNumberOfReceivingWorkerThreads() {
-                        return 2;
-                    }
-
-                    @Override
-                    public int getNumberOfSendingWorkerThreads() {
-                        return 2;
-                    }
-
-                    @Override
                     public int getWatchdogTimeoutSeconds() {
                         // return
                         // (int)TimeUnit.MINUTES.toSeconds(watchdogTimeoutMinutes);
@@ -441,6 +432,24 @@ public class GerritService {
                     public String getGerritProxy() {
                         return gc.getProxy();
                     }
+
+					@Override
+					public String getGerritFrontEndUrl() {
+						// TODO Auto-generated method stub
+						return null;
+					}
+
+					@Override
+					public Credentials getHttpCredentials() {
+						// TODO Auto-generated method stub
+						return null;
+					}
+
+					@Override
+					public int getWatchdogTimeoutMinutes() {
+						// TODO Auto-generated method stub
+						return 0;
+					}
                 });
         }
 
@@ -1003,7 +1012,8 @@ public class GerritService {
             info.setOwnerUserName(owner
                 .getString(GerritChangeVO.JSON_KEY_USERNAME));
 
-        info.setOwnerEmail(owner.getString(GerritChangeVO.JSON_KEY_EMAIL));
+        if (owner.containsKey(GerritChangeVO.JSON_KEY_EMAIL))
+        	info.setOwnerEmail(owner.getString(GerritChangeVO.JSON_KEY_EMAIL));
 
         info.setUrl(j.getString(GerritChangeVO.JSON_KEY_URL));
 
@@ -1051,8 +1061,10 @@ public class GerritService {
         if (patchSetUploader.containsKey(GerritChangeVO.JSON_KEY_NAME))
             patch.setUploaderName(patchSetUploader
                 .getString(GerritChangeVO.JSON_KEY_NAME));
-        patch.setUploaderEmail(patchSetUploader
-            .getString(GerritChangeVO.JSON_KEY_EMAIL));
+        
+        if (patchSetUploader.containsKey(GerritChangeVO.JSON_KEY_EMAIL))
+        	patch.setUploaderEmail(patchSetUploader
+        			.getString(GerritChangeVO.JSON_KEY_EMAIL));
 
         try {
             if (authorSupported) {

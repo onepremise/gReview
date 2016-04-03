@@ -12,18 +12,11 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 
 /**
  * @author jhuntley
@@ -45,22 +38,14 @@ public class GerritMonitor {
             GerritConfig gc = s.getConfig();
 
             gHandler =
-                new GerritHandler(gc.getHost(), gc.getPort(), gc.getAuth(),
-                    NUM_WORKER_THREADS);
+                new GerritHandler(NUM_WORKER_THREADS);
 
             // gHandler.addListener(this);
-            gHandler.addListener(new ConnectionListener() {
-
-                @Override
-                public void connectionDown() {
-                    log.error("Gerrit connection down.");
-                    // gHandler.shutdown(false);
-                }
-
-                @Override
-                public void connectionEstablished() {
-                    log.info("Gerrit connection established!");
-                }
+            gHandler.addListener(new GerritEventListener() {
+				@Override
+				public void gerritEvent(GerritEvent event) {
+					log.info("Gerrit event recieved: " + event.toString());
+				}
             });
 
             gHandler.addListener(new GerritEventListener() {
@@ -68,55 +53,23 @@ public class GerritMonitor {
                 @Override
                 public void gerritEvent(GerritEvent event) {
                     log.debug("Processing GerritEvent...");
+                    
+                    if (event.getEventType().equals(GerritEventType.PATCHSET_CREATED) ||
+                    		event.getEventType().equals(GerritEventType.REF_UPDATED)) {
+                    	log.debug(String.format("Processing %s...", event.toString()));
+                    	processGerritEvent(event);
+                    }
                 }
-
-                @Override
-                public void gerritEvent(PatchsetCreated event) {
-                    log.debug("Processing PatchsetCreated...");
-                    processGerritEvent(event);
-                }
-
-                @Override
-                public void gerritEvent(DraftPublished event) {
-                    log.debug("Processing DraftPublished...");
-                }
-
-                @Override
-                public void gerritEvent(ChangeAbandoned event) {
-                    log.debug("Processing ChangeAbandoned...");
-                }
-
-                @Override
-                public void gerritEvent(ChangeMerged event) {
-                    log.debug("Processing ChangeMerged...");
-                }
-
-                @Override
-                public void gerritEvent(ChangeRestored event) {
-                    log.debug("Processing ChangeRestored...");
-                }
-
-                @Override
-                public void gerritEvent(CommentAdded event) {
-                    log.debug("Processing CommentAdded...");
-                }
-
-                @Override
-                public void gerritEvent(RefUpdated event) {
-                    log.debug("Processing RefUpdated...");
-                    processGerritEvent(event);
-                }
-
             });
         }
 
-        if (!gHandler.isAlive())
-            gHandler.start();
+        //if (!gHandler.isAlive())
+        //    gHandler.start();
 
         return gHandler;
     }
 
-    public void processGerritEvent(GerritTriggeredEvent e) {
+    public void processGerritEvent(GerritEvent e) {
         if (gerritListeners != null) {
             for (GerritProcessListener l : gerritListeners) {
                 l.processGerritEvent(e);

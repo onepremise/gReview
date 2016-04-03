@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -72,8 +73,6 @@ import com.houghtonassociates.bamboo.plugins.dao.GerritConfig;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-
-import edu.emory.mathcs.backport.java.util.Collections;
 
 /**
  * @author Jason Huntley

@@ -22,7 +22,7 @@
       	    <Import-Package>
       	    com.houghtonassociates.bamboo.*,
       	    net.sf.json-lib.*;version="2.4",
-      	    com.sonyericsson.hudson.plugins.gerrit.*;version="1.5.2",
+      	    com.sonymobile.tools.gerrit.*;version="2.0.1",
       	    com.jcraft.jzlib.*;version="1.1.3",
       	    com.jcraft.jsch.*;version="0.1.51",
       	    com.atlassian.bamboo.ww2.*;resolution:=optional,
@@ -76,7 +76,7 @@
             org.apache.commons.configuration.*;resolution:=optional,
             org.apache.commons.logging.*;resolution:=optional,
             org.apache.commons.lang.*;resolution:=optional,
-            org.eclipse.jgit.*;version="3.1.0",
+            org.eclipse.jgit.*;version="3.5.3",
             org.slf4j.*;resolution:=optional,
             javax.crypto.*;resolution:=optional,
             javax.net.ssl.*;resolution:=optional,

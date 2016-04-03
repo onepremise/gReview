@@ -19,8 +19,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 
 public class GerritChangeVO {
 
@@ -185,10 +185,10 @@ public class GerritChangeVO {
             return fileSets;
         }
 
-        public com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet
+        public com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet
                         toPatchSet() {
-            com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet p =
-                new com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet();
+        	com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet p =
+                new com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet();
 
             p.setNumber(this.getNumber().toString());
             p.setRef(this.getRef());

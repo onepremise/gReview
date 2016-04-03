@@ -33,6 +33,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.http.auth.Credentials;
 import org.apache.log4j.Logger;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.PersonIdent;
@@ -112,11 +113,12 @@ import com.houghtonassociates.bamboo.plugins.dao.GerritProcessListener;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
 import com.houghtonassociates.bamboo.plugins.dao.jgit.JGitRepository;
 import com.opensymphony.xwork2.TextProvider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig2;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import com.sonymobile.tools.gerrit.gerritevents.GerritConnectionConfig2;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
+import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 
 /**
  * This class allows bamboo to use Gerrit as if it were a repository.
@@ -852,33 +854,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         return gc;
     }
 
-    protected class GerritBandanaContext implements BambooBandanaContext {
-
-        private static final long serialVersionUID = 2823839939046273111L;
-
-        private long planID = 639917L;
-
-        @Override
-        public boolean hasParentContext() {
-            return false;
-        }
-
-        @Override
-        public BambooBandanaContext getParentContext() {
-            return null;
-        }
-
-        @Override
-        public long getPlanId() {
-            return planID;
-        }
-
-        @Override
-        public String getPluginKey() {
-            return moduleDescriptor.getPluginKey();
-        }
-    }
-
     public BuildLoggerManager getBuildLoggerManager() {
         return buildLoggerManager;
     }
@@ -975,10 +950,16 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
         if (!currentRevision.equals(lastVcsRevisionKey)) {
             String author = Author.UNKNOWN_AUTHOR;
-            RevCommit rev = jgitRepo.resolveRev(currentRevision);
-
-            if (rev != null) {
-                authorIdent = rev.getAuthorIdent();
+            
+	        try {
+	            RevCommit rev = jgitRepo.resolveRev(currentRevision);
+	
+	            if (rev != null) {
+	                authorIdent = rev.getAuthorIdent();
+	            }
+            } catch (RepositoryException e) {
+            	log.debug(String.format("Failed to retrieve author for %s.", currentRevision));
+            	lastVcsRevisionKey=currentRevision;
             }
 
             jgitRepo.close();
@@ -1268,16 +1249,6 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     }
 
     @Override
-    public int getNumberOfReceivingWorkerThreads() {
-        return 2;
-    }
-
-    @Override
-    public int getNumberOfSendingWorkerThreads() {
-        return 2;
-    }
-
-    @Override
     public void
                     pushRevision(@NotNull final File file,
                                  @Nullable final String s) throws RepositoryException {
@@ -1503,7 +1474,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
         cRepos = chain.getEffectiveRepositoryDefinitions();
 
         for (RepositoryDefinition rd : cRepos) {
-            if (rd.getName().equals(this.getName())
+            if (rd.getName().toLowerCase().equals(this.getName().toLowerCase())
                 && rd.getPluginKey().equals(this.getKey())) {
                 HierarchicalConfiguration hconfig = rd.getConfiguration();
                 String strDefBranch =
@@ -1561,7 +1532,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     }
 
     private void publishChangeDetectionEvent(ImmutableChain c,
-                                             GerritTriggeredEvent e) {
+                                             GerritEvent e) {
         if (c != null) {
             VcsBranch triggerBranch = this.getVcsBranch();
 
@@ -1576,6 +1547,18 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             }
 
             BuildDefinition buildDefinition = c.getBuildDefinition();
+
+            // 5.8+
+            // for (TriggerDefinition td : c.getTriggerDefinitions()) {
+            // if (this.getProject().equals(project)) {
+            // if (this.getVcsBranch().equals(triggerBranch)) {
+            // eventPublisher
+            // .publish(new ChangeDetectionRequiredEvent(this, c
+            // .getKey(), td, false));
+            // }
+            // }
+            // }
+
             for (BuildStrategy buildStrategy : buildDefinition
                 .getBuildStrategies()) {
 
@@ -1586,6 +1569,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     if (this.getVcsBranch().equals(triggerBranch)) {
                         // ||
                         // triggerBranch.isEqualToBranchWith(c.getBuildName()))
+
                         eventPublisher
                             .publish(new ChangeDetectionRequiredEvent(this, c
                                 .getKey(), tbs.getId(), tbs
@@ -1598,7 +1582,7 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
     }
 
     @Override
-    public void processGerritEvent(GerritTriggeredEvent e) {
+    public void processGerritEvent(GerritEvent e) {
         log.debug("GerritRepository processing event: "
             + e.getEventType().toString());
 
@@ -1635,4 +1619,22 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
             }
         }
     }
+
+	@Override
+	public String getGerritFrontEndUrl() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Credentials getHttpCredentials() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getWatchdogTimeoutMinutes() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
