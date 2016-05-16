@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.houghtonassociates.bamboo.plugins</groupId>
 	<artifactId>gReview</artifactId>
-	<version>1.4.4.5</version>
+	<version>1.4.5.1</version>
 
 	<organization>
 		<name>Houghton Associates</name>
@@ -54,12 +54,21 @@
         <!--<bamboo.version>5.8.0</bamboo.version>-->
         <!--<bamboo.version>5.8.1</bamboo.version>-->
         <!--<bamboo.version>5.8.2</bamboo.version>-->
+        
+        <!--<bamboo.version>5.8.5</bamboo.version>-->
         <!--<bamboo.version>5.9.0</bamboo.version>-->
         <!--<bamboo.version>5.9.1</bamboo.version>-->
         <!--<bamboo.version>5.9.3</bamboo.version>-->
+        <!--<bamboo.version>5.9.7</bamboo.version>-->
+        <!--<bamboo.version>5.9.10</bamboo.version>-->
+        <!--<bamboo.version>5.10.0</bamboo.version>-->
+        <!--<bamboo.version>5.10.1.1</bamboo.version>-->
+        <!--<bamboo.version>5.10.2</bamboo.version>-->
+        <!--<bamboo.version>5.10.3</bamboo.version>-->
+        <!--<bamboo.version>5.11</bamboo.version>-->
         
-        <bamboo.version>5.7.0</bamboo.version>
-		<bamboo.data.version>5.7.0</bamboo.data.version>
+        <bamboo.version>5.8.0</bamboo.version>
+		<bamboo.data.version>5.8.0</bamboo.data.version>
 		
 		<!--<amps.version>4.2.1</amps.version>-->
 		<!--<amps.version>6.2.1</amps.version>-->
@@ -203,7 +212,7 @@
 	<dependency>
 		<groupId>com.sonymobile.tools.gerrit</groupId>
 		<artifactId>gerrit-events</artifactId>
-		<version>2.0.1</version>
+		<version>2.1.0</version>
 	</dependency>
 
 		

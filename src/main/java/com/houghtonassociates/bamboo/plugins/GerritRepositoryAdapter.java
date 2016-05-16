@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import com.atlassian.bamboo.author.Author;
 import com.atlassian.bamboo.author.AuthorCachingFacade;
-import com.atlassian.bamboo.bandana.BambooBandanaContext;
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.build.BuildDefinition;
 import com.atlassian.bamboo.build.BuildLoggerManager;
@@ -85,6 +84,7 @@ import com.atlassian.bamboo.repository.RepositoryDefinitionManager;
 import com.atlassian.bamboo.repository.RepositoryException;
 import com.atlassian.bamboo.security.EncryptionService;
 import com.atlassian.bamboo.template.TemplateRenderer;
+import com.atlassian.bamboo.trigger.TriggerDefinition;
 import com.atlassian.bamboo.util.Narrow;
 import com.atlassian.bamboo.utils.SystemProperty;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
@@ -115,7 +115,6 @@ import com.houghtonassociates.bamboo.plugins.dao.jgit.JGitRepository;
 import com.opensymphony.xwork2.TextProvider;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnectionConfig2;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
@@ -1548,35 +1547,15 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
 
             BuildDefinition buildDefinition = c.getBuildDefinition();
 
-            // 5.8+
-            // for (TriggerDefinition td : c.getTriggerDefinitions()) {
-            // if (this.getProject().equals(project)) {
-            // if (this.getVcsBranch().equals(triggerBranch)) {
-            // eventPublisher
-            // .publish(new ChangeDetectionRequiredEvent(this, c
-            // .getKey(), td, false));
-            // }
-            // }
-            // }
-
-            for (BuildStrategy buildStrategy : buildDefinition
-                .getBuildStrategies()) {
-
-                TriggeredBuildStrategy tbs =
-                    Narrow.downTo(buildStrategy, TriggeredBuildStrategy.class);
-
-                if ((tbs != null) && this.getProject().equals(project)) {
-                    if (this.getVcsBranch().equals(triggerBranch)) {
-                        // ||
-                        // triggerBranch.isEqualToBranchWith(c.getBuildName()))
-
-                        eventPublisher
-                            .publish(new ChangeDetectionRequiredEvent(this, c
-                                .getKey(), tbs.getId(), tbs
-                                .getTriggeringRepositories(), tbs
-                                .getTriggerConditionsConfiguration()));
-                    }
-                }
+			// 5.8+
+			if (this.getProject().equals(project)) {
+				for (TriggerDefinition td : c.getTriggerDefinitions()) {
+					if (this.getVcsBranch().equals(triggerBranch)) {
+						eventPublisher
+								.publish(new ChangeDetectionRequiredEvent(this,
+										c.getKey(), td, false));
+					}
+				}
             }
         }
     }
