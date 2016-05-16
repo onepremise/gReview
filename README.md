@@ -188,6 +188,16 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 Bug Fixes and Enhancements
 ==========================
 
+1.4.5.1 Updates
+---------------
+
+* Bring OSGi and Pom configuration up-to-date
+* Upgrade atlassian plugin model to support 5.8.0-5.9.10
+* Upgrade dependencies to support 5.8.0-5.9.10
+* Upgrade the bamboo jGit plugin
+* Upgrade gerrit-events to 2.1.0
+* Remove BuildStrategy, TriggeredBuildStrategy, ImmutableChain.getTriggers deprecated references from GerritRepository and replace with newer call conventions
+
 1.4.3.6 Updates
 ---------------
 
