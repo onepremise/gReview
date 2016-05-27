@@ -2,11 +2,11 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    
+
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.houghtonassociates.bamboo.plugins</groupId>
 	<artifactId>gReview</artifactId>
-	<version>1.4.5.1</version>
+	<version>1.4.6.5</version>
 
 	<organization>
 		<name>Houghton Associates</name>
@@ -18,82 +18,85 @@
 	<packaging>atlassian-plugin</packaging>
 
 	<properties>
-        <!--<bamboo.version>4.2.1</bamboo.version>-->
-        <!--<bamboo.version>4.2.2</bamboo.version>-->
-        <!--<bamboo.version>4.3.0</bamboo.version>-->
-        <!--<bamboo.version>4.3.2</bamboo.version>-->
-        <!--<bamboo.version>4.3.3</bamboo.version>-->
-        <!--<bamboo.version>4.4.0</bamboo.version>-->
-        <!--<bamboo.version>4.4.1</bamboo.version>-->
-        <!--<bamboo.version>4.4.2</bamboo.version>-->
-        <!--<bamboo.version>4.4.3</bamboo.version>-->
-        <!--<bamboo.version>4.4.4</bamboo.version>-->
-		<!--<bamboo.version>4.4.5</bamboo.version>-->
-        <!--<bamboo.version>4.4.8</bamboo.version>-->		
-        <!--<bamboo.version>5.0.0</bamboo.version>-->
-        <!--<bamboo.version>5.0.1</bamboo.version>-->
-        <!--<bamboo.version>5.1.0</bamboo.version>-->
-        <!--<bamboo.version>5.1.1</bamboo.version>-->
-        <!--<bamboo.version>5.2</bamboo.version>-->
-        <!--<bamboo.version>5.2.1</bamboo.version>-->
-        <!--<bamboo.version>5.2.2</bamboo.version>-->
-        <!--<bamboo.version>5.3</bamboo.version>-->
-        <!--<bamboo.version>5.4</bamboo.version>-->
-        <!--<bamboo.version>5.4.1</bamboo.version>-->
-        <!--<bamboo.version>5.4.2</bamboo.version>-->
-        <!--<bamboo.version>5.4.3</bamboo.version>-->
-        <!--<bamboo.version>5.5.0</bamboo.version>-->
-        <!--<bamboo.version>5.5.1</bamboo.version>-->
-        <!--<bamboo.version>5.6.0</bamboo.version>-->
-        <!--<bamboo.version>5.6.1</bamboo.version>-->
-        <!--<bamboo.version>5.6.2</bamboo.version>-->
-        <!--<bamboo.version>5.7.0</bamboo.version>-->
-        <!--<bamboo.version>5.7.1</bamboo.version>-->
-        <!--<bamboo.version>5.7.2</bamboo.version>-->
-        
-        <!--<bamboo.version>5.8.0</bamboo.version>-->
-        <!--<bamboo.version>5.8.1</bamboo.version>-->
-        <!--<bamboo.version>5.8.2</bamboo.version>-->
-        
-        <!--<bamboo.version>5.8.5</bamboo.version>-->
-        <!--<bamboo.version>5.9.0</bamboo.version>-->
-        <!--<bamboo.version>5.9.1</bamboo.version>-->
-        <!--<bamboo.version>5.9.3</bamboo.version>-->
-        <!--<bamboo.version>5.9.7</bamboo.version>-->
-        <!--<bamboo.version>5.9.10</bamboo.version>-->
-        <!--<bamboo.version>5.10.0</bamboo.version>-->
-        <!--<bamboo.version>5.10.1.1</bamboo.version>-->
-        <!--<bamboo.version>5.10.2</bamboo.version>-->
-        <!--<bamboo.version>5.10.3</bamboo.version>-->
-        <!--<bamboo.version>5.11</bamboo.version>-->
-        
-        <bamboo.version>5.8.0</bamboo.version>
-		<bamboo.data.version>5.8.0</bamboo.data.version>
-		
-		<!--<amps.version>4.2.1</amps.version>-->
-		<!--<amps.version>6.2.1</amps.version>-->
+		<!--<bamboo.version>4.2.1</bamboo.version> -->
+		<!--<bamboo.version>4.2.2</bamboo.version> -->
+		<!--<bamboo.version>4.3.0</bamboo.version> -->
+		<!--<bamboo.version>4.3.2</bamboo.version> -->
+		<!--<bamboo.version>4.3.3</bamboo.version> -->
+		<!--<bamboo.version>4.4.0</bamboo.version> -->
+		<!--<bamboo.version>4.4.1</bamboo.version> -->
+		<!--<bamboo.version>4.4.2</bamboo.version> -->
+		<!--<bamboo.version>4.4.3</bamboo.version> -->
+		<!--<bamboo.version>4.4.4</bamboo.version> -->
+		<!--<bamboo.version>4.4.5</bamboo.version> -->
+		<!--<bamboo.version>4.4.8</bamboo.version> -->
+		<!--<bamboo.version>5.0.0</bamboo.version> -->
+		<!--<bamboo.version>5.0.1</bamboo.version> -->
+		<!--<bamboo.version>5.1.0</bamboo.version> -->
+		<!--<bamboo.version>5.1.1</bamboo.version> -->
+		<!--<bamboo.version>5.2</bamboo.version> -->
+		<!--<bamboo.version>5.2.1</bamboo.version> -->
+		<!--<bamboo.version>5.2.2</bamboo.version> -->
+		<!--<bamboo.version>5.3</bamboo.version> -->
+		<!--<bamboo.version>5.4</bamboo.version> -->
+		<!--<bamboo.version>5.4.1</bamboo.version> -->
+		<!--<bamboo.version>5.4.2</bamboo.version> -->
+		<!--<bamboo.version>5.4.3</bamboo.version> -->
+		<!--<bamboo.version>5.5.0</bamboo.version> -->
+		<!--<bamboo.version>5.5.1</bamboo.version> -->
+		<!--<bamboo.version>5.6.0</bamboo.version> -->
+		<!--<bamboo.version>5.6.1</bamboo.version> -->
+		<!--<bamboo.version>5.6.2</bamboo.version> -->
+		<!--<bamboo.version>5.7.0</bamboo.version> -->
+		<!--<bamboo.version>5.7.1</bamboo.version> -->
+		<!--<bamboo.version>5.7.2</bamboo.version> -->
+
+		<!--<bamboo.version>5.8.0</bamboo.version> -->
+		<!--<bamboo.version>5.8.1</bamboo.version> -->
+		<!--<bamboo.version>5.8.2</bamboo.version> -->
+
+		<!--<bamboo.version>5.8.5</bamboo.version> -->
+		<!--<bamboo.version>5.9.0</bamboo.version> -->
+		<!--<bamboo.version>5.9.1</bamboo.version> -->
+		<!--<bamboo.version>5.9.3</bamboo.version> -->
+		<!--<bamboo.version>5.9.7</bamboo.version> -->
+		<!--<bamboo.version>5.9.10</bamboo.version> -->
+		<!--<bamboo.version>5.10.0</bamboo.version> -->
+		<!--<bamboo.version>5.10.1.1</bamboo.version> -->
+		<!--<bamboo.version>5.10.2</bamboo.version> -->
+		<!--<bamboo.version>5.10.3</bamboo.version> -->
+		<!--<bamboo.version>5.11.1</bamboo.version> -->
+		<!--<bamboo.version>5.11.1.1</bamboo.version> -->
+		<!--<bamboo.version>5.11.3</bamboo.version> -->
+		<!--<bamboo.version>5.12.0.2</bamboo.version> -->
+
+		<bamboo.version>5.10.0</bamboo.version>
+		<bamboo.data.version>5.10.0</bamboo.data.version>
+
+		<!--<amps.version>4.2.1</amps.version> -->
+		<!--<amps.version>6.2.1</amps.version> -->
 		<amps.version>5.0.3</amps.version>
 		<slf4j.version>1.6.4</slf4j.version>
-        <jgit.version>3.5.3.201412180710-r</jgit.version>
+		<jgit.version>4.0.3.201509231615-r</jgit.version>
 	</properties>
 
 	<repositories>
 		<repository>
-            <id>central.maven.org</id>
-            <url>http://central.maven.org/maven2</url>
-        </repository>
-	    <repository>
-            <id>repo1.maven.org</id>
-            <url>http://repo1.maven.org/maven2</url>
-        </repository>
-        <repository>
-            <id>jenkins-releases</id>
-            <url>http://repo.jenkins-ci.org/public</url>
-        </repository>
-        <repository>
-            <id>jgit-repository</id>
-            <url>https://repo.eclipse.org/content/groups/releases/</url>
-        </repository>
+			<id>central.maven.org</id>
+			<url>http://central.maven.org/maven2</url>
+		</repository>
+		<repository>
+			<id>repo1.maven.org</id>
+			<url>http://repo1.maven.org/maven2</url>
+		</repository>
+		<repository>
+			<id>jenkins-releases</id>
+			<url>http://repo.jenkins-ci.org/public</url>
+		</repository>
+		<repository>
+			<id>jgit-repository</id>
+			<url>https://repo.eclipse.org/content/groups/releases/</url>
+		</repository>
 		<repository>
 			<id>jfrog-libs-releases</id>
 			<url>http://repo.jfrog.org/artifactory/libs-releases</url>
@@ -101,10 +104,10 @@
 	</repositories>
 
 	<pluginRepositories>
-	    <pluginRepository>
-            <id>repo1.maven.org</id>
-            <url>http://repo1.maven.org/maven2</url>
-        </pluginRepository>
+		<pluginRepository>
+			<id>repo1.maven.org</id>
+			<url>http://repo1.maven.org/maven2</url>
+		</pluginRepository>
 		<pluginRepository>
 			<id>jfrog-libs-releases</id>
 			<url>http://repo.jfrog.org/artifactory/libs-releases</url>
@@ -125,47 +128,47 @@
 			<version>3.2.1</version>
 			<scope>provided</scope>
 		</dependency>
-		
-	    <dependency>
+
+		<dependency>
 			<groupId>commons-beanutils</groupId>
 			<artifactId>commons-beanutils</artifactId>
 			<version>1.8.3</version>
 			<scope>provided</scope>
 		</dependency>
-		
-	    <dependency>
+
+		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.1</version>
 		</dependency>
-		
-	    <dependency>
+
+		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>1.3.2</version>
 		</dependency>
 
-	    <dependency>
-		    <groupId>org.slf4j</groupId>
-		    <artifactId>slf4j-api</artifactId>
-		    <version>${slf4j.version}</version>
-		    <scope>provided</scope>
-	    </dependency>
-	    
-	    <dependency>
-		    <groupId>org.slf4j</groupId>
-		    <artifactId>slf4j-log4j12</artifactId>
-		    <version>${slf4j.version}</version>
-		    <scope>provided</scope>
-	    </dependency>
-      
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>${slf4j.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>servlet-api</artifactId>
 			<version>2.5</version>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.atlassian.bamboo</groupId>
 			<artifactId>atlassian-bamboo-api</artifactId>
@@ -187,47 +190,47 @@
 			<version>${bamboo.version}</version>
 			<scope>provided</scope>
 		</dependency>
-        <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jzlib</artifactId>
-            <version>1.1.3</version>
-        </dependency> 
-        <dependency>      
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-            <version>0.1.51</version>
-        </dependency>
-	<dependency>
-		<groupId>net.sf.json-lib</groupId>
-		<artifactId>json-lib</artifactId>
-		<version>2.4</version>
-		<classifier>jdk15</classifier>
-	</dependency>
+		<dependency>
+			<groupId>com.jcraft</groupId>
+			<artifactId>jzlib</artifactId>
+			<version>1.1.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jcraft</groupId>
+			<artifactId>jsch</artifactId>
+			<version>0.1.51</version>
+		</dependency>
 
-	<!-- <dependency> -->
-	<!-- <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId> -->
-	<!-- <artifactId>gerrit-events</artifactId> -->
-	<!-- <version>1.5.2</version> -->
-	<!-- </dependency> -->
-	<dependency>
-		<groupId>com.sonymobile.tools.gerrit</groupId>
-		<artifactId>gerrit-events</artifactId>
-		<version>2.1.0</version>
-	</dependency>
+		<dependency>
+			<groupId>net.sf.json-lib</groupId>
+			<artifactId>json-lib</artifactId>
+			<version>2.4</version>
+			<classifier>jdk15</classifier>
+		</dependency>
 
-		
+		<!-- <dependency> -->
+		<!-- <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId> -->
+		<!-- <artifactId>gerrit-events</artifactId> -->
+		<!-- <version>1.5.2</version> -->
+		<!-- </dependency> -->
+		<dependency>
+			<groupId>com.sonymobile.tools.gerrit</groupId>
+			<artifactId>gerrit-events</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.6</version>
 			<scope>test</scope>
 		</dependency>
-		
-        <dependency>
-           <groupId>org.eclipse.jgit</groupId>
-           <artifactId>org.eclipse.jgit</artifactId>
-           <version>${jgit.version}</version>
-        </dependency>
+
+		<dependency>
+			<groupId>org.eclipse.jgit</groupId>
+			<artifactId>org.eclipse.jgit</artifactId>
+			<version>${jgit.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -258,15 +261,9 @@
 				</configuration>
 			</plugin>
 
-			<!--  <plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.12</version>
-				<configuration>
-					<excludedGroups>manual</excludedGroups>
-					<parallel>methods</parallel>
-					<threadCount>16</threadCount>
-				</configuration>
-			</plugin>	-->		
+			<!-- <plugin> <artifactId>maven-surefire-plugin</artifactId> <version>2.12</version> 
+				<configuration> <excludedGroups>manual</excludedGroups> <parallel>methods</parallel> 
+				<threadCount>16</threadCount> </configuration> </plugin> -->
 
 			<plugin>
 				<artifactId>maven-dependency-plugin</artifactId>

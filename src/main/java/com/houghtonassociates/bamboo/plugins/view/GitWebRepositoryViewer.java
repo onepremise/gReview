@@ -23,6 +23,8 @@ import java.util.Map;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import com.atlassian.bamboo.collections.ActionParametersMap;
 import com.atlassian.bamboo.commit.Commit;
@@ -38,8 +40,6 @@ import com.atlassian.bamboo.variable.CustomVariableContext;
 import com.atlassian.bamboo.webrepository.AbstractWebRepositoryViewer;
 import com.atlassian.bamboo.webrepository.CommitUrlProvider;
 import com.atlassian.bamboo.ww2.actions.build.admin.create.BuildConfiguration;
-import com.atlassian.util.concurrent.NotNull;
-import com.atlassian.util.concurrent.Nullable;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 

@@ -239,7 +239,7 @@ public class JGitRepository {
         try {
             commit = rw.parseCommit(ref.getObjectId());
         } finally {
-            rw.release();
+            rw.close();
         }
         return commit;
     }
@@ -321,7 +321,7 @@ public class JGitRepository {
         } catch (Exception e) {
             throw new RepositoryException(e);
         } finally {
-            rw.release();
+            rw.close();
         }
 
         return c;

@@ -188,6 +188,14 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 Bug Fixes and Enhancements
 ==========================
 
+1.4.6.5 Updates
+---------------
+
+* Support for Bamboo 5.10.0-5.10.3
+* Upgrade the jGit plugin to 4.0.3
+* Upgrade gerrit-events to 2.5.0
+* Migrate to new annotations for NotNull and Nullable
+
 1.4.5.1 Updates
 ---------------
 
