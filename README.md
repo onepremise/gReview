@@ -188,6 +188,11 @@ Ex: bamboo-home\logs\atlassian-bamboo.log
 Bug Fixes and Enhancements
 ==========================
 
+1.4.6.7 Updates
+---------------
+
+* Fixed NullPointerException in ViewGerritChainResultsAction.
+
 1.4.6.5 Updates
 ---------------
 
