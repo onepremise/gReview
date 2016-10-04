@@ -142,6 +142,9 @@ public class GerritService {
                 SshConnectionFactory.getConnection(gc.getHost(), gc.getPort(),
                     gc.getAuth());
         } catch (IOException e) {
+            if(sshConnection != null) {
+              sshConnection.disconnect();
+            }
             throw new RepositoryException(
                 "Failed to establish connection to Gerrit!");
         }
