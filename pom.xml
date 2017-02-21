@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.houghtonassociates.bamboo.plugins</groupId>
 	<artifactId>gReview</artifactId>
-	<version>1.4.6.7</version>
+	<version>1.4.6.8</version>
 
 	<organization>
 		<name>Houghton Associates</name>
@@ -70,12 +70,12 @@
 		<!--<bamboo.version>5.11.3</bamboo.version> -->
 		<!--<bamboo.version>5.12.0.2</bamboo.version> -->
 
-		<bamboo.version>5.10.0</bamboo.version>
-		<bamboo.data.version>5.10.0</bamboo.data.version>
+		<bamboo.version>5.12.3.1</bamboo.version>
+		<!--<bamboo.data.version>5.10.0</bamboo.data.version> -->
 
 		<!--<amps.version>4.2.1</amps.version> -->
 		<!--<amps.version>6.2.1</amps.version> -->
-		<amps.version>5.0.3</amps.version>
+		<amps.version>6.2.9</amps.version>
 		<slf4j.version>1.6.4</slf4j.version>
 		<jgit.version>4.0.3.201509231615-r</jgit.version>
 	</properties>
@@ -249,7 +249,7 @@
 				<extensions>true</extensions>
 				<configuration>
 					<productVersion>${bamboo.version}</productVersion>
-					<productDataVersion>${bamboo.data.version}</productDataVersion>
+					<productDataVersion>${bamboo.version}</productDataVersion>
 				</configuration>
 			</plugin>
 
@@ -261,8 +261,8 @@
 				</configuration>
 			</plugin>
 
-			<!-- <plugin> <artifactId>maven-surefire-plugin</artifactId> <version>2.12</version> 
-				<configuration> <excludedGroups>manual</excludedGroups> <parallel>methods</parallel> 
+			<!-- <plugin> <artifactId>maven-surefire-plugin</artifactId> <version>2.12</version>
+				<configuration> <excludedGroups>manual</excludedGroups> <parallel>methods</parallel>
 				<threadCount>16</threadCount> </configuration> </plugin> -->
 
 			<plugin>
@@ -275,7 +275,7 @@
 						</goals>
 						<configuration>
 							<includeScope>system</includeScope>
-							<outputDirectory>${build.outputDirectory}</outputDirectory>
+							<outputDirectory>${project.build.outputDirectory}</outputDirectory>
 						</configuration>
 					</execution>
 				</executions>
