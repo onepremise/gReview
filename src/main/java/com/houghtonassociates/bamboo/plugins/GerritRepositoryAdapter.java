@@ -1466,13 +1466,9 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
      */
     private boolean isRepoTriggerFor(ImmutableChain chain,
                                      boolean isRemoteTrigger) {
-        List<BuildStrategy> strats = chain.getTriggers();
-        List<RepositoryDefinition> cRepos =
-            new ArrayList<RepositoryDefinition>();
+        List<TriggerDefinition> strats = chain.getTriggerDefinitions();
 
-        cRepos = chain.getEffectiveRepositoryDefinitions();
-
-        for (RepositoryDefinition rd : cRepos) {
+        for (RepositoryDefinition rd : chain.getEffectiveRepositoryDefinitions()) {
             if (rd.getName().toLowerCase().equals(this.getName().toLowerCase())
                 && rd.getPluginKey().equals(this.getKey())) {
                 HierarchicalConfiguration hconfig = rd.getConfiguration();
@@ -1485,32 +1481,23 @@ public class GerritRepositoryAdapter extends AbstractStandaloneRepository
                     || this.getVcsBranch().isEqualToBranchWith(strCustBranch)) {
 
                     if (isRemoteTrigger) {
-                        for (BuildStrategy s : strats) {
-                            if (s instanceof TriggeredBuildStrategy) {
-                                TriggeredBuildStrategy tbs =
-                                    Narrow.downTo(s,
-                                        TriggeredBuildStrategy.class);
-
-                                Set<Long> repos =
-                                    tbs.getTriggeringRepositories();
-
-                                if (repos.contains(rd.getId())) {
-                                    return true;
-                                } else {
-                                    for (Long rID : repos) {
-                                        RepositoryDataEntity rde =
-                                            repositoryDefinitionManager
-                                                .getRepositoryDataEntity(rID);
-                                        if (rde.getName()
-                                            .equals(this.getName())
-                                            && rde.getPluginKey().equals(
-                                                this.getKey())) {
-                                            return true;
-                                        }
+                        for (TriggerDefinition s : strats) {
+                            Set<Long> repos =
+                                    s.getTriggeringRepositories();
+                            if (repos.contains(rd.getId())) {
+                                return true;
+                            } else {
+                                for (Long rID : repos) {
+                                    RepositoryDataEntity rde =
+                                        repositoryDefinitionManager
+                                            .getRepositoryDataEntity(rID);
+                                    if (rde.getName()
+                                        .equals(this.getName())
+                                        && rde.getPluginKey().equals(
+                                            this.getKey())) {
+                                        return true;
                                     }
                                 }
-                            } else {
-                                return false;
                             }
                         }
                     } else {
