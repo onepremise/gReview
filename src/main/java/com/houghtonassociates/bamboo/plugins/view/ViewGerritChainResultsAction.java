@@ -20,8 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import com.atlassian.bamboo.resultsummary.ResultSummaryPredicates;
+import com.atlassian.bamboo.storage.StorageLocationService;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import com.atlassian.bamboo.build.ChainResultsAction;
@@ -47,7 +50,6 @@ import com.atlassian.bamboo.resultsummary.ResultsSummary;
 import com.atlassian.bamboo.resultsummary.tests.FilteredTestResults;
 import com.atlassian.bamboo.resultsummary.tests.TestClassResultDescriptor;
 import com.atlassian.bamboo.resultsummary.vcs.RepositoryChangeset;
-import com.atlassian.bamboo.utils.BambooPredicates;
 import com.atlassian.bamboo.v2.build.agent.BuildAgent;
 import com.atlassian.bamboo.ww2.aware.permissions.PlanReadSecurityAware;
 import com.google.common.collect.Iterables;
@@ -55,6 +57,8 @@ import com.google.common.collect.Lists;
 import com.houghtonassociates.bamboo.plugins.GerritRepositoryAdapter;
 import com.houghtonassociates.bamboo.plugins.dao.GerritChangeVO;
 import com.houghtonassociates.bamboo.plugins.dao.GerritService;
+
+import static com.houghtonassociates.bamboo.plugins.view.RepositoryHelper.getDefaultRepository;
 
 /**
  * @author Jason Huntley
@@ -87,6 +91,7 @@ public class ViewGerritChainResultsAction extends ChainResultsAction implements 
 
     private DeploymentProjectService deploymentProjectService;
     private CommentService commentService;
+    private StorageLocationService storageLocationService;
 
     public ViewGerritChainResultsAction() {
         super();
@@ -164,14 +169,14 @@ public class ViewGerritChainResultsAction extends ChainResultsAction implements 
 
     public FilteredTestResults<TestClassResultDescriptor> getFilteredTestResults() {
         if (filteredTestResults == null) {
-            filteredTestResults = new ChainFilteredTestResults(getChainResult(), 0, getDefaultPageSizeForTests());
+            filteredTestResults = ChainFilteredTestResults.newInstance(testsManager, testQuarantineManager, getChainResult(), 0, getDefaultPageSizeForTests());
         }
         return filteredTestResults;
     }
 
     public boolean isLogAccessible(BuildResultsSummary jobResults) {
         if (jobResults != null) {
-            File logFile = new File(BuildLogUtils.getLogFileDirectory(jobResults.getPlanKey()), BuildLogUtils.getLogFileName(jobResults.getPlanResultKey()));
+            File logFile = new File(BuildLogUtils.getLogFileDirectory(jobResults.getPlanKey()), BuildLogUtils.getLogFileName(jobResults.getPlanKey(), jobResults.getBuildNumber()));
             return logFile.canRead();
         }
         return false;
@@ -221,7 +226,8 @@ public class ViewGerritChainResultsAction extends ChainResultsAction implements 
         if (jobResultKeyForLogDisplay == null && getChainResult().isInProgress()) {
             for (ChainStageResult stageResult : getChainResult().getStageResults()) {
                 try{
-                    jobResultKeyForLogDisplay = Iterables.find(stageResult.getBuildResults(), BambooPredicates.resultsSummaryIsInProgress()).getBuildResultKey();
+                    jobResultKeyForLogDisplay = Iterables.find(stageResult.getBuildResults(),
+                            ResultSummaryPredicates::isInProgress).getBuildResultKey();
                     return jobResultKeyForLogDisplay;
                 } catch (NoSuchElementException e) {
                 }
@@ -251,11 +257,15 @@ public class ViewGerritChainResultsAction extends ChainResultsAction implements 
         this.commentService = commentService;
     }
 
+    public void setStorageLocationService(StorageLocationService storageLocationService) {
+        this.storageLocationService = storageLocationService;
+    }
+
     public GerritRepositoryAdapter getRepository() {
         GerritRepositoryAdapter repository = null;
 
         Repository repo =
-            PlanHelper.getDefaultRepository(this.getImmutablePlan());
+                getDefaultRepository(this.getImmutableChain());
 
         if (repo instanceof GerritRepositoryAdapter) {
             repository = (GerritRepositoryAdapter) repo;
@@ -264,10 +274,12 @@ public class ViewGerritChainResultsAction extends ChainResultsAction implements 
         return repository;
     }
 
+
+
     public GerritService getGerritService() throws RepositoryException {
         if (gerritService == null) {
             Repository repo =
-                PlanHelper.getDefaultRepository(this.getImmutablePlan());
+                    getDefaultRepository(this.getImmutableChain());
 
             if (repo instanceof GerritRepositoryAdapter) {
                 GerritRepositoryAdapter gra = getRepository();
